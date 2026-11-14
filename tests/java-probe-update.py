@@ -1,0 +1,44 @@
+"""AI-sandbox only. Compile-probes LiquidNative's v142 update bridge methods against tiny Android/Capacitor stubs.
+It validates the bridge method signatures and Java syntax; it is not a substitute for an Android Gradle build or device test."""
+import pathlib, subprocess, tempfile, sys
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+SRC = (ROOT / 'native-android' / 'LiquidNative.java').read_text(encoding='utf-8')
+START, END = '  /* ---------- v142: persistent, background automatic updates.', '  /* ---------- T10: Canvas.'
+body = SRC[SRC.index(START):SRC.index(END)]
+tmp = pathlib.Path(tempfile.mkdtemp())
+def w(path, src):
+    f = tmp / path; f.parent.mkdir(parents=True, exist_ok=True); f.write_text(src)
+w('android/os/Build.java', 'package android.os; public class Build { public static class VERSION { public static final int SDK_INT = 26; } }')
+w('android/provider/Settings.java', 'package android.provider; public class Settings { public static final String ACTION_MANAGE_UNKNOWN_APP_SOURCES = "a"; }')
+w('android/net/Uri.java', 'package android.net; public class Uri { public static Uri parse(String s) { return null; } }')
+w('android/util/Log.java', 'package android.util; public class Log { public static int e(String a, String b) { return 0; } public static int e(String a, String b, Throwable t) { return 0; } }')
+w('android/content/Intent.java', '''package android.content; public class Intent { public static final String ACTION_VIEW = "v"; public static final int FLAG_GRANT_READ_URI_PERMISSION = 1, FLAG_ACTIVITY_NEW_TASK = 2; public Intent(String a) {} public Intent(String a, android.net.Uri u) {} public Intent addFlags(int f) { return this; } public Intent setDataAndType(android.net.Uri u, String t) { return this; } }''')
+w('android/content/SharedPreferences.java', 'package android.content; public interface SharedPreferences { int getInt(String k, int d); String getString(String k, String d); }')
+w('android/content/pm/PackageManager.java', 'package android.content.pm; public class PackageManager { public boolean canRequestPackageInstalls() { return true; } }')
+w('android/content/Context.java', '''package android.content; public class Context { public android.content.pm.PackageManager getPackageManager() { return null; } public String getPackageName() { return "com.liquid.flacplayer"; } public void startActivity(Intent i) {} }''')
+w('androidx/core/content/FileProvider.java', 'package androidx.core.content; public class FileProvider { public static android.net.Uri getUriForFile(android.content.Context c, String a, java.io.File f) { return null; } }')
+w('org/json/JSONObject.java', 'package org.json; public class JSONObject { public JSONObject put(String k, Object v) { return this; } public JSONObject put(String k, int v) { return this; } public JSONObject put(String k, boolean v) { return this; } }')
+w('com/getcapacitor/JSObject.java', 'package com.getcapacitor; public class JSObject extends org.json.JSONObject { public JSObject() {} }')
+w('com/getcapacitor/PluginMethod.java', 'package com.getcapacitor; import java.lang.annotation.*; @Retention(RetentionPolicy.RUNTIME) public @interface PluginMethod {}')
+w('com/getcapacitor/PluginCall.java', '''package com.getcapacitor; public class PluginCall { public String getString(String n, String d) { return d; } public void resolve(JSObject o) {} public void resolve() {} public void reject(String m) {} }''')
+w('com/getcapacitor/Plugin.java', 'package com.getcapacitor; public class Plugin { public android.content.Context getContext() { return null; } }')
+w('com/liquid/flacplayer/UpdateSupport.java', '''package com.liquid.flacplayer; public class UpdateSupport { public static void cleanInstalled(android.content.Context c){} public static final String STATUS_READY="ready", STATUS_QUEUED="queued", STATUS_DOWNLOADING="downloading", STATUS_FAILED="failed", STATUS_UNKNOWN="unknown"; public static boolean validTarget(long b,String s){return true;} public static String identity(long b,String s){return "";} public static String state(android.content.Context c){return "";} public static String targetId(android.content.Context c){return "";} public static String targetSha(android.content.Context c){return "";} public static long targetBuild(android.content.Context c){return 0;} public static long archiveVersionCode(android.content.Context c,java.io.File f){return 1;} public static long installedVersionCode(android.content.Context c){return 1;} public static String verifyApk(android.content.Context c,long b,String s){return null;} public static void markFailed(android.content.Context c,String i,String e){} public static android.content.SharedPreferences prefs(android.content.Context c){return null;} public static java.io.File apkFile(android.content.Context c,long b,String s){return null;} }''')
+w('com/liquid/flacplayer/UpdateDownloadService.java', '''package com.liquid.flacplayer; public class UpdateDownloadService { public static boolean isRunning(){return false;} public static void enqueue(android.content.Context c,String u,long b,String s){} public static void resumeSaved(android.content.Context c){} }''')
+# stubs for the battery-optimisation / OEM settings code that now sits inside the extracted range (later w() calls replace the first versions above)
+w('android/os/PowerManager.java', 'package android.os; public class PowerManager { public boolean isIgnoringBatteryOptimizations(String p) { return true; } }')
+w('android/provider/Settings.java', 'package android.provider; public class Settings { public static final String ACTION_MANAGE_UNKNOWN_APP_SOURCES = "a", ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS = "b", ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS = "c", ACTION_APPLICATION_DETAILS_SETTINGS = "d"; }')
+w('android/content/Intent.java', '''package android.content; public class Intent { public static final String ACTION_VIEW = "v"; public static final int FLAG_GRANT_READ_URI_PERMISSION = 1, FLAG_ACTIVITY_NEW_TASK = 2; public Intent() {} public Intent(String a) {} public Intent(String a, android.net.Uri u) {} public Intent addFlags(int f) { return this; } public Intent setDataAndType(android.net.Uri u, String t) { return this; } public Intent setData(android.net.Uri u) { return this; } public Intent setClassName(String a, String b) { return this; } public Intent putExtra(String k, String v) { return this; } }''')
+w('android/content/Context.java', '''package android.content; public class Context { public static final String POWER_SERVICE = "power"; public Object getSystemService(String n) { return null; } public android.content.pm.PackageManager getPackageManager() { return null; } public String getPackageName() { return "com.liquid.flacplayer"; } public void startActivity(Intent i) {} }''')
+wrapper = '''package com.liquid.flacplayer;
+import java.io.*; import android.content.*; import android.net.Uri; import android.util.Log; import com.getcapacitor.*;
+public class LiquidNativeProbe extends Plugin {
+''' + body + '\n}\n'
+w('com/liquid/flacplayer/LiquidNativeProbe.java', wrapper)
+out = tmp / 'out'; out.mkdir()
+files = [str(p) for p in tmp.rglob('*.java')]
+import shutil
+JAVAC = ['javac'] if shutil.which('javac') else ['java', '--module', 'jdk.compiler/com.sun.tools.javac.Main']   # no javac binary in some sandboxes: the JDK module does the same job
+r = subprocess.run(JAVAC + ['-proc:none', '-d', str(out)] + files, capture_output=True, text=True)
+print(r.stdout + r.stderr or 'javac: no output')
+print('JAVA UPDATE BRIDGE PROBE', 'OK' if r.returncode == 0 else 'FAILED')
+sys.exit(r.returncode)

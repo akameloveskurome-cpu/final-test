@@ -1,0 +1,25 @@
+# Signing secrets: never commit these (see signing/README.md)
+*.keystore
+*.jks
+*.p12
+KEYSTORE_BASE64.txt
+KEYSTORE_PASSWORD.txt
+KEYSTORE*.txt
+key.txt
+
+# Build output and dependencies
+node_modules/
+dist/
+android/
+tests/out/
+
+# OS and editor junk
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+
+# Python bytecode
+__pycache__/
+*.pyc

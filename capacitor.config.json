@@ -1,0 +1,7 @@
+{
+  "appId": "com.liquid.flacplayer",
+  "appName": "Liquid Dark",
+  "webDir": "dist",
+  "backgroundColor": "#000000",
+  "android": { "allowMixedContent": false }
+}

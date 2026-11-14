@@ -1,0 +1,35 @@
+{
+  "name": "liquid-flac-player",
+  "version": "0.208.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 5173",
+    "android:add": "cap add android",
+    "android:sync": "npm run build && cap sync android",
+    "test": "node --import ./tests/register.mjs --test tests/*.test.mjs",
+    "smoke": "python3 tests/smoke.py",
+    "search-big": "python3 tests/search-big.py",
+    "screenshots": "python3 tests/screenshots.py && python3 tests/screenshots_v146.py && python3 tests/screenshots_v208.py",
+    "monkey": "python3 tests/monkey.py",
+    "glass-extremes": "python3 tests/glass_extremes.py",
+    "settings-roundtrip": "python3 tests/settings_roundtrip.py"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/app": "^6.0.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2",
+    "vite": "^5.4.10"
+  },
+  "description": "Personal local FLAC player for Android (Vite + vanilla JS + Capacitor 6 + Java/Media3 plugin)",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "license": "MIT",
+  "author": "Ai Hoshino"
+}

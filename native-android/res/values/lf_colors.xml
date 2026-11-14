@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- T15: the only two colours of the app icon and splash. Red is the only accent. -->
+<resources>
+    <color name="lf_red">#FA243C</color>
+    <color name="lf_black">#000000</color>
+    <!-- widgets: black clear glass, white text, red accent (same look as the app) -->
+    <color name="lf_white">#FFFFFF</color>
+    <color name="lf_white_70">#B3FFFFFF</color>
+</resources>

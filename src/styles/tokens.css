@@ -1,0 +1,58 @@
+/* ===== TOKENS. Every colour in the app comes from here. Never hard-code a hex elsewhere. ===== */
+:root{
+  --sat:env(safe-area-inset-top,0px);   /* status bar / camera cut-out height. On Android MainActivity overwrites these two with exact numbers (edge-to-edge) */
+  --sab:env(safe-area-inset-bottom,0px);   /* gesture / navigation bar height */
+  --bg:#000;
+  --ink:#000;
+  --on-accent:#fff;
+  --knob:#fff;
+  --accent:#FA243C;                       /* Apple Music red: the ONLY accent */
+  --accent-soft:rgba(250,36,60,.18);
+  --accent-glow:rgba(250,36,60,.40);
+  --q-dot:#FA243C;                        /* the dot in the Now Playing quality pill: always this red, on every song */
+  --text:#fff;
+  --text-2:rgba(255,255,255,.62);
+  --text-3:rgba(255,255,255,.38);
+  --hair:rgba(255,255,255,.12);
+  --rail:rgba(255,255,255,.22);
+  --rail-hi:rgba(255,255,255,.35);
+  --scrim:rgba(0,0,0,.32);
+  --toggle-off:rgba(255,255,255,.14);
+  /* secondary spots (all white: red is the only colour) */
+  --v-green:#fff; --v-orange:#fff; --v-yellow:#fff;
+  --v-blue:#fff; --v-magenta:#fff; --v-pink:#fff;
+  /* glass: strong (bars, buttons, sheets) */
+  --spec:inset 0 0 0 1px rgba(255,255,255,.20),inset 1px 1px 0 rgba(255,255,255,.45),inset -1px -1px 0 rgba(255,255,255,.10),var(--fringe-edge);
+  --drop:0 12px 32px rgba(0,0,0,.55);
+  /* Glass edge colour fringe (Settings > Animation) reaches EVERY glass surface, not only the tab-bar pill: --fringe is its width (0 px at 0 %), --fringe-a its strength (set to 0 for no fringe at the default width) */
+  --fringe:1.2px; --fringe-a:.16;
+  --fringe-edge:inset var(--fringe) 0 0 0 rgba(255,40,70,var(--fringe-a)),inset calc(-1 * var(--fringe)) 0 0 0 rgba(40,190,255,var(--fringe-a));
+  /* glass: light (plain list rows, cards, settings, tiles). Clear, only a hairline rim, NO blur so long lists stay fast */
+  --sheen-lite:linear-gradient(135deg,rgba(255,255,255,.075),rgba(255,255,255,.012) 60%,rgba(255,255,255,.04));
+  --spec-lite:inset 0 0 0 1px rgba(255,255,255,.11),inset 1px 1px 0 rgba(255,255,255,.26),inset -1px -1px 0 rgba(255,255,255,.05),var(--fringe-edge);
+  --row-fill:rgba(255,255,255,.025);
+  /* glass: overlays that sit on moving content (sheets): dark tint + backdrop blur for readability */
+  --r-card:26px; --r-head:30px; --r-pill:999px; --r-row:20px;
+  --spring:cubic-bezier(.3,1.45,.5,1);
+  --tabbar-h:94px;
+  --lyric-size:26px;
+  --amb-1:rgba(250,36,60,.62);
+  --amb-2:rgba(250,36,60,.34);
+  --amb-3:rgba(140,18,40,.52);
+  --np-glow-1:rgba(250,36,60,.55);
+  --np-glow-2:rgba(250,36,60,.18);
+}
+/* pure black, black liquid glass, red is the ONLY colour */
+:root{
+  --glass-fill:rgba(0,0,0,.10);
+  --sheen:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.02) 55%,rgba(255,255,255,.07));
+  --bar-fill:rgba(0,0,0,.08);
+  --sheet-fill:rgba(0,0,0,.20);
+}
+html[data-contrast="1"]{ --fringe-a:0; --text-2:rgba(255,255,255,.85); --text-3:rgba(255,255,255,.65); --hair:rgba(255,255,255,.3); --spec-lite:inset 0 0 0 1px rgba(255,255,255,.3),inset 1px 1px 0 rgba(255,255,255,.4) }
+html[data-motion="reduce"] *,html[data-motion="reduce"] *::before,html[data-motion="reduce"] *::after{ transition-duration:.01ms!important; animation-duration:.01ms!important }
+
+/* demo-library album colours (used by src/data.js demo data) */
+:root{--demo-1a:#5b73ff;--demo-1b:#2a1a8a;--demo-2a:#6dffa0;--demo-2b:#0b7a5a;--demo-3a:#f55be8;--demo-3b:#4a1190;--demo-4a:#f8c76a;--demo-4b:#8a1d1d;--demo-5a:#ff4d6a;--demo-5b:#7a0f2a;--demo-6a:#ff7a59;--demo-6b:#a31a54;--demo-7a:#b05bff;--demo-7b:#3a1580;--demo-8a:#ff9a5a;--demo-8b:#8a3a14;}
+
+:root{--lens-c0:var(--accent);--lens-c1:var(--accent);--lens-c2:var(--accent);--lens-c3:var(--accent)}   /* lens: per-tab colours inside the magnifier */

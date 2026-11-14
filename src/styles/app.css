@@ -1,0 +1,988 @@
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.3 -apple-system,"SF Pro Text",Inter,Roboto,system-ui,sans-serif;overscroll-behavior:none}
+body{overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.blk{display:block}   /* span stand-in for a block <div> inside a <button> (v61); placed first so any later display rule still wins */
+svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+svg.fill{fill:currentColor;stroke:none}
+#app{position:relative;height:100%;max-width:520px;margin:auto;overflow:hidden;overflow:clip}
+.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;padding:calc(var(--sat) + 12px) 18px calc(var(--tabbar-h) + 150px);scrollbar-width:none}
+.screen::-webkit-scrollbar{display:none}
+.screen.sub{z-index:5;background:var(--bg)}
+h1.large{font-size:2.375rem;font-weight:800;letter-spacing:-.5px;margin:6px 0 14px}
+h2.sec{font-size:1.375rem;font-weight:800;margin:22px 0 12px}
+.top{display:flex;align-items:center;justify-content:space-between;min-height:56px}
+.top.right{justify-content:flex-end}
+
+/* ---- glass ---- */
+.glass{background:var(--sheen),var(--glass-fill);box-shadow:var(--spec),var(--drop);backdrop-filter:saturate(1.3);-webkit-backdrop-filter:saturate(1.3);border-radius:var(--r-card)}
+.gbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--sheen),var(--glass-fill);box-shadow:var(--spec),0 6px 16px rgba(0,0,0,.5);transition:transform calc(.35s * var(--dur-k,1)) var(--spring)}
+
+.gbtn.sm{width:38px;height:38px}
+.gbtn.fav{color:var(--accent)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:var(--r-pill);font-size:0.75rem;font-weight:700;background:var(--sheen),var(--glass-fill);box-shadow:var(--spec)}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.npmeta .badge i{background:var(--q-dot)!important}   /* the quality pill dot is always red, whatever the song / state */
+.chip.green{color:var(--v-green)}
+
+/* ---- covers (flat) ---- */
+.cover{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--g);box-shadow:var(--spec-lite)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 12px}
+.card{min-width:0}
+.card .t{font-weight:600;margin-top:6px;font-size:0.8125rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .s{color:var(--text-2);font-size:0.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hscroll{display:flex;gap:16px;overflow-x:auto;margin:0 -18px;padding:0 18px;scrollbar-width:none}
+.hscroll .card{flex:0 0 31%}
+.hscroll::-webkit-scrollbar{display:none}
+.card{display:block;width:100%;text-align:left;transition:transform calc(.35s * var(--dur-k,1)) var(--spring)}
+
+
+/* ---- rows (flat) ---- */
+.row{display:flex;align-items:center;gap:14px;padding:11px 14px;margin:0 0 8px;width:100%;text-align:left;border-radius:var(--r-row);background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite);transition:transform calc(.35s * var(--dur-k,1)) var(--spring)}
+
+.row .ic{color:var(--accent);width:38px;height:38px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:var(--sheen),var(--glass-fill);box-shadow:var(--spec-lite)}
+.row .ic svg{width:20px;height:20px}
+.row .cnt{color:var(--text-2);font-size:0.9375rem}
+.row .lbl{flex:1;font-size:1.25rem}
+.row .chev{color:var(--text-3)}
+.row.song{padding:8px 12px 8px 8px;border-radius:18px;content-visibility:auto;contain-intrinsic-size:auto 64px}
+.row.song:active{transform:none}
+.row .thumb{width:48px;height:48px;border-radius:10px;flex:0 0 auto}
+.row .meta{flex:1;min-width:0}
+.row .meta b{display:block;font-weight:500;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .meta span{display:block;color:var(--text-2);font-size:0.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .dur{color:var(--text-2);font-size:0.875rem}
+.row .idx{width:22px;color:var(--text-2);text-align:center}
+.row.playing{background:var(--sheen-lite),var(--accent-soft)}
+.row.playing .meta b,.row.playing .idx{color:var(--accent)}
+
+/* ---- search ---- */
+.searchpill{display:flex;align-items:center;gap:10px;height:48px;padding:0 16px;border-radius:var(--r-pill);background:var(--sheen),var(--glass-fill);box-shadow:var(--spec);color:var(--text-2)}
+.searchpill input{flex:1;background:none;border:0;outline:0;color:var(--text);font:inherit}
+.searchpill svg{width:20px;height:20px}
+.searchpill:focus-within{box-shadow:var(--spec),0 0 0 2px var(--accent-soft)}
+.genre-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gtile{border-radius:20px;padding:16px;min-height:78px;text-align:left;font-weight:700;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite);position:relative;overflow:hidden;transition:transform calc(.35s * var(--dur-k,1)) var(--spring)}
+
+html .gtile::before{background:var(--accent)}
+.gtile::before{content:"";position:absolute;left:0;top:18%;bottom:18%;width:3px;border-radius:3px;background:var(--gc,var(--accent))}
+.gtile small{display:block;color:var(--text-2);font-weight:500;margin-top:2px}
+
+/* ---- tab bar ---- */
+.tabbar{position:absolute;left:10px;right:10px;bottom:max(14px,var(--sab));height:var(--tabbar-h);z-index:30;display:flex;padding:8px 12px;border-radius:var(--r-pill);background:var(--sheen),var(--glass-fill);box-shadow:var(--spec),var(--drop);touch-action:none}
+.tabbar .tab{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:0.8125rem;font-weight:600;color:var(--text);transition:color calc(.25s * var(--dur-k,1))}
+.tabbar .tab.on{color:var(--accent)}
+.tabbar .tab svg{width:32px;height:32px}
+.lens{position:absolute;z-index:3;top:0;left:0;overflow:hidden;border-radius:var(--r-pill);pointer-events:none;--pop:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.02) 60%,rgba(255,255,255,.07));
+  box-shadow:0 calc(4px + 10px*var(--pop)) calc(14px + 12px*var(--pop)) rgba(0,0,0,.45);will-change:transform,width,height}
+/* rim + gloss are drawn ABOVE the magnified copy (children paint over inset shadows) */
+.lens::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,calc(.26*var(--pop))),rgba(255,255,255,0) 40%,rgba(255,255,255,0) 68%,rgba(255,255,255,calc(.16*var(--pop))));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.28 + .3*var(--pop))),inset 1px 1px 2px rgba(255,255,255,calc(.5 + .3*var(--pop))),inset -1px -1px 2px rgba(255,255,255,.18),inset 0 0 calc(0.875rem*var(--pop)) rgba(255,255,255,calc(.18*var(--pop)))}
+/* magnified copy of the tabs under the lens (opaque so the real tab below does not show twice) + thin colour fringe like real glass */
+.lens-mag{position:absolute;display:flex;box-sizing:border-box;padding:8px 12px;pointer-events:none;background:#070708;opacity:0;will-change:transform;
+  filter:none}
+.lens-mag .tab{pointer-events:none;transition:none}
+html[data-refract="0"] .lens-mag,html[data-contrast="1"] .lens-mag{display:none}   /* Settings > Lens refraction off: plain glass pill */
+
+/* ---- mini player ---- */
+.mini{position:absolute;left:14px;right:14px;bottom:calc(max(14px,var(--sab)) + var(--tabbar-h) + 10px);z-index:29;height:62px;display:flex;align-items:center;gap:12px;padding:7px 10px 7px 7px;border-radius:var(--r-pill);background:var(--sheen),var(--glass-fill);box-shadow:var(--spec),var(--drop);text-align:left;width:calc(100% - 28px)}
+.mini .cover{width:48px;border-radius:50%}
+.mini .meta{flex:1;min-width:0;display:block}
+.mini .mini-open{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;align-self:stretch}
+.mini .meta b{display:block;font-size:0.9375rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini .meta span{display:block;font-size:0.7812rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini .mb{width:40px;height:40px;display:grid;place-items:center}
+.mini .mb svg{width:26px;height:26px}
+
+/* ---- Now Playing ---- */
+.np{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;padding:calc(var(--sat) + 8px) 22px calc(max(16px,var(--sab)) + 8px);background:var(--ink);transform:translateY(100%);transition:transform calc(.5s * var(--dur-k,1)) var(--spring);overflow:hidden}
+.np.open{transform:none}
+.np .glow{position:absolute;inset:-10%;z-index:0;background:radial-gradient(120% 70% at 15% 0%,var(--np1),transparent 60%),radial-gradient(100% 60% at 100% 100%,var(--np2),transparent 65%);opacity:.9}
+html .np .glow{background:radial-gradient(120% 70% at 15% 0%,var(--np-glow-1),transparent 60%),radial-gradient(100% 60% at 100% 100%,var(--np-glow-2),transparent 65%)}
+.np>*{position:relative;z-index:1}
+.np .grab{width:44px;height:5px;border-radius:3px;background:var(--rail-hi);margin:0 auto 10px}
+.np .art{flex:1;display:grid;place-items:center;min-height:0;padding:6px 0 14px}
+.np .art .cover{height:100%;max-height:360px;border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.np .titles{display:flex;align-items:flex-start;gap:12px}
+.np .titles .t{flex:1;min-width:0}
+.np .titles b{display:block;font-size:1.625rem;font-weight:800;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np .titles span{display:block;color:var(--text-2);font-size:1.0625rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np .badge{margin:12px auto 6px}
+.scrub{position:relative;height:30px;margin-top:8px;touch-action:none}
+.scrub .rail{position:absolute;left:0;right:0;top:13px;height:5px;border-radius:3px;background:var(--rail)}
+.scrub .fill{position:absolute;left:0;right:0;top:13px;height:5px;border-radius:3px;overflow:hidden;pointer-events:none}
+.scrub .fill i{position:absolute;inset:0;background:var(--accent);transform:translate3d(-100%,0,0);will-change:transform}
+.scrub::before{content:"";position:absolute;inset:-10px 0}
+.scrub .thumb{position:absolute;left:0;top:3px;pointer-events:none;will-change:transform;width:25px;height:25px;margin-left:-12px;border-radius:50%;background:rgba(255,255,255,.18);box-shadow:var(--spec),0 3px 10px rgba(0,0,0,.5)}
+.times{display:flex;justify-content:space-between;color:var(--text-2);font-size:0.8125rem}
+.transport{display:flex;align-items:center;justify-content:space-between;margin:16px 0 18px}
+.cluster{display:flex;align-items:center;justify-content:space-around;flex:1;margin:0 14px;height:78px;border-radius:var(--r-pill);background:var(--sheen),var(--glass-fill);box-shadow:var(--spec),var(--drop)}
+.cluster button{width:64px;height:64px;display:grid;place-items:center;transition:transform calc(.35s * var(--dur-k,1)) var(--spring)}
+
+.cluster svg{width:30px;height:30px}
+.cluster .pp svg{width:40px;height:40px;color:var(--accent)}
+.sbtn{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:var(--sheen),var(--glass-fill);box-shadow:var(--spec);transition:transform calc(.35s * var(--dur-k,1)) var(--spring)}
+.sbtn.on{color:var(--accent)}
+
+.np .bottom{display:flex;justify-content:space-around;color:var(--text-2);padding-top:2px}
+.np .bottom button{width:64px;height:44px;border-radius:var(--r-pill);display:grid;place-items:center;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite);transition:transform calc(.35s * var(--dur-k,1)) var(--spring)}
+
+.np .bottom svg{width:22px;height:22px}
+
+/* ---- settings ---- */
+.setcard{border-radius:22px;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite);overflow:hidden;margin-bottom:22px}
+.setrow{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--hair)}
+.setrow:last-child{border:0}
+.setrow .tx{flex:1;display:block}
+.setrow .tx b{display:block;font-weight:600;font-size:1.125rem}
+.setrow .tx span{display:block;color:var(--text-2);font-size:0.875rem;margin-top:2px}
+.sethead{color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;font-size:0.875rem;margin:6px 6px 8px}
+.toggle{width:52px;height:32px;border-radius:16px;background:var(--toggle-off);box-shadow:var(--spec-lite);position:relative;flex:0 0 auto;transition:background calc(.25s * var(--dur-k,1))}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;right:23px;height:26px;border-radius:13px;background:var(--knob);box-shadow:0 2px 6px rgba(0,0,0,.45)}
+.toggle.on{background:var(--accent)}
+.toggle.on::after{left:23px;right:3px}
+
+/* ---- toast + stubs ---- */
+.toast{position:absolute;left:50%;bottom:190px;transform:translate(-50%,20px);opacity:0;z-index:97;padding:10px 16px;border-radius:var(--r-pill);font-size:0.875rem;font-weight:600;white-space:nowrap;background:var(--sheen),var(--glass-fill);box-shadow:var(--spec),var(--drop);transition:calc(.35s * var(--dur-k,1)) var(--spring);pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast{background:var(--sheen),var(--sheet-fill);backdrop-filter:none;-webkit-backdrop-filter:none}
+.empty{color:var(--text-2);text-align:center;padding:28px 18px;margin:10px 0;border-radius:22px;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite)}
+/* start-up: shown on Home while the saved library is being read (instead of the misleading "No music yet") */
+.libload{display:flex;align-items:center;justify-content:center;gap:12px;color:var(--text-2);padding:28px 18px;margin:10px 0;border-radius:22px;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite)}
+.libdots{display:inline-flex;gap:6px}
+.libdots i{width:8px;height:8px;border-radius:50%;background:var(--accent);opacity:.35;animation:libdot 1s ease-in-out 3}
+.libdots i:nth-child(2){animation-delay:.15s}.libdots i:nth-child(3){animation-delay:.3s}
+@keyframes libdot{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+@media (prefers-reduced-motion:reduce){.libdots i{animation:none;opacity:.7}}
+.pl-mosaic{display:grid;grid-template-columns:1fr 1fr;border-radius:12px;overflow:hidden;aspect-ratio:1;box-shadow:var(--spec-lite)}
+.pl-mosaic .cover{border-radius:0;box-shadow:none}
+.detail-art{width:62%;margin:8px auto 16px}
+.detail-art .cover{border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.detail-t{text-align:center}
+.detail-t b{display:block;font-size:1.375rem;font-weight:800}
+.detail-t .a{color:var(--accent);font-size:1.25rem;margin-top:2px}
+.detail-t .m{color:var(--text-2);font-size:0.8125rem;margin-top:4px}
+.actions{display:flex;gap:12px;margin:18px 0 8px}
+.actions button{flex:1;height:50px;border-radius:var(--r-pill);font-weight:700;color:var(--accent);display:flex;align-items:center;justify-content:center;gap:8px;background:var(--sheen),var(--glass-fill);box-shadow:var(--spec);transition:transform calc(.35s * var(--dur-k,1)) var(--spring)}
+
+.actions svg{width:20px;height:20px}
+@keyframes slidein{from{transform:translateX(24%);opacity:0}to{transform:none;opacity:1}}
+.screen.sub{animation:slidein calc(.4s * var(--dur-k,1)) var(--spring)}
+.screen.sub.still{animation:none}
+/* fixes: floating bars need a denser fill so rows scrolling underneath don't clutter; badge must stay inline */
+.tabbar,.mini{background:var(--sheen),var(--bar-fill);backdrop-filter:saturate(1.4);-webkit-backdrop-filter:saturate(1.4)}
+/* ---- notification permission sheet ---- */
+#sheet .scrim{position:absolute;inset:0;z-index:90;background:var(--scrim);backdrop-filter:none;-webkit-backdrop-filter:none}
+#sheet .sheetbox{position:absolute;left:12px;right:12px;bottom:calc(20px + var(--sab));z-index:91;padding:22px;border-radius:var(--r-head);background:var(--sheen),var(--sheet-fill);backdrop-filter:saturate(1.5);-webkit-backdrop-filter:saturate(1.5);box-shadow:var(--spec),var(--drop)}
+#sheet .sheetbox b{font-size:1.25rem}
+#sheet .sheetbox p{margin:8px 0 16px;color:var(--text-2);font-size:0.9375rem;line-height:1.4}
+
+/* ---- T6 playlists: edit controls + add-songs picker ---- */
+.plrow{display:flex;align-items:center;gap:8px}.plrow .row{flex:1;min-width:0}.plctl{display:flex;gap:6px;margin-bottom:8px}
+.gbtn[disabled]{opacity:.35;pointer-events:none}
+#sheet .sheetbox .searchpill.field{margin:12px 0 4px}
+#sheet .sheetbox .row{margin-bottom:8px}
+.picklist{max-height:44vh;overflow:auto;margin:10px -6px 0;padding:0 6px;overscroll-behavior:contain}
+.row .chk{width:34px;height:34px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;color:var(--accent);font-weight:700;background:var(--sheen),var(--glass-fill);box-shadow:var(--spec-lite)}
+.row.on .chk{background:var(--accent);color:var(--text)}
+
+/* ---- T16 copy-log fallback sheet ---- */
+#sheet .sheetbox textarea.logbox{display:block;width:100%;height:34vh;margin-top:6px;padding:12px;border:0;border-radius:var(--r-row);resize:none;color:var(--text);font:12px/1.4 ui-monospace,Menlo,monospace;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite)}
+
+/* T9: Lyrics view */
+.lyr{position:absolute;inset:0;z-index:70;display:none;flex-direction:column;background:#000;padding:calc(var(--sat) + 2px) 22px 0;overflow:hidden}
+.lyr.open{display:flex}
+.lyr-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:4px;position:relative;z-index:2}
+.lyr-t{text-align:center;min-width:0;flex:1}.lyr-t b,.lyr-t span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lyr-t span{color:var(--text-2);font-size:0.8125rem}
+.lyr-body{flex:1;position:relative;z-index:1;overflow-y:auto;padding:14px 0 70vh;margin:0 -22px;padding-left:22px;padding-right:22px;scrollbar-width:none;touch-action:pan-y;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 26px,#000 calc(100% - 70px),transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 26px,#000 calc(100% - 70px),transparent 100%)}
+.lyr-body::-webkit-scrollbar{display:none}
+.ln{margin:0 0 .6em;font-size:var(--lyric-size);font-weight:800;line-height:1.22;color:var(--text);transition:color .25s}
+.ln.tap{cursor:pointer}.ln.cur{color:var(--accent)}
+.ln.cur .w{opacity:.55}.ln.cur .w.wd{opacity:1}
+/* T10: Canvas */
+.cvmedia{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;max-width:none}   /* v56: cvFit() in main.js sets the px size that makes the picture area cover the square */
+.np .bottom button.cvbtn.on{color:var(--accent);box-shadow:var(--spec),0 0 14px var(--accent-glow)}
+/* T11: Song Info */
+.infobox{max-height:70vh;overflow-y:auto;scrollbar-width:none;margin-top:10px}
+.ibasic{display:grid;gap:8px;margin:12px 0}
+.itile{display:flex;flex-direction:column;gap:3px;padding:11px 14px;border-radius:18px;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite);margin-bottom:8px}
+.itile .il{color:var(--text-2);font-size:0.8125rem}
+.itile .iv{font-weight:700;font-size:1rem;word-break:break-word}
+.itile.miss .iv{color:var(--accent)}
+.isec{color:var(--accent);font-size:0.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin:16px 0 8px}
+.ixtra{display:block;width:100%;height:46px;border-radius:var(--r-pill);font-weight:700;color:var(--accent);background:var(--sheen),var(--glass-fill);box-shadow:var(--spec)}
+/* T8: Up Next sheet list */
+.qlist{max-height:52vh;overflow-y:auto;margin-top:10px;scrollbar-width:none}
+/* T7: song row + ⋯ button */
+.songwrap{display:flex;align-items:center;gap:6px}.songwrap>.row{flex:1;min-width:0}.songwrap>.gbtn{flex:none}.plrow>.songwrap{flex:1;min-width:0}
+
+/* v20: see-through liquid glass. An ambient, slowly drifting red glow sits behind all screens so the glass has something to show. */
+#app{background:var(--bg)}
+.screen.sub{background:transparent}
+.np{background:rgba(0,0,0,.26);backdrop-filter:saturate(1.5);-webkit-backdrop-filter:saturate(1.5)}
+/* glass parts: clear, no blur */
+.gbtn,.sbtn,.actions button,.np .bottom button,.toast,.tabbar,.mini{backdrop-filter:saturate(1.5);-webkit-backdrop-filter:saturate(1.5)}
+
+/* T22 sleep timer: pill under the quality badge + active state of the NP button */
+.np .sleeppill{display:flex;width:fit-content;margin:0 auto 6px;color:var(--accent);font-variant-numeric:tabular-nums}
+.np .sleeppill .sl-ic svg{width:14px;height:14px;display:block}
+.np .bottom button.slbtn.on{color:var(--accent);box-shadow:var(--spec),0 0 14px var(--accent-glow)}
+
+/* T26 accessibility: red focus ring (keyboard / TalkBack focus only), 44px touch targets, hidden live region */
+button:focus-visible,[role="button"]:focus-visible,[role="slider"]:focus-visible,[role="switch"]:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mini .mb{width:44px;height:44px}.gbtn.sm{width:44px;height:44px}.tabbar .tab{min-height:44px}.toggle{position:relative}.toggle::before{content:"";position:absolute;inset:-8px -4px}
+/* T23 sort + A-Z rail, T25 disc headers / recent searches */
+.sortbtn{margin:0 0 12px}
+.letter{position:static;padding:10px 2px 6px;font-size:0.9375rem;pointer-events:none;font-weight:800;color:var(--accent);background:none}
+.lsec .grid{margin-bottom:6px}
+.disc{font-size:0.8125rem;font-weight:700;color:var(--text-2);margin:14px 2px 4px;letter-spacing:.3px}
+.sechead{display:flex;align-items:center;justify-content:space-between}
+/* T12 A-B loop: button + markers on the scrubber (colours from tokens only) */
+.np .bottom button.abbtn{font-weight:700;font-size:0.875rem;letter-spacing:.02em}
+.np .bottom button.abbtn.on{color:var(--accent);box-shadow:var(--spec),0 0 14px var(--accent-glow)}
+.scrub .abm{display:none;position:absolute;top:8px;width:3px;height:15px;margin-left:-1px;border-radius:2px;background:var(--text);pointer-events:auto;touch-action:none}
+.scrub .abm::before{content:'';position:absolute;inset:-10px -13px}
+
+/* T12 part 2: drag handles (Up Next + playlist edit). Hidden arrows stay in the DOM for TalkBack. */
+.dh{touch-action:none;cursor:grab}
+.sr{position:absolute!important;width:1px!important;height:1px!important;min-width:0!important;padding:0!important;margin:-1px!important;overflow:hidden;clip:rect(0 0 0 0);border:0!important}
+[data-drow]{position:relative}
+[data-drow].dragging{z-index:30;pointer-events:none;opacity:.94;transition:none;filter:drop-shadow(0 10px 18px var(--scrim))}
+[data-drow].dragging .row{box-shadow:var(--spec-lite),0 0 0 1px var(--accent)}
+[data-drow].dropat.above{box-shadow:0 -2px 0 var(--accent)}
+[data-drow].dropat.below{box-shadow:0 2px 0 var(--accent)}
+
+/* ===== v50 ===== */
+/* albums: no black bar (letter headers are plain red letters), room for the A-Z rail */
+.card .t,.card .s{display:block}
+.cover{border-radius:10px}
+/* glass: really see-through bars. Light tint, brighter colours, a bright rim. */
+.tabbar,.mini{background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.015) 55%,rgba(255,255,255,.06)),var(--bar-fill);
+  backdrop-filter:saturate(1.9) brightness(1.1);-webkit-backdrop-filter:saturate(1.9) brightness(1.1)}
+.tabbar .tab,.mini .meta b,.mini .meta span{text-shadow:0 1px 6px rgba(0,0,0,.65)}
+.gbtn,.sbtn,.actions button,.np .bottom button,.cluster{backdrop-filter:saturate(1.7);-webkit-backdrop-filter:saturate(1.7)}
+.cluster{background:var(--sheen),var(--glass-fill)}
+.np{background:rgba(0,0,0,.08);backdrop-filter:saturate(1.6);-webkit-backdrop-filter:saturate(1.6)}
+/* Canvas video: Now Playing has no backdrop filter at all, so the WebView cannot glitch the video; a darker tint keeps the buttons readable */
+.np.hascv{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(0,0,0,.45)}
+.cvmedia{transform:translateZ(0);background:var(--bg);pointer-events:none}
+
+/* lyrics: two backgrounds (Settings > Lyrics, or the button at the top right of the lyrics) */
+
+/* ===== v51 ===== */
+/* albums: list rows like the reference (small cover left, title + artist right), no box, no ripple rings */
+.alist{display:flex;flex-direction:column}
+.row.arow{background:none;box-shadow:none;border-radius:14px;padding:6px 4px;margin:0;gap:14px;content-visibility:auto;contain-intrinsic-size:auto 76px}
+.row.arow .thumb{width:68px;height:68px;border-radius:8px}
+.row.arow .meta b{font-size:1.125rem;font-weight:500}
+.row.arow .meta span{font-size:0.875rem}
+.row.arow:active{background:rgba(255,255,255,.07);transform:none}
+/* home: small covers in a sideways row */
+.hscroll{gap:12px}
+.hscroll .card{flex:0 0 112px;width:112px}
+.hscroll .card .t{font-size:0.8125rem}
+/* see-through glass: rows, cards, settings and tiles let the background show */
+:root{--row-fill:rgba(255,255,255,.012)}
+.setcard,.gtile,.chip{backdrop-filter:saturate(1.6);-webkit-backdrop-filter:saturate(1.6)}
+/* v51b: settings cards, sheets, Now Playing buttons: clear glass (lyrics keep their own background) */
+.setcard,.np .bottom button,#sheet .sheetbox .row{background:var(--sheen-lite),rgba(0,0,0,.06)}
+#sheet .sheetbox{backdrop-filter:saturate(1.7);-webkit-backdrop-filter:saturate(1.7)}
+
+/* v51c: lyrics = plain black, every line white, the line that is playing is red (no blur, no cover background) */
+
+/* ===== v52 ===== */
+/* pure black everywhere: no ambient glow */
+:root{--amb-1:transparent;--amb-2:transparent;--amb-3:transparent;--np-glow-1:transparent;--np-glow-2:transparent}
+html,body,#app{background:#000}
+.np .glow{display:none}
+/* overlays: Now Playing and the bars are opaque enough that nothing behind them bleeds through */
+.np,.np.hascv{background:#000;backdrop-filter:none;-webkit-backdrop-filter:none}
+.tabbar,.mini{background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.02) 55%,rgba(255,255,255,.07)),rgba(14,14,16,.78);
+  backdrop-filter:saturate(1.8);-webkit-backdrop-filter:saturate(1.8)}
+.cluster,.sbtn,.np .bottom button,#sheet .sheetbox{backdrop-filter:saturate(1.6);-webkit-backdrop-filter:saturate(1.6)}
+#sheet .sheetbox{background:var(--sheen),rgba(14,14,16,.86)}
+.screen.sub{background:#000}
+.mini .meta b{color:var(--accent)}
+
+/* liquid glass: press = the glass squashes and wobbles like a drop of fluid, a light spot follows the finger */
+/* v148 fix: the wobble keyframes read --lq-amp (Settings > Animation: Button squash and jiggle x Bounciness) and --lq-dur (Spring speed), set in applySettings, so every CSS wobble follows the sliders like the JS springs do */
+@keyframes lq-wobble{0%{transform:scale(1,1)}18%{transform:scale(calc(1 + .036*var(--lq-amp,1)),calc(1 - .040*var(--lq-amp,1)))}38%{transform:scale(calc(1 - .016*var(--lq-amp,1)),calc(1 + .020*var(--lq-amp,1)))}58%{transform:scale(calc(1 + .010*var(--lq-amp,1)),calc(1 - .006*var(--lq-amp,1)))}78%{transform:scale(calc(1 - .003*var(--lq-amp,1)),calc(1 + .002*var(--lq-amp,1)))}100%{transform:scale(1,1)}}
+@keyframes lq-knob{0%{width:26px}40%{width:36px}100%{width:26px}}
+.gbtn,.sbtn,.actions button,.np .bottom button,.cluster button,.mini .mb,.ixtra,.chip,.sortbtn,.tabbar,.mini,.toggle,.setrow,.gtile,.searchpill{--lx:50%;--ly:50%}
+.gbtn,.sbtn,.actions button,.np .bottom button,.ixtra,.chip,.sortbtn,.toggle,.tabbar,.mini,.gtile,.cluster,.mini .mb,.searchpill{position:relative}
+.tabbar,.mini{position:absolute}
+.lq-on{animation:lq-wobble var(--lq-dur,.65s) cubic-bezier(.2,.9,.3,1.2)}
+.lq-on:not(.toggle)::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(circle at var(--lx) var(--ly),rgba(255,255,255,.38),rgba(255,255,255,0) 55%);animation:lq-glint var(--lq-dur,.65s) ease-out forwards;z-index:3}
+@keyframes lq-glint{from{opacity:1}to{opacity:0}}
+.toggle.lq-on{animation:lq-wobble var(--lq-dur,.65s) cubic-bezier(.2,.9,.3,1.2)}
+/* liquid knob: the knob's two edges are separate transitions. The edge that leads moves fast, the trailing edge lags (and overshoots a little), so the knob stretches while it travels and snaps back like the tab-bar pill. Held = it already stretches. */
+.toggle::after{transition:left calc(.24s * var(--dur-k,1)) var(--liq,cubic-bezier(.3,1.3,.5,1)),right calc(.46s * var(--dur-k,1)) var(--liq,cubic-bezier(.3,1.3,.5,1)) .035s}                 /* moving left: the left edge leads */
+.toggle.on::after{transition:right calc(.24s * var(--dur-k,1)) var(--liq,cubic-bezier(.3,1.3,.5,1)),left calc(.46s * var(--dur-k,1)) var(--liq,cubic-bezier(.3,1.3,.5,1)) .035s}                                                /* moving right: the right edge leads */
+.toggle:not(.on):active::after{right:14px;transition:right calc(.16s * var(--dur-k,1)) var(--liq,cubic-bezier(.3,1.3,.5,1)),left calc(.3s * var(--dur-k,1)) var(--liq,cubic-bezier(.3,1.3,.5,1))}
+.toggle.on:active::after{left:14px;transition:left calc(.16s * var(--dur-k,1)) var(--liq,cubic-bezier(.3,1.3,.5,1)),right calc(.3s * var(--dur-k,1)) var(--liq,cubic-bezier(.3,1.3,.5,1))}
+@media (prefers-reduced-motion:reduce){.toggle::after,.toggle.on::after,.toggle:active::after{transition:none}}
+html[data-motion="reduce"] .toggle::after,html[data-motion="reduce"] .toggle.on::after,html[data-motion="reduce"] .toggle:active::after{transition:none}
+.mini.lq-on{animation-name:lq-wobble-bar}
+@keyframes lq-wobble-bar{0%{transform:scale(1,1)}20%{transform:scale(calc(1 + .010*var(--lq-amp,1)),calc(1 - .028*var(--lq-amp,1)))}42%{transform:scale(calc(1 - .004*var(--lq-amp,1)),calc(1 + .014*var(--lq-amp,1)))}64%{transform:scale(calc(1 + .002*var(--lq-amp,1)),calc(1 - .004*var(--lq-amp,1)))}100%{transform:scale(1,1)}}
+@media (prefers-reduced-motion:reduce){.lq-on,.lq-on::after{animation:none}}
+html[data-motion="reduce"] .lq-on,html[data-motion="reduce"] .lq-on::after{animation:none}
+.toggle.lq-on{animation-duration:var(--lq-dur,.6s)}
+
+/* ===== v53: overlays are SOLID black under the glass (nothing behind may show through), edge-to-edge fades, no whole-app scroll ===== */
+/* popups / sheets: a dark scrim over EVERYTHING (also the tab bar + mini player) and a solid black box that carries the glass look on top */
+#sheet .scrim{background:rgba(0,0,0,.82);backdrop-filter:none;-webkit-backdrop-filter:none}
+#sheet .sheetbox{background:var(--sheen),#050506;backdrop-filter:none;-webkit-backdrop-filter:none;max-height:calc(100% - var(--sat) - 24px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+#sheet .sheetbox::-webkit-scrollbar{display:none}
+#sheet .sheetbox .row,#sheet .sheetbox .actions button{background:var(--sheen-lite),#0c0c0e}
+.toast{background:var(--sheen),#050506;backdrop-filter:none;-webkit-backdrop-filter:none}
+.cluster,.sbtn,.np .bottom button{background-color:#08080a}
+/* floating bars: black fade behind them so list rows never sit under the glass (the bars stay see-through glass) */
+#app::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--sab) + var(--tabbar-h) + 40px);z-index:28;pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,0),#000 62%)}
+#app.has-mini::after{height:calc(var(--sab) + var(--tabbar-h) + 62px + 58px)}
+#app:has(#mini .mini)::after{height:calc(var(--sab) + var(--tabbar-h) + 62px + 58px)}
+/* top: black behind the status bar so scrolled rows never clash with the clock / icons */
+#app::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(var(--sat) + 10px);z-index:28;pointer-events:none;background:linear-gradient(to bottom,#000 var(--sat),rgba(0,0,0,0))}
+.np,.lyr,#sheet .scrim{overscroll-behavior:contain}
+.lyr-body{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+
+/* ===== v54: motion pass. Same spring everywhere: sheets rise, scrims fade, lyrics open like a page, lines breathe, lists settle ===== */
+@keyframes lf-rise{from{transform:translateY(46px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+@keyframes lf-fade{from{opacity:0}to{opacity:1}}
+@keyframes lf-lyr-in{from{transform:translateY(7%) scale(.97);opacity:0}to{transform:none;opacity:1}}
+@keyframes lf-item{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+@keyframes lf-pop{0%{transform:scale(.4);opacity:0}55%{transform:scale(1.14);opacity:1}100%{transform:scale(1)}}
+/* sheets / popups: the box springs up, the scrim fades in, rows inside cascade */
+#sheet .scrim{animation:lf-fade calc(.25s * var(--dur-k,1)) ease-out}
+#sheet .sheetbox{animation:lf-rise calc(.5s * var(--dur-k,1)) var(--spring)}
+#sheet .sheetbox .row,#sheet .sheetbox .actions{animation:lf-item calc(.45s * var(--dur-k,1)) var(--spring) backwards}
+#sheet .sheetbox .row:nth-of-type(1){animation-delay:.03s}#sheet .sheetbox .row:nth-of-type(2){animation-delay:.06s}
+#sheet .sheetbox .row:nth-of-type(3){animation-delay:.09s}#sheet .sheetbox .row:nth-of-type(4){animation-delay:.12s}
+#sheet .sheetbox .row:nth-of-type(5){animation-delay:.15s}#sheet .sheetbox .row:nth-of-type(6){animation-delay:.18s}
+#sheet .sheetbox .row:nth-of-type(n+7){animation-delay:.21s}
+#sheet .sheetbox .row.lq-on{animation:lq-wobble-bar var(--lq-dur,.65s) cubic-bezier(.2,.9,.3,1.2)}
+/* lyrics page */
+.lyr.open{animation:lf-lyr-in calc(.5s * var(--dur-k,1)) var(--spring)}
+.lyr-now{position:absolute;right:18px;bottom:calc(var(--sab) + 22px);z-index:3;height:44px;padding:0 18px 0 14px;border-radius:var(--r-pill);display:flex;align-items:center;gap:8px;font-weight:800;font-size:0.9375rem;color:var(--text);
+  background:var(--sheen),var(--glass-fill);box-shadow:var(--spec),var(--drop);backdrop-filter:saturate(1.6);-webkit-backdrop-filter:saturate(1.6);
+  transform:translateY(24px) scale(.8);opacity:0;pointer-events:none;transition:transform calc(.45s * var(--dur-k,1)) var(--spring),opacity .25s}
+.lyr-now svg{width:20px;height:20px}
+.lyr.free .lyr-now{transform:none;opacity:1;pointer-events:auto}
+
+/* every list: rows and cards respond to a tap (wobble comes from main.js), rows get a light glint */
+.row,.setrow,.card,.lyr-now,.mini-open,.lshome,.lstop,.lscell,.resume,.lsempty{position:relative}
+.row.lq-on,.setrow.lq-on,.card.lq-on,.lyr-now.lq-on,.mini-open.lq-on,.lshome.lq-on,.lstop.lq-on,.resume.lq-on,.lsempty.lq-on{animation-name:lq-wobble-bar}
+.row.lq-on::after,.setrow.lq-on::after,.card.lq-on::after,.mini-open.lq-on::after,.lshome.lq-on::after,.lstop.lq-on::after,.lscell.lq-on::after,.resume.lq-on::after,.lsempty.lq-on::after{border-radius:inherit}
+.lshome,.lstop,.lscell,.resume,.lsempty,.profile .pfmain{--lx:50%;--ly:50%}
+
+.setrow,.mini-open{transition:transform calc(.35s * var(--dur-k,1)) var(--spring)}
+/* screens pushed on top keep the slide, the big title and first rows settle in after it */
+.screen.sub .row:nth-of-type(-n+8){animation:lf-item calc(.5s * var(--dur-k,1)) var(--spring) backwards}
+.screen.sub .row:nth-of-type(1){animation-delay:.04s}.screen.sub .row:nth-of-type(2){animation-delay:.07s}.screen.sub .row:nth-of-type(3){animation-delay:.10s}
+.screen.sub .row:nth-of-type(4){animation-delay:.13s}.screen.sub .row:nth-of-type(5){animation-delay:.16s}.screen.sub .row:nth-of-type(n+6){animation-delay:.19s}
+.screen.sub .row.lq-on{animation:lq-wobble-bar var(--lq-dur,.65s) cubic-bezier(.2,.9,.3,1.2)}
+.screen.sub.still .row{animation:none}
+/* heart + play controls: bounce when they change state */
+.gbtn.popit svg{animation:lf-pop calc(.5s * var(--dur-k,1)) var(--spring)}
+.cluster button svg{transition:transform calc(.35s * var(--dur-k,1)) var(--spring)}
+.cluster button:active svg{transform:scale(.88)}
+.toast{transition:transform calc(.5s * var(--dur-k,1)) var(--spring),opacity .25s}
+@media (prefers-reduced-motion:reduce){#sheet .scrim,#sheet .sheetbox,#sheet .sheetbox .row,.lyr.open,.screen.sub .row,.gbtn.popit svg{animation:none}}
+html[data-motion="reduce"] #sheet .scrim,html[data-motion="reduce"] #sheet .sheetbox,html[data-motion="reduce"] #sheet .sheetbox .row,html[data-motion="reduce"] #sheet .sheetbox .actions,html[data-motion="reduce"] .lyr.open,html[data-motion="reduce"] .screen.sub .row,html[data-motion="reduce"] .gbtn.popit svg{animation:none}
+
+/* v54: no A-Z rail */
+
+/* ===== v55 fixes ===== */
+/* A2/A3/A4: toasts sit at the TOP, above sheets (z 90/91) and Now Playing, wrap instead of being cut off, never cover the controls */
+.toast{top:calc(var(--sat) + 12px);bottom:auto;z-index:97;width:max-content;max-width:calc(100% - 32px);white-space:normal;text-align:center;transform:translate(-50%,-20px)}
+.toast.show{transform:translate(-50%,0)}
+/* A5: while a playlist row is dragged the bars fade away, so the row is never under them and the scroll edge is the real screen edge */
+#app::after{transition:opacity calc(.15s * var(--dur-k,1))}
+.tabbar,.mini{transition:opacity calc(.15s * var(--dur-k,1))}
+#app.dragmode .tabbar,#app.dragmode .mini{opacity:0;pointer-events:none}
+#app.dragmode::after{opacity:0}
+/* A6: the hidden Now button is not focusable until it shows */
+.lyr-now{visibility:hidden;transition:transform calc(.45s * var(--dur-k,1)) var(--spring),opacity calc(.25s * var(--dur-k,1)),visibility 0s linear calc(.45s * var(--dur-k,1))}
+.lyr.free .lyr-now{visibility:visible;transition-delay:0s}
+/* A7: a closed Now Playing is hidden for keyboard + screen readers too (after the slide-out) */
+.np{visibility:hidden;transition:transform calc(.5s * var(--dur-k,1)) var(--spring),visibility 0s linear calc(.5s * var(--dur-k,1))}
+.np.open{visibility:visible;transition-delay:0s}
+/* A8/A9/A10: rows of live lists never replay the entrance cascade; fill-mode backwards = no frozen transform, so :active works */
+#sheet .qlist .row,#sheet .qlist .songwrap,#sheet .picklist .row{animation:none!important}
+/* D11: arrows reachable by keyboard become visible while focused */
+.sr:focus-visible{position:static!important;width:44px!important;height:44px!important;margin:0!important;clip:auto!important;overflow:visible!important;outline:2px solid var(--accent);outline-offset:2px}
+/* D9: the phone's Reduce Motion + the in-app switch also calm the screen slide and the Now Playing slide (plain fades) */
+@media (prefers-reduced-motion:reduce){.screen.sub{animation:none}.np{transform:none;opacity:0;transition:opacity .2s,visibility 0s linear .2s}.np.open{opacity:1;transition-delay:0s,0s}}
+html[data-motion="reduce"] .screen.sub{animation:none}
+html[data-motion="reduce"] .np{transform:none;opacity:0;transition:opacity .2s,visibility 0s linear .2s}
+html[data-motion="reduce"] .np.open{opacity:1;transition-delay:0s,0s}
+
+/* ---- liquid pill on button rows (src/liquidgroups.js): the squash on :active steps aside, the row owns horizontal drags ---- */
+[data-liquid]{position:relative;touch-action:pan-y}
+.cluster[data-liquid] button:active,.np .bottom[data-liquid] button:active,.actions[data-liquid] button:active{transform:none}
+[data-liquid]>button{position:relative;z-index:2}
+[data-liquid]>.lens{position:absolute;top:0;left:0;opacity:0}
+
+[data-liquid],.np .bottom,.cluster,.actions{touch-action:pan-y}   /* BUG #32: the row owns horizontal drags, vertical swipes still scroll */
+
+/* v66: while the lens is down the real tabs stay white (like the recording); only the magnified copy carries each tab's own colour */
+.tabbar.lensing .tab.on{color:var(--text)}
+.tabbar .lens-mag .tab{color:var(--text)}.tabbar .lens-mag .tab.on{color:var(--accent)}   /* v72: red accent only, no per-tab colours */
+
+/* v72: fluid glass on toggles, scrub thumb and every pressed control */
+.toggle.tg-live::after{left:var(--kl)!important;right:var(--kr)!important;top:var(--kt,3px)!important;height:var(--kh,26px)!important;transition:none!important;border-radius:999px;
+  background:linear-gradient(180deg,rgba(255,255,255,calc(.96 - .22*var(--pop,0))),rgba(255,255,255,calc(.86 - .22*var(--pop,0))));
+  box-shadow:0 calc(2px + 5px*var(--pop,0)) calc(6px + 8px*var(--pop,0)) rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,calc(.35*var(--pop,0)))}
+.toggle.tg-live{animation:none!important;overflow:visible}
+.scrub .thumb{transform-origin:50% 50%}
+.jy-down{filter:brightness(1.14) saturate(1.08)}
+
+/* v73: Settings > Album details off = only covers + album names */
+html[data-albuminfo="0"] .row.arow .meta span{display:none}
+html[data-albuminfo="0"] .row.arow .meta{display:flex;align-items:center}
+/* v73: the tab under the moving pill turns red (real tab too, not only the magnified copy) */
+.tabbar.lensing .tab.on{color:var(--accent)}
+
+/* v73: glass fringe on the magnified copy (like the recording): thin red / cyan edges */
+.tabbar .lens-mag .tab{filter:drop-shadow(var(--fringe,1.2px) 0 0 rgba(255,40,70,.55)) drop-shadow(calc(-1 * var(--fringe,1.2px)) 0 0 rgba(40,190,255,.5))}
+
+/* v74: icons the pill is over turn red; the one that is on stays red */
+.tabbar .tab.hov,.tabbar.lensing .tab.hov{color:var(--accent)}
+.tabbar .lens-mag .tab.hov{color:var(--accent)}
+
+/* v76: Animation studio */
+.animrow{padding:12px 18px 10px;border-bottom:1px solid var(--hair)}
+.animrow:last-child{border:0}
+.animrow b{display:flex;justify-content:space-between;font-weight:600;font-size:1rem}
+.animrow b em{font-style:normal;color:var(--accent);font-variant-numeric:tabular-nums}
+.animrow input[type=range]{width:100%;margin:8px 0 2px;accent-color:var(--accent);touch-action:pan-y}
+.animchips{display:flex;gap:8px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid var(--hair)}
+html[data-redhover="0"] .tabbar .tab.hov:not(.on),html[data-redhover="0"] .tabbar .lens-mag .tab.hov:not(.on){color:var(--text)}
+
+/* v77: Bigger album covers (Settings > Display options) */
+html[data-bigcovers="1"] .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px}
+html[data-bigcovers="1"] .hscroll .card{flex:0 0 164px;width:164px}
+html[data-bigcovers="1"] .np .art .cover{max-height:none;max-width:100%;height:auto;width:min(100%,96vw)}
+html[data-bigcovers="1"] .detail-art{width:90%;max-width:440px}
+html[data-bigcovers="1"] .row.arow .thumb{width:92px;height:92px;border-radius:10px}
+
+/* v79: see-through glass pill. The tab bar and the pill let the picture behind show; the real tab under the pill hides while its magnified copy is shown */
+html .tabbar{background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.008) 55%,rgba(255,255,255,.05));backdrop-filter:saturate(1.5) brightness(1.06);-webkit-backdrop-filter:saturate(1.5) brightness(1.06)}
+html .lens{background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.01) 60%,rgba(255,255,255,.05))}
+html .lens-mag{background:transparent}
+.tabbar.lensing>.tab.hov{opacity:0}
+/* v89: when the magnified copy is off (Increase Contrast, or Lens refraction off) nothing else draws the icon inside the pill, so the real tab must stay visible */
+html[data-contrast="1"] .tabbar.lensing>.tab.hov,html[data-refract="0"] .tabbar.lensing>.tab.hov{opacity:1}
+.tabbar>.tab{transition:color calc(.25s * var(--dur-k,1)),opacity calc(.12s * var(--dur-k,1))}
+/* v79: Animation studio: the controls dock stays pinned at the top while the sliders scroll */
+.animdock{position:sticky;top:var(--sat,0px);z-index:6;margin:0 -18px 10px;padding:10px 18px 12px;background:var(--bg);border-bottom:1px solid rgba(255,255,255,.1)}
+.animdock .actions{margin:0 0 10px}
+.animdock-r{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px;font-size:0.8125rem;color:var(--text-2)}
+.animdock .animchips{padding:0;border:0}
+.animdock .demostage{margin:0 0 10px;padding:12px 8px;border-radius:26px;background:radial-gradient(circle at 15% 30%,#ff3b6b 0,transparent 45%),radial-gradient(circle at 55% 80%,#ffb02e 0,transparent 40%),radial-gradient(circle at 90% 25%,#3b7bff 0,transparent 45%),#1b1b2a}
+.tabbar.demobar{position:relative;left:auto;right:auto;bottom:auto;width:100%;box-sizing:border-box;z-index:1}
+
+/* v83: Bluetooth, built into the app: a chip under the song's title in Now Playing + a glass pill that slides in when something connects */
+.npmeta{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 6px}
+.npmeta .badge{margin:0}
+.btchip{color:#6cb8ff;max-width:100%;animation:bt-pop calc(.6s * var(--dur-k,1)) var(--spring) backwards}
+.btchip svg{width:14px;height:14px;flex:0 0 auto}
+.btchip .btn{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.btchip em,.btbanner em{font-style:normal;color:var(--text-2);font-size:0.75rem}
+.btbat{position:relative;display:inline-block;width:20px;height:10px;border:1.5px solid currentColor;border-radius:3px;color:var(--v-green);vertical-align:-1px;margin-left:2px}
+.btbat::after{content:"";position:absolute;right:-4px;top:2px;width:2px;height:4px;border-radius:0 1px 1px 0;background:currentColor}
+.btbat i{position:absolute;left:1px;top:1px;bottom:1px;width:calc((100% - 2px) * var(--p) / 100);background:currentColor;border-radius:1px}
+.btbat.low{color:var(--accent)}
+@keyframes bt-pop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
+.btbanner{position:absolute;left:50%;top:calc(var(--sat,0px) + 10px);z-index:120;display:flex;align-items:center;gap:12px;max-width:calc(100% - 28px);padding:9px 20px 9px 9px;border-radius:var(--r-pill);
+  background:linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.03) 55%,rgba(255,255,255,.08)),rgba(20,20,26,.46);backdrop-filter:saturate(1.8);-webkit-backdrop-filter:saturate(1.8);
+  box-shadow:var(--spec),0 16px 38px rgba(0,0,0,.5);transform:translate(-50%,-160%) scale(.8);opacity:0;pointer-events:none;transition:transform calc(.6s * var(--dur-k,1)) var(--spring),opacity .25s}
+.btbanner.show{transform:translate(-50%,0) scale(1);opacity:1}
+.btbanner .bti{width:40px;height:40px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;color:#fff;background:linear-gradient(160deg,#6cb8ff,#2a6df4);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 14px rgba(42,109,244,.5)}
+.btbanner.off .bti{background:linear-gradient(160deg,#8a8a94,#55555e);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.btbanner .bti svg{width:22px;height:22px;stroke-width:2}
+.btbanner .btt{display:flex;flex-direction:column;min-width:0}
+.btbanner .btt b{font-size:0.9375rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btbanner .btt small{font-size:0.75rem;color:var(--text-2);display:flex;align-items:center;gap:6px}
+html[data-motion="reduce"] .btbanner{transform:translate(-50%,0);transition:opacity .2s}
+html[data-motion="reduce"] .btchip{animation:none}
+
+/* v84: see-through glass everywhere. The dark fades / solid fills that hid the picture behind bars, buttons, sheets and toasts are gone; only a light tint + a little blur stay so text is still readable */
+html #app::after{background:none}
+html .mini{background:var(--sheen),rgba(0,0,0,.05);backdrop-filter:saturate(1.7) brightness(1.08);-webkit-backdrop-filter:saturate(1.7) brightness(1.08)}
+html .cluster,html .sbtn,html .np .bottom button{background-color:rgba(255,255,255,.025);backdrop-filter:saturate(1.7);-webkit-backdrop-filter:saturate(1.7)}
+html #sheet .sheetbox{background:var(--sheen),rgba(0,0,0,.14);backdrop-filter:saturate(1.8);-webkit-backdrop-filter:saturate(1.8)}
+html #sheet .sheetbox .row,html #sheet .sheetbox .actions button{background:var(--sheen-lite),rgba(255,255,255,.03)}
+html .toast{background:var(--sheen),rgba(0,0,0,.16);backdrop-filter:saturate(1.7);-webkit-backdrop-filter:saturate(1.7)}
+html .btbanner{background:linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.02) 55%,rgba(255,255,255,.08)),rgba(20,20,26,.16);backdrop-filter:saturate(1.8);-webkit-backdrop-filter:saturate(1.8)}
+html .gbtn,html .searchpill,html .chip{backdrop-filter:saturate(1.7);-webkit-backdrop-filter:saturate(1.7)}
+.mini .meta b,.mini .meta span,.toast,#sheet .sheetbox b,#sheet .sheetbox p{text-shadow:0 1px 6px rgba(0,0,0,.6)}
+
+/* v85: every full-screen layer (tab page, sub page / Settings, Now Playing, Lyrics) has its own solid black base and its own stacking, so one page never shows through or merges with another. Only the small glass controls on top stay see-through. */
+html #main,html .screen.sub,html .np,html .np.hascv,html .lyr{background:#000}
+html #main{z-index:1;isolation:isolate}
+html .screen.sub,html .np,html .lyr{isolation:isolate}
+html #sub{position:absolute;inset:0;z-index:5;pointer-events:none}
+html #sub .screen{pointer-events:auto}
+
+/* v86: the mini player is clear glass: no blur at all, the page behind shows through sharp */
+html .mini,html .mini .mb,html .mini .mini-open{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html .mini{background:var(--sheen),rgba(0,0,0,0)}
+
+/* v87: the test bar sits on plain black (no colour backdrop); the bar and pill are the same clear glass as the real ones */
+.animdock .demostage{background:#000;padding:0;border-radius:0}
+.animdock{background:#000}
+
+/* v88: profile picture in Settings */
+.profile{display:flex;align-items:center;gap:0;margin:6px 0 4px;padding:0;border-radius:22px;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite)}
+.profile .avatar{width:64px;height:64px;flex:0 0 auto;border-radius:50%;overflow:hidden;display:grid;place-items:center;padding:0;background:var(--sheen),var(--glass-fill);box-shadow:var(--spec),0 6px 16px rgba(0,0,0,.5);color:var(--text-2)}
+.profile .avatar img,.profile .avatar video{width:100%;height:100%;object-fit:cover;display:block}
+.profile .avatar svg{width:34px;height:34px}
+.profile .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.profile .tx span{font-size:0.8125rem;color:var(--text-2)}
+
+/* v90: album cover viewer: only a black screen and the cover. Tap anywhere to close. */
+.cvv{position:absolute;inset:0;z-index:95;display:grid;place-items:center;padding:0;border:0;background:#000;animation:lf-cvv-in calc(.28s * var(--dur-k,1)) var(--spring)}
+.cvv .cover{width:min(100%,calc(100vh - 2*var(--sat,0px)));border-radius:0;box-shadow:none;pointer-events:none}
+@supports (height:100dvh){.cvv .cover{width:min(100%,calc(100dvh - 2*var(--sat,0px)))}}
+@keyframes lf-cvv-in{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+html[data-motion="reduce"] .cvv{animation:none}
+@media (prefers-reduced-motion:reduce){.cvv{animation:none}}
+/* the cover on Now Playing / album page is a press target (tap = view, hold = lyrics): no text-selection or the phone's long-press menu */
+.np .art,.detail-art{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+
+/* v91: the whole Profile picture card is the button (the Remove chip stays its own button) */
+.profile .pfmain{flex:1;min-width:0;display:flex;align-items:center;gap:14px;padding:12px 14px;text-align:left;color:inherit;border-radius:inherit;font:inherit}
+.profile>.chip{margin-right:14px;flex:0 0 auto}
+
+/* v92: Settings > Lyrics style > white lyrics on the album cover colour (--lyr-bg is set from the cover in main.js) */
+html[data-lyrstyle="cover"] .lyr{background:linear-gradient(180deg,var(--lyr-bg,#c8102e) 0%,#000 100%);background:radial-gradient(120% 65% at 90% 8%,var(--lyr-bg2,var(--lyr-bg,#c8102e)) 0%,transparent 62%),radial-gradient(110% 70% at 5% 95%,var(--lyr-bg3,#3a0a12) 0%,transparent 66%),linear-gradient(180deg,var(--lyr-bg,#c8102e) 0%,color-mix(in srgb,var(--lyr-bg,#c8102e) 70%,#000) 100%);transition:background .5s}
+html[data-lyrstyle="cover"] .lyr .ln{color:#fff}
+html[data-lyrstyle="cover"] .lyr .ln.cur{color:#fff}
+/* v119: slow drifting light of the cover colour behind the words (Apple Music look). Only transform moves, so it costs almost nothing. */
+html[data-lyrstyle="cover"] .lyr::before{content:"";position:absolute;z-index:0;left:-30%;top:-15%;width:160%;height:75%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(255,255,255,.22) 0%,transparent 100%);background:radial-gradient(closest-side,color-mix(in srgb,var(--lyr-bg,#2a0c12) 55%,#fff) 0%,transparent 100%);opacity:.42;animation:lf-lyr-drift 4s ease-in-out 1 forwards;will-change:transform}
+@keyframes lf-lyr-drift{from{transform:translate3d(-8%,-4%,0) scale(1)}to{transform:translate3d(10%,16%,0) scale(1.25)}}
+html[data-lyrstyle="cover"] .lyr .lyr-t span{color:rgba(255,255,255,.78)}
+
+/* v93: credit popup (notifications). No glass rim / bars, transparent box: just the picture, the text and two plain buttons on the dark scrim */
+#sheet .sheetbox.notifcard{background:none;box-shadow:none;border-radius:0;backdrop-filter:none;-webkit-backdrop-filter:none;left:20px;right:20px;bottom:auto;top:50%;transform:translateY(-50%);text-align:center;overflow:visible;animation:lf-fade calc(.35s * var(--dur-k,1)) ease-out}
+#sheet .sheetbox.notifcard .popimg{display:block;margin:0 auto 16px;max-width:100%;max-height:42vh;object-fit:contain;border-radius:24px}
+#sheet .sheetbox.notifcard .actions button{background:rgba(255,255,255,.07);box-shadow:none;border:0}
+/* v93: the popup box itself took the focus and Android draws its default gold / orange focus frame around it: no frame on dialogs (buttons keep their red keyboard ring) */
+#sheet .sheetbox,#sheet .sheetbox:focus,#sheet .sheetbox:focus-visible,#sheet [role="dialog"]:focus{outline:0!important;-webkit-tap-highlight-color:transparent}
+#sheet button,.actions button{-webkit-tap-highlight-color:transparent}
+
+/* v95 (now ONLY with Settings > Immersive album cover; owner's order): Now Playing gets the cover's colour (top) fading darker (bottom); buttons turn clear, the red accent turns white so it stays visible */
+html[data-immersive="1"] #np.np{background:linear-gradient(180deg,var(--np-bg,#c8102e) 0%,#000 100%);background:radial-gradient(120% 55% at 92% 6%,var(--np-bg2,var(--np-bg,#c8102e)) 0%,transparent 62%),radial-gradient(110% 60% at 4% 96%,var(--np-bg3,#3a0a12) 0%,transparent 66%),linear-gradient(180deg,var(--np-bg,#c8102e) 0%,color-mix(in srgb,var(--np-bg,#c8102e) 62%,#000) 100%);backdrop-filter:none;-webkit-backdrop-filter:none;transition:background .6s,transform calc(.5s * var(--dur-k,1)) var(--spring),visibility 0s linear calc(.5s * var(--dur-k,1));--accent:#fff;--accent-soft:rgba(255,255,255,.2);--accent-glow:rgba(255,255,255,.3)}
+html[data-immersive="1"] #np.np.open{transition:background .6s,transform calc(.5s * var(--dur-k,1)) var(--spring)}
+html[data-immersive="1"] .np .glow{display:none}
+html[data-immersive="1"] .np .cluster,html[data-immersive="1"] .np .sbtn,html[data-immersive="1"] .np .bottom button{background:rgba(255,255,255,.14)}
+
+/* ===== v101: library scan card (src/scanview.js). TRANSPARENT liquid glass: no solid fill, the library stays visible behind it ===== */
+.scanv{position:absolute;inset:0;z-index:85;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;visibility:hidden;transition:opacity calc(.35s * var(--dur-k,1)) ease,visibility 0s linear calc(.35s * var(--dur-k,1));background:radial-gradient(90% 60% at 50% 46%,rgba(250,36,60,.14),rgba(0,0,0,.42) 78%)}
+.scanv.on{opacity:1;visibility:visible;transition-delay:0s}
+.scanv-card{position:relative;width:min(300px,calc(100% - 56px));padding:24px 22px 18px;border-radius:34px;text-align:center;overflow:hidden;pointer-events:auto;
+  background:var(--sheen),rgba(0,0,0,.66);
+  box-shadow:var(--spec),0 22px 60px rgba(0,0,0,.45),0 0 70px rgba(250,36,60,.12);transform:translateY(18px) scale(.88);opacity:0;transition:transform calc(.6s * var(--dur-k,1)) var(--spring),opacity .3s ease}
+.scanv.on .scanv-card{transform:none;opacity:1}
+.scanv-card::before{content:"";position:absolute;left:8%;right:8%;top:0;height:34%;border-radius:0 0 50% 50%/0 0 100% 100%;background:linear-gradient(to bottom,rgba(255,255,255,.11),rgba(255,255,255,0));pointer-events:none}   /* curved top reflection */
+.scanv-card::after{content:"";position:absolute;top:-30%;bottom:-30%;width:42%;left:-60%;background:linear-gradient(100deg,rgba(255,255,255,0),rgba(255,255,255,.13),rgba(255,255,255,0));transform:skewX(-14deg);animation:sc-glint 3.4s ease-in-out 2;pointer-events:none}   /* light sliding over the glass */
+.scanv-hide{position:absolute;top:12px;right:12px;width:30px;height:30px;border:0;border-radius:50%;display:grid;place-items:center;color:var(--text-2);background:var(--sheen-lite),rgba(255,255,255,.04);box-shadow:var(--spec-lite);cursor:pointer;z-index:2}
+.scanv-orb{position:relative;width:132px;height:132px;margin:4px auto 16px}
+.scanv-orb .pr{position:absolute;inset:6px;border-radius:50%;border:1.5px solid rgba(250,36,60,.55);opacity:0;animation:sc-pulse 2.6s cubic-bezier(.2,.6,.3,1) 2}
+.scanv-orb .pr:nth-child(2){animation-delay:.87s}.scanv-orb .pr:nth-child(3){animation-delay:1.73s}
+.sc-disc{position:absolute;inset:9px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 30% 22%,rgba(255,255,255,.30),rgba(255,255,255,.05) 42%,rgba(0,0,0,.12) 100%);box-shadow:var(--spec),inset 0 -14px 26px rgba(250,36,60,.20),0 8px 24px rgba(0,0,0,.35)}
+.sc-disc::before{content:"";position:absolute;inset:17%;border-radius:50%;border:1px solid rgba(255,255,255,.13);box-shadow:0 0 0 14px rgba(255,255,255,0),inset 0 0 0 14px rgba(255,255,255,0)}
+.sc-disc::after{content:"";position:absolute;inset:33%;border-radius:50%;border:1px solid rgba(255,255,255,.10)}
+.sc-sweep{position:absolute;inset:-2px;border-radius:50%;background:conic-gradient(from 0deg,rgba(250,36,60,0) 0deg,rgba(250,36,60,0) 230deg,rgba(250,36,60,.5) 330deg,rgba(255,176,186,.95) 360deg);-webkit-mask:radial-gradient(circle,transparent 27%,#000 29%);mask:radial-gradient(circle,transparent 27%,#000 29%);animation:sc-spin 1.7s linear infinite;transition:opacity .4s}
+.sc-ring{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.sc-ring circle{fill:none;stroke-width:4}
+.sc-ring .trk{stroke:rgba(255,255,255,.12)}
+.sc-ring .val{stroke:var(--accent);stroke-linecap:round;stroke-dasharray:377;stroke-dashoffset:377;transform:rotate(-90deg);transform-origin:66px 66px;transition:stroke-dashoffset .25s linear;filter:drop-shadow(0 0 5px var(--accent-glow))}
+.scanv.ind .sc-ring .val{stroke-dasharray:96 377;stroke-dashoffset:0!important;transition:none;animation:sc-ringspin 1.3s linear infinite}
+.sc-mid{position:absolute;inset:0;display:grid;place-items:center;color:var(--text)}
+.sc-mid>*{grid-area:1/1;transition:opacity .25s,transform calc(.45s * var(--dur-k,1)) var(--spring)}
+.sc-pct{font-size:1.6875rem;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;text-shadow:0 1px 10px rgba(0,0,0,.45)}
+.sc-pct small{font-size:0.875rem;font-weight:600;color:var(--text-2);margin-left:1px}
+.sc-note,.sc-chk{opacity:0;transform:scale(.6);filter:drop-shadow(0 1px 8px rgba(0,0,0,.5))}
+.scanv.ind .sc-pct{opacity:0;transform:scale(.7)}
+.scanv.ind .sc-note{opacity:1;transform:none;animation:sc-bob 1.4s ease-in-out 2}
+.sc-chk path{stroke-dasharray:30;stroke-dashoffset:30}
+.scanv.done .sc-pct,.scanv.done .sc-note{opacity:0;transform:scale(.6);animation:none}
+.scanv.done .sc-chk{opacity:1;transform:none}
+.scanv.done .sc-chk path{stroke-dashoffset:0;transition:stroke-dashoffset .5s .12s ease-out}
+.scanv.done .sc-sweep{opacity:0}
+.scanv.done .pr{animation:none;opacity:0}
+.sc-fly{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.sc-chip{position:absolute;left:50%;top:50%;width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:10px;object-fit:cover;opacity:0;box-shadow:var(--spec-lite),0 6px 16px rgba(0,0,0,.45)}
+.sc-chip.go{animation:sc-in .95s cubic-bezier(.45,0,.75,.35) forwards}
+.scanv-title{font-size:1.125rem;font-weight:700;letter-spacing:-.01em;text-shadow:0 1px 10px rgba(0,0,0,.4)}
+.scanv-count{margin-top:3px;font-size:0.875rem;font-weight:500;color:var(--text-2);font-variant-numeric:tabular-nums}
+.scanv-bar{position:relative;height:8px;margin:14px 2px 0;border-radius:99px;overflow:hidden;background:rgba(255,255,255,.10);box-shadow:inset 0 1px 2px rgba(0,0,0,.4),var(--spec-lite)}
+.scanv-bar i{position:relative;display:block;height:100%;width:0;border-radius:inherit;overflow:hidden;background:linear-gradient(90deg,#a3122a,var(--accent) 62%,#ff7385);box-shadow:0 0 12px var(--accent-glow);transition:width .25s linear}
+.scanv-bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,rgba(255,255,255,0) 20%,rgba(255,255,255,.55) 50%,rgba(255,255,255,0) 80%);transform:translateX(-100%);animation:sc-shimmer 1.3s ease-in-out 2}
+.scanv.ind .scanv-bar i{width:38%!important;transition:none;animation:sc-slide 1.5s ease-in-out infinite}
+.scanv.done .scanv-bar i{width:100%!important}
+.scanv-file{margin-top:10px;min-height:16px;font-size:0.75rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html[data-contrast="1"] .scanv-card{background:var(--sheen),rgba(0,0,0,.62)}
+@keyframes sc-spin{to{transform:rotate(360deg)}}
+@keyframes sc-ringspin{from{transform:rotate(-90deg)}to{transform:rotate(270deg)}}
+@keyframes sc-pulse{0%{transform:scale(.92);opacity:.75}100%{transform:scale(1.95);opacity:0}}
+@keyframes sc-glint{0%,55%{left:-60%}100%{left:130%}}
+@keyframes sc-shimmer{to{transform:translateX(100%)}}
+@keyframes sc-slide{0%{transform:translateX(-100%)}100%{transform:translateX(265%)}}
+@keyframes sc-bob{0%,100%{transform:translateY(2px)}50%{transform:translateY(-3px)}}
+@keyframes sc-in{0%{transform:translate(var(--sx),var(--sy)) rotate(var(--sr)) scale(1);opacity:0}18%{opacity:1}82%{opacity:1}100%{transform:translate(0,0) rotate(0) scale(.2);opacity:0}}
+@media (prefers-reduced-motion:reduce){.scanv *,.scanv-card::after{animation:none!important}.scanv-card{transition:opacity .2s}}
+html[data-motion="reduce"] .scanv *,html[data-motion="reduce"] .scanv-card::after{animation:none!important}
+html[data-motion="reduce"] .scanv-card{transition:opacity .2s}
+
+/* v101: the notification / credit popup has no box, clear glass buttons, red Allow. No blur. v102: the picture sits on a solid black background (the black scrim covers the whole app behind it). */
+#sheet .scrim.nsc{background:#000}
+#sheet .scrim:has(+ .notifcard){background:#000}
+/* v104: the buttons are real liquid glass, the same as Play / Shuffle (sheen + glass fill + bright rim); press = liquid pill + glint. The picture is scaled to FIT the space whatever its shape: width = the smallest of the card, 360px, the height limit x its aspect ratio, 2x its own size. */
+#sheet .sheetbox.notifcard .actions button{background:var(--sheen),var(--glass-fill);box-shadow:var(--spec),0 6px 16px rgba(0,0,0,.5);border:0}
+#sheet .sheetbox.notifcard .popimg{--maxh:max(120px,min(44vh,380px,calc(100vh - 280px)));display:block;margin:0 auto 18px;max-width:none;max-height:none;height:auto;aspect-ratio:var(--ar,1);width:min(100%,360px,calc(var(--maxh) * var(--ar,1)),calc(var(--nw,4000) * 2px));object-fit:contain;border-radius:24px}
+#sheet .sheetbox.notifcard .popimg:not([data-ready]){opacity:0}
+#sheet .sheetbox.notifcard .actions button[data-act="notif-allow"]{color:var(--accent)}
+
+/* v108: glass bar size is a free slider (Settings > Display > Glass bar size and Settings > Animation, 40% to 220%). main.js sets --tabk (scale) and --tabbar-h on <html>; 100% = the old Medium. */
+html .tabbar{padding:calc(0.4375rem * var(--tabk,1)) calc(0.75rem * var(--tabk,1))}
+html .lens-mag{padding:calc(0.4375rem * var(--tabk,1)) calc(0.75rem * var(--tabk,1))}
+html .tabbar .tab{gap:calc(0.25rem * var(--tabk,1));font-size:calc(0.75rem * var(--tabk,1))}
+html .tabbar .tab svg{width:calc(1.75rem * var(--tabk,1));height:calc(1.75rem * var(--tabk,1))}
+
+/* v108: Home extras */
+.homesub{margin:-6px 0 12px;color:var(--text-2);font-size:0.875rem;font-weight:600}
+.quick{display:flex;gap:8px;overflow-x:auto;margin:0 -18px 6px;padding:2px 18px 6px;scrollbar-width:none}
+.quick::-webkit-scrollbar{display:none}
+.quick .chip{flex:0 0 auto;padding:9px 14px;font-size:0.8125rem;white-space:nowrap}
+.quick .chip svg{width:16px;height:16px}
+.acard .cover{border-radius:50%}
+.acard .t,.acard .s{text-align:center}
+.genrechips{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
+.genrechips .chip{padding:8px 14px;font-size:0.8125rem}
+
+/* v118: artist photo on the artist page */
+.apic{width:44%;max-width:260px;margin:8px auto 10px}
+.apic .cover{border-radius:50%;box-shadow:0 18px 44px rgba(0,0,0,.55)}
+
+/* v119: Home greeting, name field, Now Playing cover size */
+.greetline{margin:-8px 0 8px;font-size:1.125rem;font-weight:700;line-height:1.3;color:var(--text)}
+.greetline+.homesub{margin-top:0}
+.profile .pfmain{flex:0 0 auto;padding:12px 6px 12px 14px}
+.profile .pfname{width:100%;margin-top:6px;padding:8px 12px;border:0;border-radius:12px;background:rgba(255,255,255,.08);color:var(--text);font:inherit;font-size:1rem;box-shadow:var(--spec-lite);outline:0}
+.profile .pfname::placeholder{color:var(--text-2)}
+.profile .pfname:focus{background:rgba(255,255,255,.14)}
+.np .art{container-type:size}
+html[data-npcover="1"] .np .art .cover{height:auto;max-height:none;max-width:none;width:calc(min(100cqw,100cqh)*var(--npk,1))}
+.npprev{width:170px;margin:12px auto 4px;padding:10px;border-radius:18px;background:rgba(255,255,255,.06);box-shadow:var(--spec-lite)}
+.npprev-art{width:100%;aspect-ratio:1;display:grid;place-items:center}
+.npprev-art .cover{width:calc(100% * var(--npk,1));border-radius:12px}
+.npprev i{display:block;height:8px;width:70%;border-radius:4px;background:rgba(255,255,255,.35);margin:8px 0 0}
+.npprev i.s{width:45%;height:6px;background:rgba(255,255,255,.18)}
+.profile .pfname{box-sizing:border-box;max-width:100%}
+.profile .tx{padding:10px 14px 12px 0}
+
+/* v119: Home screen customisation */
+html[data-homecard="small"] .hscroll .card{flex:0 0 92px;width:92px}
+html[data-homecard="large"] .hscroll .card{flex:0 0 160px;width:160px}
+html[data-homecard="large"] .hscroll .card .t,html[data-homecard="large"] .hscroll .card .s{font-size:0.9375rem}
+.resume{display:flex;align-items:center;gap:14px;width:100%;margin:6px 0 10px;padding:12px;border-radius:22px;text-align:left;color:inherit;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite)}
+.resume .cover{width:64px;flex:0 0 auto;border-radius:14px}
+.resume .rt{flex:1;min-width:0;display:block}
+.resume .rt em{display:block;font-style:normal;font-size:0.75rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--accent)}
+.resume .rt b{display:block;font-size:1.125rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.resume .rt span{display:block;font-size:0.875rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.resume .rp{width:44px;height:44px;flex:0 0 auto;display:grid;place-items:center;border-radius:50%;background:var(--accent);color:#fff}
+.resume .rp svg{width:20px;height:20px}
+.mystats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 10px}
+.mystats>div{padding:12px 10px;border-radius:18px;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite);text-align:center;min-width:0}
+.mystats b{display:block;font-size:1.375rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mystats span{font-size:0.75rem;color:var(--text-2)}
+.mystats .wide{grid-column:1/-1}
+.hsseg{display:flex;gap:8px;flex:1}
+.hsseg .chip{flex:1;justify-content:center;text-align:center}
+.hsseg .chip.sel{background:var(--accent);color:#fff}
+.hsrow .gbtn{flex:0 0 auto}
+.hsrow .gbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.hsrow .gbtn:disabled{opacity:.3}
+.hsrow .tx{min-width:0}
+.profile .pfnamebtn{display:flex;flex-direction:column;gap:2px;text-align:left;color:inherit;font:inherit;padding:10px 14px 12px 0;background:none}
+.profile .pfnamebtn b{font-size:1.25rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile .pfbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.profile .pfbtns .chip{padding:8px 14px;font-size:0.8125rem}
+.profile .pfbtns .chip.sel{background:var(--accent);color:#fff}
+
+/* v119: Home screen settings: rename box, pin picker, small buttons under a row's name */
+.hsacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.hsacts .chip{font-size:0.8125rem;padding:5px 11px}
+.hsren{box-sizing:border-box;width:100%;max-width:100%;margin-top:6px;padding:8px 12px;border:0;border-radius:12px;background:rgba(255,255,255,.08);color:var(--text);font:inherit;font-size:1rem;box-shadow:var(--spec-lite);outline:0}
+.hsren:focus{background:rgba(255,255,255,.14)}
+.hsren::placeholder{color:var(--text-2)}
+select.hsren{flex:1;min-width:0;margin-top:0;appearance:auto}
+.hsrow .tx{flex:1}
+
+
+/* ===== v119: Apple Music style lyrics (both backgrounds). The --ly-* values come from Settings > Lyrics > Lyrics animation (src/lyanim.js). ===== */
+/* A synced line: the playing one is full colour and slightly bigger; the others are softer and a little smaller (--d = distance from the playing line, set in main.js). */
+.ln.tap{opacity:calc(var(--ly-op,.58) - var(--d,5) * .03);transform:scale(var(--ly-small,.94));transform-origin:left center;-webkit-tap-highlight-color:transparent;
+  translate:0 var(--ty,0px);
+  transition:opacity calc(.4s * var(--ly-fade,1)) ease,transform calc(.5s * var(--ly-fade,1)) var(--spring),filter calc(.45s * var(--ly-fade,1)) ease,color calc(.25s * var(--ly-fade,1)),translate calc(.7s * var(--ly-glide,1)) cubic-bezier(.22,.8,.25,1)}
+.ln.tap.cur{opacity:1;transform:scale(var(--ly-zoom,1.02))}
+html[data-lyblur="1"] .ln.tap:not(.cur){filter:blur(calc(var(--d,5) * var(--ly-blur,0px)))}
+.ln:not(.tap){opacity:.92;color:var(--accent)}
+/* classic = black background, red words: every line is the red accent, only its strength changes */
+.ln.tap{color:var(--accent)}
+.ln.tap .w{transition:opacity .25s}
+/* cover colour = white words */
+html[data-lyrstyle="cover"] .lyr .ln.tap{color:#fff}
+html[data-lyrstyle="cover"] .lyr .ln.tap:not(.cur){opacity:calc(var(--ly-op,.58) - .03 - var(--d,5) * .03)}
+/* the user is scrolling to pick a line: all lines are readable and sharp (like Apple Music) */
+.lyr.free .ln.tap:not(.cur){opacity:.62;filter:none!important}
+.lyr.free .ln.tap.cur{opacity:1}
+.lyr-t b{font-size:0.9375rem}
+/* Settings > Lyrics animation: the live preview box */
+.lyr.lyprev{position:relative;inset:auto;display:block;z-index:0;padding:0 18px;margin:4px 0 8px;border-radius:20px;overflow:hidden;animation:none}
+.lyprev .lyprevbody{position:relative;height:150px;overflow:hidden;padding:10px 0 90px;pointer-events:none;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 18px,#000 calc(100% - 40px),transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 18px,#000 calc(100% - 40px),transparent 100%)}
+.lyprev .ln{font-size:1.375rem}
+html[data-motion="reduce"] .ln.tap,html[data-motion="reduce"] .ln.tap.cur{transition:opacity .2s,color .2s;filter:none}
+html[data-motion="reduce"] .lyr::before{animation:none}
+@media (prefers-reduced-motion:reduce){.ln.tap{transition:opacity .2s,color .2s;filter:none}.lyr::before{animation:none!important}}
+
+/* v119: calm Home. Same rhythm for every row: title left, "See All" right (plain accent text), even spacing, genres in one scrolling row */
+#main .sechead{align-items:baseline;margin:0}
+#main .sechead h2.sec{margin:26px 0 12px;font-size:1.3125rem}
+.seeall{flex:0 0 auto;padding:6px 0 6px 12px;font-size:0.9375rem;font-weight:600;color:var(--accent);background:none;box-shadow:none;border:0}
+.seeall:active{opacity:.55}
+#main .genrechips{flex-wrap:nowrap;overflow-x:auto;margin:0 -18px 4px;padding:2px 18px 6px;scrollbar-width:none}
+#main .genrechips::-webkit-scrollbar{display:none}
+#main .genrechips .chip{flex:0 0 auto;white-space:nowrap}
+#main .hscroll{padding-bottom:2px}
+#main .quick{margin-bottom:0}
+
+/* v130: popup = full black screen, picture centred, buttons pinned at the bottom (liquid glass, red accent) */
+#sheet .sheetbox.notifcard.popcard{inset:0;left:0;right:0;top:0;bottom:0;transform:none;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:max(28px,env(safe-area-inset-top)) 22px max(26px,env(safe-area-inset-bottom));background:#000;overflow:hidden}
+#sheet .popcard .pbody{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+#sheet .popcard .pbody b{font-size:1.375rem;color:#fff;margin-top:6px}
+#sheet .popcard .pbody p{margin:4px auto 0;max-width:320px;color:var(--text-2);font-size:0.875rem;line-height:1.4}
+#sheet .sheetbox.notifcard.popcard .popimg{--maxh:max(120px,min(56vh,460px,calc(100vh - 300px)));margin:0 auto 10px}
+#sheet .popcard .actions{width:100%;max-width:420px;margin:12px 0 0;flex:0 0 auto}
+#sheet .sheetbox.notifcard.popcard .actions button{height:54px;color:#fff;border:1px solid rgba(255,255,255,.14)}
+#sheet .sheetbox.notifcard.popcard .actions button[data-act="notif-allow"],#sheet .sheetbox.notifcard.popcard .actions button[data-act="sheet-close"],#sheet .sheetbox.notifcard.popcard .actions button[data-act="upd-go"],#sheet .sheetbox.notifcard.popcard .actions button[data-act="upd-allow"]{color:#fff;background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 55%),var(--accent);border-color:rgba(255,255,255,.28);box-shadow:0 0 22px var(--accent-glow,rgba(255,40,60,.45)),0 6px 16px rgba(0,0,0,.5)}
+
+/* v132: pictures and GIFs in a playlist. A cover picture fills the square; the strip lists them; the viewer shows one at its real size (fit to the screen, never cropped). */
+.pl-mosaic.pp-cover{display:block}.pl-mosaic.pp-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.pp-wait{background:var(--row-fill)}
+.ppv{position:absolute;inset:0;z-index:96;background:#000;display:flex;flex-direction:column;animation:lf-cvv-in calc(.28s * var(--dur-k,1)) var(--spring)}
+.pp-stage{flex:1;min-height:0;display:grid;place-items:center;padding:calc(var(--sat,0px) + 8px) 0 8px;overflow:auto;-webkit-overflow-scrolling:touch}
+.pp-big{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
+.pp-stage .pp-wait{width:60%;aspect-ratio:1;border-radius:16px}
+.pp-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px calc(var(--sab,0px) + 14px);background:linear-gradient(0deg,rgba(0,0,0,.9),rgba(0,0,0,.55))}
+.pp-cap{min-width:0}.pp-cap b{display:block;font-size:0.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pp-cap span{display:block;font-size:0.75rem;color:var(--text-2);margin-top:2px}
+.pp-btns{display:flex;gap:8px;flex:none}.pp-btns .gbtn{font-size:1.375rem;line-height:1;width:auto;min-width:44px;padding:0 12px;border-radius:22px;font-weight:700;font-size:0.9375rem}
+html[data-motion="reduce"] .ppv{animation:none}
+@media (prefers-reduced-motion:reduce){.ppv{animation:none}}
+
+/* ===== v134: your own background picture / GIF (Settings > Home > Background picture or GIF) =====
+   The picture is painted as a CSS background (it keeps moving if it is a GIF) on the three full-screen bases that already exist: the app (behind Home, every tab and every Settings page),
+   Now Playing and the lyrics. All three have the same size, so the picture lines up and never jumps. The pages themselves turn see-through, so no layer sits on top of a button,
+   a row or the tab bar; the dim layer is part of the same background, not an extra element. Nothing here applies until a picture is chosen (html[data-bg="1"]). */
+html[data-bg="1"]{--bgpaint:linear-gradient(var(--bgdimc),var(--bgdimc)),var(--bgimg) center/var(--bgsize,cover) no-repeat,#000;--row-fill:rgba(0,0,0,.30)}
+html[data-bg="1"] #app{background:var(--bgpaint)}
+html[data-bg="1"] #main,html[data-bg="1"] .screen.sub{background:transparent}
+html[data-bg="1"] .np:not(.hascv){background:var(--bgpaint)}
+html[data-bg="1"][data-lyrstyle="classic"] .lyr{background:var(--bgpaint)}
+/* the quiet glass of rows, cards and settings gets a little more tint so text stays readable on a busy picture (still no blur: long lists stay fast) */
+html[data-bg="1"] .setcard,html[data-bg="1"] .np .bottom button{background:var(--sheen-lite),rgba(0,0,0,.30)}
+html[data-bg="1"] .row.arow{background:none}
+html[data-bg="1"] .animdock,html[data-bg="1"] .animdock .demostage{background:rgba(0,0,0,.55)}
+html[data-bg="1"] h1.large,html[data-bg="1"] h2.sec,html[data-bg="1"] .sethead,html[data-bg="1"] .top b,html[data-bg="1"] .card .t,html[data-bg="1"] .card .s,html[data-bg="1"] .row .meta b,html[data-bg="1"] .row .meta span,html[data-bg="1"] .row .lbl,html[data-bg="1"] .row .cnt,html[data-bg="1"] .setrow .tx b,html[data-bg="1"] .setrow .tx span{text-shadow:0 1px 6px rgba(0,0,0,.6)}
+/* small preview inside the Background page */
+.bgprev{flex:1;height:170px;border-radius:16px;background:var(--bgpaint);box-shadow:var(--spec-lite);overflow:hidden}
+/* the status-bar fade is plain black for a flat black app; over a picture it is only a soft shade, so the picture is not cut by a black band */
+html[data-bg="1"] #app::before{background:linear-gradient(to bottom,rgba(0,0,0,.45) var(--sat),rgba(0,0,0,0))}
+
+/* v144: a card that is only refreshed (not opened) must not replay its slide-in / fade-in */
+#sheet .scrim.lf-still,#sheet .sheetbox.lf-still,#sheet .sheetbox.lf-still .actions,#sheet .sheetbox.lf-still .row{animation:none!important}
+
+/* ---------- Listening Statistics ---------- */
+.lshome{padding:12px;margin:6px 0 12px;border-radius:22px;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite);cursor:pointer}
+.lsempty{display:block;width:100%;font:inherit}
+.lsh3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.lsh3 b,.mystats b{display:block;font-size:1.25rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lsh3 span,.lshl2 em{font-size:0.75rem;color:var(--text-2);font-style:normal}
+.lshl2{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 4px}
+.lshl2>div{min-width:0}.lshl2 b{display:block;font-size:0.875rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lsbars{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:4px;align-items:end;height:110px;margin:10px 0 18px;padding-bottom:16px}
+.lsbar{position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center;background:none;border:0;box-shadow:none;padding:0;color:inherit}
+.lsbar i{display:block;width:100%;max-width:26px;border-radius:6px 6px 3px 3px;background:var(--accent-soft)}
+.lsbar.hi i{background:var(--accent)}
+.lsbar em{position:absolute;bottom:-16px;left:0;right:0;text-align:center;font-size:0.625rem;font-style:normal;color:var(--text-2)}
+.lshcap{margin:14px 0 0;font-size:0.75rem;font-weight:700;letter-spacing:.04em;color:var(--text-2)}
+.lshours{display:grid;grid-template-columns:repeat(12,1fr);gap:5px;align-items:end;height:96px;margin:20px 0 34px;padding-bottom:18px}
+.lshb{position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center}
+.lshb i{display:block;width:100%;border-radius:4px 4px 2px 2px;background:var(--accent);opacity:.78;min-height:2px}
+.lshb.pk i{opacity:1}
+.lshb.z i{height:2px!important;background:rgba(255,255,255,.18);opacity:1}
+.lshb b{position:absolute;left:50%;transform:translateX(-50%);margin-bottom:3px;white-space:nowrap;font-size:0.625rem;font-weight:700;color:var(--text)}
+.lshb em{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:0.6875rem;font-style:normal;color:var(--text-2)}
+.lshb.now em{color:var(--text);font-weight:700}
+.lshb.now::after{content:"";position:absolute;bottom:-27px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--text)}
+.lsper{margin:4px 0 10px;display:flex;gap:6px;flex-wrap:wrap}
+.lsnav{display:flex;align-items:center;justify-content:space-between;margin:6px 0 12px}
+.lsnav b{font-size:1.0625rem}.lsnav .gbtn[disabled]{opacity:.3}
+.lstoday{margin:0 0 12px}
+.lsnote{color:var(--text-2);font-size:0.875rem;line-height:1.5;margin:8px 0 14px}.lsnote b{color:inherit}
+.lstops{display:grid;gap:8px;margin:10px 0 14px}
+.lstop{display:flex;align-items:center;gap:12px;padding:10px;border-radius:20px;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite);text-align:left;width:100%}
+.lstop .cover,.lstop .lsbigart{width:56px;flex:0 0 56px}
+.lstop em,.lshlc em{display:block;font-size:0.75rem;font-style:normal;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.lstop b{display:block;font-size:1rem}
+.lstop .meta{min-width:0;flex:1}.lstop .meta span{font-size:0.8125rem;color:var(--text-2)}
+.lslist{display:grid;gap:2px;margin:6px 0 16px}
+.lsrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left}
+.lsrank{flex:0 0 26px;text-align:center;font-weight:800;color:var(--text-2);font-size:0.875rem}
+.lsrow .thumb,.lsrow .cover{width:48px;flex:0 0 48px}
+.lsrow .meta{min-width:0;flex:1}.lsrow .meta b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lsmini{display:block;font-size:0.75rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lsh{padding:8px 4px}
+.lshl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 14px}
+.lshlc{padding:12px;border-radius:18px;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite);min-width:0}
+.lshlc b{display:block;font-size:1rem;margin:2px 0;overflow:hidden;text-overflow:ellipsis}.lshlc span{font-size:0.75rem;color:var(--text-2)}
+.lscal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:8px 0 16px}
+.lscal em{text-align:center;font-size:0.625rem;font-style:normal;color:var(--text-2)}
+.lscell{aspect-ratio:1;border-radius:10px;border:0;box-shadow:none;color:inherit;font-size:0.75rem;background:var(--row-fill);background:color-mix(in srgb,var(--accent) calc(var(--v)*80%),var(--row-fill))}
+.lscmp.up{color:var(--v-green)}.lscmp.down{color:var(--accent)}
+.lsfilter{width:100%;padding:10px 14px;margin:6px 0 10px;border-radius:var(--r-pill);border:0;background:var(--row-fill);color:inherit;font:inherit;box-shadow:var(--spec-lite)}
+.lsclrwrap{display:flex;justify-content:center;margin:56px 0 40px;padding-top:24px;border-top:1px solid var(--hair)}.lsclr{margin:0}.lsdates{display:grid;gap:8px;margin:8px 0}.lsdates input{padding:10px 14px;border-radius:var(--r-pill);border:0;background:var(--row-fill);color:inherit;font:inherit}
+.mystats.lsm b{font-size:1.0625rem;white-space:normal;line-height:1.15}
+.lsh3 b{font-size:1.0625rem;white-space:normal;line-height:1.15}
+
+.lsdn{margin:6px 0 14px;padding:14px;border-radius:20px;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite)}
+.lsdnh{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lsdnh span{display:flex;align-items:center;gap:6px;min-width:0}.lsdnh svg{width:22px;height:22px;flex:0 0 22px}
+.lsdnh b{font-size:1.5rem;font-weight:800}.lsdnh em{font-size:0.75rem;font-style:normal;color:var(--text-2)}
+.lsdnh .sun svg{color:var(--accent)}.lsdnh .moon svg{color:var(--text)}
+.lsdnbar{height:12px;border-radius:6px;margin:10px 0 6px;overflow:hidden;background:var(--rail)}
+.lsdnbar i{display:block;height:100%;background:var(--accent);border-radius:6px 0 0 6px}
+.lsdnbar.sm{height:8px;margin:0}
+.lsdncap{font-size:0.75rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--accent);margin:14px 0 2px}.lsdn>.lsdncap:first-child{margin-top:0}
+.lsdnrow{display:grid;grid-template-columns:84px 1fr auto;align-items:center;gap:10px;padding:7px 0;font-size:0.8125rem}.lsdnrow>span{color:var(--text-2)}.lsdnrow>b{font-weight:600;white-space:nowrap}.lsdnrow>em{grid-column:2/-1;font-style:normal;color:var(--text-3)}
+
+.actions.lsmenu{flex-direction:column;align-items:stretch;gap:10px}.actions.lsmenu button{flex:0 0 auto;width:100%;min-height:48px}
+
+/* v146: background-allow popup (own layer, never touches #sheet, so no blink / no clash with the update screen) */
+#lf-bgallow{position:fixed;inset:0;z-index:99990;background:#000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:space-between;text-align:center;padding:max(28px,env(safe-area-inset-top)) 22px max(26px,env(safe-area-inset-bottom));animation:lf-fade calc(.3s * var(--dur-k,1)) ease-out}
+#lf-bgallow .bgbody{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+#lf-bgallow .bgimg{display:block;max-width:min(100%,360px);max-height:min(52vh,460px);object-fit:contain;border-radius:24px;margin-bottom:10px}
+#lf-bgallow b{font-size:1.375rem}#lf-bgallow p{margin:4px auto 0;max-width:320px;color:var(--text-2);font-size:0.875rem;line-height:1.4}#lf-bgallow p b{font-size:inherit;color:#fff}
+#lf-bgallow .bgact{width:100%;max-width:420px;display:flex;flex-direction:column;gap:10px}
+#lf-bgallow button{height:54px;border-radius:27px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:#fff;font:inherit;font-size:1.0625rem;-webkit-tap-highlight-color:transparent}
+#lf-bgallow button[data-bg="go"]{color:var(--accent)}
+
+/* v146: Home stats banner: liquid-glass box above Listening Stats (empty box when no picture) */
+.statban{position:relative;margin:14px 0 14px;min-height:96px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.statban.pic{width:fit-content;max-width:100%;min-height:0;margin-left:auto;margin-right:auto;padding:6px;box-sizing:border-box}
+.statban.pic{background:var(--glass-fill)}   /* v148: see-through glass fill only: NO sheen gradient behind the picture (it showed through as a moving shine line); the wallpaper still shows through the frame and the rim stays */
+/* v148: tapping the banner wobbles it like every other glass card; the white tap glint is switched off so no light ever crosses the picture */
+.statban.lq-on{animation-name:lq-wobble-bar}
+.statban.lq-on::after{display:none}
+.statban.pic img{border-radius:calc(var(--r-card) - 6px)}
+.statban img{display:block;max-width:100%;max-height:360px;width:auto;height:auto;object-fit:contain;border-radius:inherit}
+
+/* v148 fix: NO blur anywhere. Glass stays clear (tint + rim only). Where glass floats over other content (tab bar, mini player, sheets such as Up Next, toasts, banners) a solid black layer sits directly beneath it, so text from the page behind can never run through or merge with it. */
+/* v161: the tab bar and the mini player are PURE transparent liquid glass: no black, no tint, no sheen. Only their rim and shadow (box-shadow) stay. */
+html .tabbar,html .mini{background:transparent;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html #sheet .scrim{background:#000;backdrop-filter:none;-webkit-backdrop-filter:none}
+html #sheet .sheetbox:not(.notifcard){background:var(--sheen),#000;backdrop-filter:none;-webkit-backdrop-filter:none}
+html #sheet .sheetbox:not(.notifcard) .row,html #sheet .sheetbox:not(.notifcard) .actions button{background:var(--sheen-lite),#0a0a0c}
+html .toast,html .btbanner{background:var(--sheen),#000;backdrop-filter:none;-webkit-backdrop-filter:none}
+
+/* v148 fix: lyrics were cut off on the right. A synced line grows from its LEFT edge (transform: scale, origin left), so a line that already filled the screen
+   ran off the right side once it was the playing one (and the bigger the text size or "Playing line size", the worse). Every synced line is now only as wide as
+   100% / the biggest scale, so the text wraps first and the grown line ends exactly at the right margin. The same width for every line also stops the
+   playing line from re-wrapping when it becomes current. Very long words with no spaces may break anywhere instead of leaving the screen. */
+.ln.tap{width:80%;width:calc(100% / max(var(--ly-zoom,1.02), var(--ly-small,.94), 1));box-sizing:border-box;overflow-wrap:anywhere}
+
+
+/* v149: the album of the song that is playing now: only its name turns red (the song row keeps its own highlight) */
+html:root .row.aplay .meta b,html:root .card.aplay .t{color:var(--accent)}
+/* v149: genre pictures / GIFs */
+.row.grow .thumb{width:52px;height:52px;border-radius:10px;flex:none}
+html .gtile.hasp{background:linear-gradient(rgba(0,0,0,.42),rgba(0,0,0,.42)),var(--gpic) center/cover no-repeat;color:#fff}
+html .gtile.hasp small{color:rgba(255,255,255,.85)}
+
+/* Snapshot: the "Share snapshot" button on Listening Stats and the picture preview sheet (src/snapshot.js draws the picture itself) */
+.lssnap{display:flex;align-items:center;gap:14px;width:100%;margin:2px 0 14px;padding:12px 14px;border-radius:20px;text-align:left;color:inherit;background:var(--sheen-lite),var(--row-fill);box-shadow:var(--spec-lite)}
+.lssnapic{flex:0 0 44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--on-accent)}
+.lssnapic svg{width:22px;height:22px}
+.lssnap .meta{min-width:0;flex:1}.lssnap .meta b{display:block;font-size:1rem}.lssnap .meta span{display:block;font-size:0.75rem;line-height:1.35;color:var(--text-2)}
+#sheet .snapimg{display:block;width:auto;max-width:100%;max-height:50vh;margin:4px auto 8px;border-radius:18px;object-fit:contain;background:#000;box-shadow:0 0 0 1px rgba(250,36,60,.45),0 8px 28px rgba(0,0,0,.6)}
+
+/* ===== v157: the Animation sliders reach every glass piece ===== */
+/* Glass edge colour fringe: the pill under every button row (transport, Play / Shuffle, Cancel / Save) gets the same red / blue edge as the tab-bar lens */
+.lens::after{box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.28 + .3*var(--pop))),inset 1px 1px 2px rgba(255,255,255,calc(.5 + .3*var(--pop))),inset -1px -1px 2px rgba(255,255,255,.18),inset 0 0 calc(0.875rem*var(--pop)) rgba(255,255,255,calc(.18*var(--pop))),inset calc(var(--fringe,1.2px) * var(--pop)) 0 0 rgba(255,40,70,.30),inset calc(-1 * var(--fringe,1.2px) * var(--pop)) 0 0 rgba(40,190,255,.28)}
+/* Scrub thumb: swells under the finger with the Pill size / Squash sliders and springs back with Bounciness + Spring speed */
+.scrub .thumb{transition:scale calc(.35s * var(--dur-k,1)) var(--spring)}
+.scrub:active .thumb{scale:calc(1 + .3 * var(--lq-amp,1))}
+html[data-motion="reduce"] .scrub .thumb{transition:none}
+html[data-motion="reduce"] .scrub:active .thumb{scale:1}
+
+/* BUG-229: visible keyboard focus on the search pill, the name fields and sheet buttons */
+.searchpill:focus-within,.profile .pfname:focus-visible,.hsren:focus-visible,#sheet button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.favdot{font-style:normal;color:var(--accent,#ff5a7a);font-size:.8em;margin-left:4px}
+
+/* BUG-228: 100vh is taller than the visible area on Android WebView while the system bars slide; use dvh where it is supported (the vh rules above stay as the fallback) */
+@supports (height:100dvh){
+  .cvv .cover{width:min(100%,calc(100dvh - 2*var(--sat,0px)))}
+  #sheet .sheetbox.notifcard .popimg{--maxh:max(120px,min(44vh,380px,calc(100dvh - 280px)))}
+  #sheet .sheetbox.notifcard.popcard .popimg{--maxh:max(120px,min(56vh,460px,calc(100dvh - 300px)))}
+}
+
+/* ===== v148+: Immersive album cover (Settings > Immersive album cover). The cover fills the top of Now Playing edge to edge and fades into the cover's colour; the song name and controls sit on that fade, in white. ===== */
+html[data-immersive="1"] #np.np{background:#000;background:radial-gradient(120% 55% at 92% 6%,var(--np-bg2,var(--np-bg,#1c1c1e)) 0%,transparent 62%),linear-gradient(180deg,var(--np-bg,#1c1c1e) 0%,color-mix(in srgb,var(--np-bg,#1c1c1e) 55%,#000) 62%,color-mix(in srgb,var(--np-bg,#1c1c1e) 36%,#000) 100%);backdrop-filter:none;-webkit-backdrop-filter:none;--accent:#fff;--accent-soft:rgba(255,255,255,.2);--accent-glow:rgba(255,255,255,.3);padding-left:22px;padding-right:22px}
+html[data-immersive="1"] .np .glow{display:none}
+html[data-immersive="1"] .np .art{position:absolute;left:0;right:0;top:0;height:78%;padding:0;display:block;z-index:0;
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 52%,rgba(0,0,0,.85) 66%,rgba(0,0,0,.45) 84%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 52%,rgba(0,0,0,.85) 66%,rgba(0,0,0,.45) 84%,transparent 100%)}
+html[data-immersive="1"] .np .art .cover{width:100%;height:100%;max-height:none;aspect-ratio:auto;border-radius:0;box-shadow:none;background-size:cover;background-position:center top}
+html[data-immersive="1"] .np .art .cvmedia{position:absolute;left:0!important;top:0!important;width:100%!important;height:100%!important;transform:none!important;object-fit:cover}
+html[data-immersive="1"] .np .art::after{content:"";position:absolute;left:0;right:0;top:0;height:22%;background:linear-gradient(180deg,rgba(0,0,0,.42),transparent);pointer-events:none}   /* keeps the status bar and the grab bar readable on a bright cover */
+html[data-immersive="1"] .np>.grabbtn,html[data-immersive="1"] .np>.titles{position:relative;z-index:1}
+html[data-immersive="1"] .np .titles{margin-top:auto;text-shadow:0 1px 14px rgba(0,0,0,.45)}
+html[data-immersive="1"] .np .titles b{font-size:1.75rem;color:#fff}
+html[data-immersive="1"] .np .titles span{color:rgba(255,255,255,.82)}
+html[data-immersive="1"] .np .cluster,html[data-immersive="1"] .np .sbtn,html[data-immersive="1"] .np .bottom button,html[data-immersive="1"] .np .titles .gbtn{background:rgba(255,255,255,.18)}
+html[data-immersive="1"] .np .times{color:rgba(255,255,255,.78)}
+
+/* v148+: Lyrics colour picker (Now Playing > ... > Lyrics colour) */
+.lycrow{display:flex;flex-wrap:wrap;gap:14px 8px;padding:6px 2px 14px}
+.lycbig{display:flex;align-items:center;gap:16px;padding:8px 2px 12px}
+.lycring{position:relative;flex:none;width:92px;height:92px;border-radius:50%;padding:7px;box-sizing:border-box;background:conic-gradient(#ff3b30,#ffcc00,#34c759,#00c7be,#0a84ff,#bf5af2,#ff2d92,#ff3b30);box-shadow:0 2px 12px rgba(0,0,0,.4)}
+.lycring i{display:block;width:100%;height:100%;border-radius:50%;box-shadow:0 0 0 3px #000,inset 0 0 0 2px rgba(255,255,255,.2)}
+.lycring input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;border-radius:50%;cursor:pointer}
+.lycbigtx{display:flex;flex-direction:column;gap:4px;min-width:0}.lycbigtx b{font-size:1.0625rem}.lycbigtx span{color:var(--text-2);font-size:.875rem;line-height:1.35}
+.lychexbox{display:flex;align-items:center;gap:8px;margin:0 2px;padding:10px 14px;border-radius:16px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.lychexbox span{color:var(--text-2);font-size:.875rem;font-weight:600;margin-right:auto}.lychexbox em{font-style:normal;color:var(--text-2);font-weight:700}
+.lychexbox input{width:92px;background:transparent;border:0;border-bottom:1px solid var(--text-2);color:var(--text);font:inherit;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:left;outline:none}
+.lychexbox input.bad{border-bottom-color:var(--accent);color:var(--accent)}
+.animdock-s{padding:8px 2px 0}.animdock-s b{display:flex;justify-content:space-between;font-weight:600;font-size:1rem}.animdock-s b em{font-style:normal;color:var(--accent);font-variant-numeric:tabular-nums}
+.animdock-s input[type=range]{width:100%;margin:6px 0 2px;accent-color:var(--accent);touch-action:pan-y}.animdock-s span{display:block;color:var(--text-2);font-size:.75rem;line-height:1.3}
+.lycauto{display:flex;align-items:center;gap:12px;margin:12px 2px 0;padding:10px 12px;border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);color:var(--text-2);font-size:.8125rem;line-height:1.35}
+.lycauto.on{box-shadow:inset 0 0 0 2px rgba(255,255,255,.45);color:var(--text)}.lycauto b{color:var(--text)}
+.lycauto i{flex:none;display:block;width:32px;height:32px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.2)}
+.lychint{margin:8px 4px 4px;color:var(--text-2);font-size:.8125rem;min-height:1.2em}
+.actions button[disabled]{opacity:.4;pointer-events:none}
+/* v208: no wobble loops that run forever: decorative animations play a few times and stop (scan spinners stay, they show progress) */
+
+/* v208 calm-down: toggles never squash as a whole (only the knob moves); rows / setting rows / cards / tiles keep their text still (glint only, at most a 1.2 % breath) */
+.toggle.lq-on{animation:none!important}
+.row.lq-on,.setrow.lq-on,.card.lq-on,.lyr-now.lq-on,.mini-open.lq-on,.lshome.lq-on,.lstop.lq-on,.resume.lq-on,.lsempty.lq-on,.statban.lq-on,#sheet .sheetbox .row.lq-on,.screen.sub .row.lq-on{animation-name:lq-wobble-soft!important}
+@keyframes lq-wobble-soft{0%{transform:scale(1,1)}25%{transform:scale(calc(1 + .003*var(--lq-amp,1)),calc(1 - .012*var(--lq-amp,1)))}55%{transform:scale(calc(1 - .001*var(--lq-amp,1)),calc(1 + .004*var(--lq-amp,1)))}100%{transform:scale(1,1)}}
+
+
+/* v208: the little grab bar at the top of Now Playing is gone (the button stays: tap it, or swipe down, to close; screen readers still find it) */
+.np .grab{background:transparent!important}

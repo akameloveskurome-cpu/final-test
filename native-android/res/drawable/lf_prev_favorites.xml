@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget picker preview (lf_prev_favorites): the app style (black glass card, white text, red accent). Mirrors the real widget. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="110dp" android:height="110dp"
+    android:viewportWidth="110" android:viewportHeight="110">
+    <path android:fillColor="#E6101012" android:strokeColor="#33FFFFFF" android:strokeWidth="1" android:pathData="M22.5,0.5 H87.5 A22,22 0 0 1 109.5,22.5 V87.5 A22,22 0 0 1 87.5,109.5 H22.5 A22,22 0 0 1 0.5,87.5 V22.5 A22,22 0 0 1 22.5,0.5 Z"/>
+    <group android:translateX="37" android:translateY="20" android:scaleX="1.5" android:scaleY="1.5">
+        <path android:fillColor="#FA243C" android:pathData="M12,21.35l-1.45,-1.32C5.4,15.36 2,12.28 2,8.5 2,5.42 4.42,3 7.5,3c1.74,0 3.41,0.81 4.5,2.09C13.09,3.81 14.76,3 16.5,3 19.58,3 22,5.42 22,8.5c0,3.78 -3.4,6.86 -8.55,11.54L12,21.35z"/>
+    </group>
+    <path android:fillColor="#FFFFFF" android:pathData="M33,74 H77 A4,4 0 0 1 81,78 V78 A4,4 0 0 1 77,82 H33 A4,4 0 0 1 29,78 V78 A4,4 0 0 1 33,74 Z"/>
+</vector>

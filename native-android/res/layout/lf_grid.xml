@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/lfg_root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/lf_widget_bg" android:orientation="vertical" android:padding="10dp">
+    <TextView android:id="@+id/lfg_head" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/lf_red" android:textSize="13sp" android:textStyle="bold" android:paddingBottom="4dp"/>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:layout_margin="3dp">
+            <ImageView android:id="@+id/lfg_i0" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:scaleType="centerCrop" android:contentDescription="@null"/>
+            <TextView android:id="@+id/lfg_t0" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white" android:textSize="11sp" android:paddingTop="3dp"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:layout_margin="3dp">
+            <ImageView android:id="@+id/lfg_i1" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:scaleType="centerCrop" android:contentDescription="@null"/>
+            <TextView android:id="@+id/lfg_t1" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white" android:textSize="11sp" android:paddingTop="3dp"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:layout_margin="3dp">
+            <ImageView android:id="@+id/lfg_i2" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:scaleType="centerCrop" android:contentDescription="@null"/>
+            <TextView android:id="@+id/lfg_t2" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white" android:textSize="11sp" android:paddingTop="3dp"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:layout_margin="3dp">
+            <ImageView android:id="@+id/lfg_i3" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:scaleType="centerCrop" android:contentDescription="@null"/>
+            <TextView android:id="@+id/lfg_t3" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white" android:textSize="11sp" android:paddingTop="3dp"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

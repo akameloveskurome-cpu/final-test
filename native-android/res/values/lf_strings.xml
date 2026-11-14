@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lf_widget_desc">Song, artist and play / pause / next / previous</string>
+    <string name="lf_tile_desc">One-tap shortcut into the app</string>
+    <string name="lf_grid_desc">Album and artist covers; tap to open the list</string>
+    <string name="lf_stats_day_desc">Today: listening time, songs played, top artist and day / night split</string>
+    <string name="lf_stats_week_desc">This week: listening time, songs, top artist and song, day / night split</string>
+    <string name="lf_stats_month_desc">This month: listening time, songs, top artist and song, day / night split</string>
+    <string name="lf_stats_all_desc">Everything: today, week, month and all time, streak, top song / artist / album, chart and day / night split</string>
+    <string name="lf_nowplaying_desc">Now playing: album cover, song, artist, album and play / pause / next / previous</string>
+    <string name="lf_genres_desc">Your top genres; tap one to open it, tap the title to open all genres</string>
+    <string name="lf_stats_daily_desc">Daily: today by hour, time listened, comparison with yesterday, songs, top artist and song, day / night split</string>
+    <string name="lf_w_genres">Genres</string>
+    <string name="lf_w_no_genres">No genre tags yet. Scan your library, then tap to open.</string>
+    <string name="lf_w_listening">listening</string>
+    <string name="lf_w_songs_played">songs played</string>
+    <string name="lf_w_unique_songs">unique songs</string>
+    <string name="lf_w_all_time">All time</string>
+    <string name="lf_w_this_month">This month</string>
+    <string name="lf_w_this_week">This week</string>
+    <string name="lf_w_today">Today</string>
+    <string name="lf_w_streak">streak</string>
+    <string name="lf_w_artists">artists</string>
+</resources>

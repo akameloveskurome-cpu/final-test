@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget picker preview (lf_prev_stats_day): the app style (black glass card, white text, red accent). Mirrors the real widget. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="110dp" android:height="110dp"
+    android:viewportWidth="110" android:viewportHeight="110">
+    <path android:fillColor="#E6101012" android:strokeColor="#33FFFFFF" android:strokeWidth="1" android:pathData="M22.5,0.5 H87.5 A22,22 0 0 1 109.5,22.5 V87.5 A22,22 0 0 1 87.5,109.5 H22.5 A22,22 0 0 1 0.5,87.5 V22.5 A22,22 0 0 1 22.5,0.5 Z"/>
+    <path android:fillColor="#FA243C" android:pathData="M13,10 H57 A3,3 0 0 1 60,13 V13 A3,3 0 0 1 57,16 H13 A3,3 0 0 1 10,13 V13 A3,3 0 0 1 13,10 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M16,26 H74 A6,6 0 0 1 80,32 V32 A6,6 0 0 1 74,38 H16 A6,6 0 0 1 10,32 V32 A6,6 0 0 1 16,26 Z"/>
+    <path android:fillColor="#B3FFFFFF" android:pathData="M12.5,44 H57.5 A2.5,2.5 0 0 1 60,46.5 V46.5 A2.5,2.5 0 0 1 57.5,49 H12.5 A2.5,2.5 0 0 1 10,46.5 V46.5 A2.5,2.5 0 0 1 12.5,44 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M13.5,58 H86.5 A3.5,3.5 0 0 1 90,61.5 V61.5 A3.5,3.5 0 0 1 86.5,65 H13.5 A3.5,3.5 0 0 1 10,61.5 V61.5 A3.5,3.5 0 0 1 13.5,58 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M13.5,68 H66.5 A3.5,3.5 0 0 1 70,71.5 V71.5 A3.5,3.5 0 0 1 66.5,75 H13.5 A3.5,3.5 0 0 1 10,71.5 V71.5 A3.5,3.5 0 0 1 13.5,68 Z"/>
+    <path android:fillColor="#38FFFFFF" android:pathData="M13,84 H97 A3,3 0 0 1 100,87 V87 A3,3 0 0 1 97,90 H13 A3,3 0 0 1 10,87 V87 A3,3 0 0 1 13,84 Z"/>
+    <path android:fillColor="#FA243C" android:pathData="M13,84 H61 A3,3 0 0 1 64,87 V87 A3,3 0 0 1 61,90 H13 A3,3 0 0 1 10,87 V87 A3,3 0 0 1 13,84 Z"/>
+    <path android:fillColor="#B3FFFFFF" android:pathData="M12.5,97 H77.5 A2.5,2.5 0 0 1 80,99.5 V99.5 A2.5,2.5 0 0 1 77.5,102 H12.5 A2.5,2.5 0 0 1 10,99.5 V99.5 A2.5,2.5 0 0 1 12.5,97 Z"/>
+</vector>

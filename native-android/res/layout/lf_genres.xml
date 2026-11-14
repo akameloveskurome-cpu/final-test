@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v148: Genres widget: up to 6 genre chips (most songs first). Each chip opens that genre; the title opens the Genres list. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/lfgn_root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/lf_widget_bg" android:orientation="vertical" android:padding="10dp">
+    <TextView android:id="@+id/lfgn_head" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:text="@string/lf_w_genres" android:textColor="@color/lf_red" android:textSize="13sp" android:textStyle="bold" android:paddingBottom="4dp"/>
+    <TextView android:id="@+id/lfgn_empty" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center" android:text="@string/lf_w_no_genres" android:textColor="@color/lf_white_70" android:textSize="12sp" android:visibility="gone"/>
+    <LinearLayout android:id="@+id/lfgn_rows" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+            <LinearLayout android:id="@+id/lfgn_c0" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center_vertical" android:background="@drawable/lf_w_chip" android:layout_margin="3dp" android:paddingLeft="9dp" android:paddingRight="9dp">
+                <TextView android:id="@+id/lfgn_n0" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white" android:textSize="13sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/lfgn_k0" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white_70" android:textSize="11sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/lfgn_c1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center_vertical" android:background="@drawable/lf_w_chip" android:layout_margin="3dp" android:paddingLeft="9dp" android:paddingRight="9dp">
+                <TextView android:id="@+id/lfgn_n1" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white" android:textSize="13sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/lfgn_k1" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white_70" android:textSize="11sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/lfgn_c2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center_vertical" android:background="@drawable/lf_w_chip" android:layout_margin="3dp" android:paddingLeft="9dp" android:paddingRight="9dp">
+                <TextView android:id="@+id/lfgn_n2" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white" android:textSize="13sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/lfgn_k2" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white_70" android:textSize="11sp"/>
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+            <LinearLayout android:id="@+id/lfgn_c3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center_vertical" android:background="@drawable/lf_w_chip" android:layout_margin="3dp" android:paddingLeft="9dp" android:paddingRight="9dp">
+                <TextView android:id="@+id/lfgn_n3" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white" android:textSize="13sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/lfgn_k3" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white_70" android:textSize="11sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/lfgn_c4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center_vertical" android:background="@drawable/lf_w_chip" android:layout_margin="3dp" android:paddingLeft="9dp" android:paddingRight="9dp">
+                <TextView android:id="@+id/lfgn_n4" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white" android:textSize="13sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/lfgn_k4" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white_70" android:textSize="11sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/lfgn_c5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center_vertical" android:background="@drawable/lf_w_chip" android:layout_margin="3dp" android:paddingLeft="9dp" android:paddingRight="9dp">
+                <TextView android:id="@+id/lfgn_n5" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white" android:textSize="13sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/lfgn_k5" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="@color/lf_white_70" android:textSize="11sp"/>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

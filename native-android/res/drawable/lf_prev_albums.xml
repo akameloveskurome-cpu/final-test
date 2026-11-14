@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget picker preview (lf_prev_albums): the app style (black glass card, white text, red accent). Mirrors the real widget. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp" android:height="110dp"
+    android:viewportWidth="250" android:viewportHeight="110">
+    <path android:fillColor="#E6101012" android:strokeColor="#33FFFFFF" android:strokeWidth="1" android:pathData="M22.5,0.5 H227.5 A22,22 0 0 1 249.5,22.5 V87.5 A22,22 0 0 1 227.5,109.5 H22.5 A22,22 0 0 1 0.5,87.5 V22.5 A22,22 0 0 1 22.5,0.5 Z"/>
+    <path android:fillColor="#FA243C" android:pathData="M15,12 H69 A3,3 0 0 1 72,15 V15 A3,3 0 0 1 69,18 H15 A3,3 0 0 1 12,15 V15 A3,3 0 0 1 15,12 Z"/>
+    <path android:fillColor="#3A0E14" android:pathData="M20,26 H56 A8,8 0 0 1 64,34 V70 A8,8 0 0 1 56,78 H20 A8,8 0 0 1 12,70 V34 A8,8 0 0 1 20,26 Z"/>
+    <path android:fillColor="#B3FFFFFF" android:pathData="M14.5,84 H49.5 A2.5,2.5 0 0 1 52,86.5 V86.5 A2.5,2.5 0 0 1 49.5,89 H14.5 A2.5,2.5 0 0 1 12,86.5 V86.5 A2.5,2.5 0 0 1 14.5,84 Z"/>
+    <path android:fillColor="#1C1C22" android:pathData="M78,26 H114 A8,8 0 0 1 122,34 V70 A8,8 0 0 1 114,78 H78 A8,8 0 0 1 70,70 V34 A8,8 0 0 1 78,26 Z"/>
+    <path android:fillColor="#B3FFFFFF" android:pathData="M72.5,84 H107.5 A2.5,2.5 0 0 1 110,86.5 V86.5 A2.5,2.5 0 0 1 107.5,89 H72.5 A2.5,2.5 0 0 1 70,86.5 V86.5 A2.5,2.5 0 0 1 72.5,84 Z"/>
+    <path android:fillColor="#4A1A10" android:pathData="M136,26 H172 A8,8 0 0 1 180,34 V70 A8,8 0 0 1 172,78 H136 A8,8 0 0 1 128,70 V34 A8,8 0 0 1 136,26 Z"/>
+    <path android:fillColor="#B3FFFFFF" android:pathData="M130.5,84 H165.5 A2.5,2.5 0 0 1 168,86.5 V86.5 A2.5,2.5 0 0 1 165.5,89 H130.5 A2.5,2.5 0 0 1 128,86.5 V86.5 A2.5,2.5 0 0 1 130.5,84 Z"/>
+    <path android:fillColor="#222A36" android:pathData="M194,26 H230 A8,8 0 0 1 238,34 V70 A8,8 0 0 1 230,78 H194 A8,8 0 0 1 186,70 V34 A8,8 0 0 1 194,26 Z"/>
+    <path android:fillColor="#B3FFFFFF" android:pathData="M188.5,84 H223.5 A2.5,2.5 0 0 1 226,86.5 V86.5 A2.5,2.5 0 0 1 223.5,89 H188.5 A2.5,2.5 0 0 1 186,86.5 V86.5 A2.5,2.5 0 0 1 188.5,84 Z"/>
+</vector>

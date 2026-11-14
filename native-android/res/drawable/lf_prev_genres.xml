@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget picker preview (lf_prev_genres): the app style (black glass card, white text, red accent). Mirrors the real widget. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp" android:height="110dp"
+    android:viewportWidth="250" android:viewportHeight="110">
+    <path android:fillColor="#E6101012" android:strokeColor="#33FFFFFF" android:strokeWidth="1" android:pathData="M22.5,0.5 H227.5 A22,22 0 0 1 249.5,22.5 V87.5 A22,22 0 0 1 227.5,109.5 H22.5 A22,22 0 0 1 0.5,87.5 V22.5 A22,22 0 0 1 22.5,0.5 Z"/>
+    <path android:fillColor="#FA243C" android:pathData="M15,12 H69 A3,3 0 0 1 72,15 V15 A3,3 0 0 1 69,18 H15 A3,3 0 0 1 12,15 V15 A3,3 0 0 1 15,12 Z"/>
+    <path android:fillColor="#26FFFFFF" android:pathData="M24,25 H70 A14,14 0 0 1 84,39 V45 A14,14 0 0 1 70,59 H24 A14,14 0 0 1 10,45 V39 A14,14 0 0 1 24,25 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M22.5,34 H65.5 A3.5,3.5 0 0 1 69,37.5 V37.5 A3.5,3.5 0 0 1 65.5,41 H22.5 A3.5,3.5 0 0 1 19,37.5 V37.5 A3.5,3.5 0 0 1 22.5,34 Z"/>
+    <path android:fillColor="#B3FFFFFF" android:pathData="M21.5,46 H46.5 A2.5,2.5 0 0 1 49,48.5 V48.5 A2.5,2.5 0 0 1 46.5,51 H21.5 A2.5,2.5 0 0 1 19,48.5 V48.5 A2.5,2.5 0 0 1 21.5,46 Z"/>
+    <path android:fillColor="#26FFFFFF" android:pathData="M102,25 H148 A14,14 0 0 1 162,39 V45 A14,14 0 0 1 148,59 H102 A14,14 0 0 1 88,45 V39 A14,14 0 0 1 102,25 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M100.5,34 H143.5 A3.5,3.5 0 0 1 147,37.5 V37.5 A3.5,3.5 0 0 1 143.5,41 H100.5 A3.5,3.5 0 0 1 97,37.5 V37.5 A3.5,3.5 0 0 1 100.5,34 Z"/>
+    <path android:fillColor="#B3FFFFFF" android:pathData="M99.5,46 H124.5 A2.5,2.5 0 0 1 127,48.5 V48.5 A2.5,2.5 0 0 1 124.5,51 H99.5 A2.5,2.5 0 0 1 97,48.5 V48.5 A2.5,2.5 0 0 1 99.5,46 Z"/>
+    <path android:fillColor="#26FFFFFF" android:pathData="M180,25 H226 A14,14 0 0 1 240,39 V45 A14,14 0 0 1 226,59 H180 A14,14 0 0 1 166,45 V39 A14,14 0 0 1 180,25 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M178.5,34 H221.5 A3.5,3.5 0 0 1 225,37.5 V37.5 A3.5,3.5 0 0 1 221.5,41 H178.5 A3.5,3.5 0 0 1 175,37.5 V37.5 A3.5,3.5 0 0 1 178.5,34 Z"/>
+    <path android:fillColor="#B3FFFFFF" android:pathData="M177.5,46 H202.5 A2.5,2.5 0 0 1 205,48.5 V48.5 A2.5,2.5 0 0 1 202.5,51 H177.5 A2.5,2.5 0 0 1 175,48.5 V48.5 A2.5,2.5 0 0 1 177.5,46 Z"/>
+    <path android:fillColor="#26FFFFFF" android:pathData="M24,63 H70 A14,14 0 0 1 84,77 V83 A14,14 0 0 1 70,97 H24 A14,14 0 0 1 10,83 V77 A14,14 0 0 1 24,63 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M22.5,72 H65.5 A3.5,3.5 0 0 1 69,75.5 V75.5 A3.5,3.5 0 0 1 65.5,79 H22.5 A3.5,3.5 0 0 1 19,75.5 V75.5 A3.5,3.5 0 0 1 22.5,72 Z"/>
+    <path android:fillColor="#B3FFFFFF" android:pathData="M21.5,84 H46.5 A2.5,2.5 0 0 1 49,86.5 V86.5 A2.5,2.5 0 0 1 46.5,89 H21.5 A2.5,2.5 0 0 1 19,86.5 V86.5 A2.5,2.5 0 0 1 21.5,84 Z"/>
+    <path android:fillColor="#26FFFFFF" android:pathData="M102,63 H148 A14,14 0 0 1 162,77 V83 A14,14 0 0 1 148,97 H102 A14,14 0 0 1 88,83 V77 A14,14 0 0 1 102,63 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M100.5,72 H143.5 A3.5,3.5 0 0 1 147,75.5 V75.5 A3.5,3.5 0 0 1 143.5,79 H100.5 A3.5,3.5 0 0 1 97,75.5 V75.5 A3.5,3.5 0 0 1 100.5,72 Z"/>
+    <path android:fillColor="#B3FFFFFF" android:pathData="M99.5,84 H124.5 A2.5,2.5 0 0 1 127,86.5 V86.5 A2.5,2.5 0 0 1 124.5,89 H99.5 A2.5,2.5 0 0 1 97,86.5 V86.5 A2.5,2.5 0 0 1 99.5,84 Z"/>
+    <path android:fillColor="#26FFFFFF" android:pathData="M180,63 H226 A14,14 0 0 1 240,77 V83 A14,14 0 0 1 226,97 H180 A14,14 0 0 1 166,83 V77 A14,14 0 0 1 180,63 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M178.5,72 H221.5 A3.5,3.5 0 0 1 225,75.5 V75.5 A3.5,3.5 0 0 1 221.5,79 H178.5 A3.5,3.5 0 0 1 175,75.5 V75.5 A3.5,3.5 0 0 1 178.5,72 Z"/>
+    <path android:fillColor="#B3FFFFFF" android:pathData="M177.5,84 H202.5 A2.5,2.5 0 0 1 205,86.5 V86.5 A2.5,2.5 0 0 1 202.5,89 H177.5 A2.5,2.5 0 0 1 175,86.5 V86.5 A2.5,2.5 0 0 1 177.5,84 Z"/>
+</vector>
