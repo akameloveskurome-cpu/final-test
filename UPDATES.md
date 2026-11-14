@@ -6,6 +6,11 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+## Tap on a cover: original only on Now Playing, your picture everywhere else
+- Tapping the album cover on an album page now opens YOUR picture or GIF full screen (if you set one).
+- On Now Playing, tapping the cover still opens the original cover by default.
+- New switch: **Settings > Tap cover shows original** (on by default). Turn it OFF and the Now Playing tap shows only your own picture or GIF for that song or album.
+
 ## Launcher icon: the whole picture is visible (no version change, still 0.208.0)
 - The home-screen icon now shows your whole logo picture instead of cutting its outer edges. It sits a bit smaller inside the icon, on a dark background. Takes effect on the next build.
 

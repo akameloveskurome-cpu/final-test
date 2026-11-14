@@ -81,7 +81,7 @@ export const GROUP_LABELS = {
   refract: 'Lens refraction (tab bar)',
   lyricSize: 'Lyrics size', lyricPx: 'Lyrics text size', lyricStyle: 'Lyrics style', coverLyrics: 'Cover in lyrics',
   tabSize: 'Glass bar size (older Small / Medium / Large choice)', tabPct: 'Glass bar size', redHover: 'Red highlight on hover', motion: 'Reduce motion', contrast: 'Increase contrast',
-  albumInfo: 'Album info', bigCovers: 'Big covers', userName: 'Your name', npCover: 'Player cover size', npImmersive: 'Immersive player',
+  albumInfo: 'Album info', bigCovers: 'Big covers', userName: 'Your name', npCover: 'Player cover size', npImmersive: 'Immersive player', npTapOrig: 'Tap cover shows original',
   home: 'Home layout', bgDim: 'Background dim', bgFit: 'Background fit', autoplay: 'Autoplay', autoCheck: 'Check for updates',
   smartArtists: 'Smart artists', sort: 'Sort order', sleepCustom: 'Custom sleep timer',
 };

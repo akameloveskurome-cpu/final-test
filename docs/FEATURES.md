@@ -155,6 +155,7 @@ Every AI must treat the **You** items as locked. Anything marked Suggested can b
 | K25 | **Background style**: black with red lyrics (default) or the album cover's colour on Now Playing and the lyrics page | v95 | You |
 | K22 | **Cover images from the folder**: `cover.jpg`, `folder.jpg` (also front / albumart / album) count as album art when a FLAC has no picture inside | T4c step 3 (done v14) | You |
 | K23 | **Cover viewer**: tap the Now Playing / album cover = black screen with only the cover | v90 | You |
+| K25 | **Tap cover shows original**: Now Playing tap = original cover (default, switch on) or your own picture / GIF (switch off); album page tap always = your own picture / GIF (Settings > Tap cover shows original) | v209 | You |
 | K24 | **Cover shortcut**: press and hold the Now Playing cover = open lyrics (Settings > Cover shortcuts) | v90 | You |
 | K26 | **Popup that fits any picture**: the author's message and "Update available" share one look (black background, picture, text, liquid glass buttons); any shape or size is scaled to fit | v104 | You |
 | K27 | **In-app updates**: "Update available" when a newer build is published; the update is mandatory since v138 (no Later, the screen cannot be closed); picture or docs changes never trigger it; an update whose signature the phone cannot read is no longer blocked as a "different key" (Android's installer still refuses a truly different key) | v95 to v104 | You |

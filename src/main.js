@@ -131,7 +131,7 @@ const APP_VERSION = pkg.version;
 const APP_BUILD = String(pkg.version).split('.')[1] || pkg.version;   // 0.208.0 -> 208, the number the README, UPDATES and the workflow use
 /* ---------- settings (persisted) ---------- */
 const TAB_MIN = 40, TAB_MAX = 220, NPC_MIN = 40, NPC_MAX = 100;
-const DEF = { contrast: false, motion: false, refract: true, albumInfo: true, bigCovers: false, redHover: true, anim: {}, lyricSize: 'Medium', userName: '', npCover: 0, npImmersive: false, home: null, tabSize: 'Medium', lyricStyle: 'classic', bgDim: 40, bgFit: 'fill', lyAnim: {}, coverLyrics: true, autoplay: true, autoCheck: true, smartArtists: true, sort: {}, recent: [] };
+const DEF = { contrast: false, motion: false, refract: true, albumInfo: true, bigCovers: false, redHover: true, anim: {}, lyricSize: 'Medium', userName: '', npCover: 0, npImmersive: false, npTapOrig: true, home: null, tabSize: 'Medium', lyricStyle: 'classic', bgDim: 40, bgFit: 'fill', lyAnim: {}, coverLyrics: true, autoplay: true, autoCheck: true, smartArtists: true, sort: {}, recent: [] };
 let set = { ...DEF };
 try { set = { ...DEF, ...JSON.parse(localStorage.getItem('lf.settings') || '{}') }; } catch {}
 if (!['Small', 'Medium', 'Large'].includes(set.lyricSize)) set.lyricSize = DEF.lyricSize; set.lyricPx = cleanLyPx(set.lyricPx, set.lyricSize);   // v148: free lyrics size (an older Small / Medium / Large keeps its size)
@@ -724,6 +724,7 @@ const sub = {
       <button class="setrow" data-act="lyricsize" style="width:100%;text-align:left"><span class="tx"><b>Lyrics</b><span>Text size: ${lyName(cleanLyPx(set.lyricPx, set.lyricSize))}</span></span>${I.chev}</button>
       <button class="setrow" data-act="lyranimopen" style="width:100%;text-align:left"><span class="tx"><b>Lyrics animation</b><span>Glide, fade, size, brightness and blur of the lyric lines.</span></span>${I.chev}</button>
       ${row('Immersive album cover', 'Now Playing shows the album cover across the whole screen, fading into the cover\'s colour behind the song name and the controls (Apple Music style). Off = the cover sits in a rounded square.', tg('npImmersive', !!set.npImmersive))}
+      ${row('Tap cover shows original', 'On Now Playing, tapping the cover opens it full screen. On = it shows the original cover from the music file. Off = it shows only your own picture or GIF for that song or album (if you set one). Everywhere else, your own picture or GIF is always shown, even when tapped.', tg('npTapOrig', set.npTapOrig !== false))}
       ${row('Cover shortcuts', 'On Now Playing: tap the cover to see it full screen, press and hold it to open the lyrics. Turn off to keep only the tap.', tg('coverLyrics', set.coverLyrics !== false))}
       ${row('Increase Contrast', 'Increase color contrast between app foreground and background colors.', tg('contrast', set.contrast))}</div>
     <div class="sethead">Home</div><div class="setcard">
@@ -1977,7 +1978,7 @@ function applyImportedSettings() {
     set.home = cleanHome(set.home); set.anim = (set.anim && typeof set.anim === 'object' && !Array.isArray(set.anim)) ? set.anim : {};   // BUG-431: clean the values applySettings() reads, so a bad imported value cannot throw halfway
     if (!Number.isFinite(+set.tabPct)) set.tabPct = 100; set.tabPct = Math.min(TAB_MAX, Math.max(TAB_MIN, Math.round(+set.tabPct)));
     set.npCover = +set.npCover > 0 ? Math.min(NPC_MAX, Math.max(NPC_MIN, Math.round(+set.npCover))) : 0;
-    set.npImmersive = set.npImmersive === true;
+    set.npImmersive = set.npImmersive === true; set.npTapOrig = set.npTapOrig !== false;
     set.lyAnim = cleanLya(set.lyAnim); set.bgDim = cleanDim(set.bgDim); set.bgFit = cleanFit(set.bgFit);
     if (!['classic', 'cover'].includes(set.lyricStyle)) set.lyricStyle = DEF.lyricStyle;
     if (!['Small', 'Medium', 'Large'].includes(set.lyricSize)) set.lyricSize = DEF.lyricSize; set.lyricPx = cleanLyPx(set.lyricPx, set.lyricSize);
@@ -2494,19 +2495,21 @@ on('onTrackChanged', () => { if ($('#lyr')?.classList.contains('open') && Native
 /* ---------- v90: album cover viewer + cover gestures. Tap the cover = black screen with only the cover. On Now Playing, press and hold = lyrics (Settings > Cover shortcuts). ---------- */
 let cvvAt = 0;
 function coverHtml(a) { return `<span class="cover blk" style="--g:${a && a.g}"></span>`; }   // v158: the full-screen cover viewer always shows the REAL (original / embedded) cover, never a custom picture/GIF layered on top (gOf() would add that layer; a.g is the plain cover, same rule as the listening stats and yearly recap)
+function coverHtmlC(a) { return `<span class="cover blk" style="--g:${a && a._t ? gOfT(a._t) : gOf(a)}"></span>`; }   // v209: the viewer with the person's OWN picture / GIF (song picture first, then the album picture; no custom picture = the original cover, because gOf / gOfT fall back to it)
+const viewHtml = a => (a && a._c ? coverHtmlC(a) : coverHtml(a));   // a._c = show the custom picture: album pages always; Now Playing only when Settings > Tap cover shows original is OFF
 function openCover(a) {
   if (!a) return; cvvAt = performance.now();
   let v = $('#cvv');
   if (!v) { $('#app').insertAdjacentHTML('beforeend', '<button class="cvv" id="cvv" aria-label="Close album cover"></button>'); v = $('#cvv'); }
-  v.innerHTML = coverHtml(a); v.dataset.np = a._np ? '1' : ''; v.focus({ preventScroll: true });
+  v.innerHTML = viewHtml(a); v.dataset.np = a._np ? '1' : ''; v.dataset.cu = a._c ? '1' : ''; v.focus({ preventScroll: true });
 }
 function closeCover() { const v = $('#cvv'); if (v) { v.remove(); const b = $('#np .art'); if (b && $('#np').classList.contains('open')) b.focus({ preventScroll: true }); } }
 document.addEventListener('click', e => { const v = e.target.closest && e.target.closest('#cvv'); if (v && performance.now() - cvvAt > 300) closeCover(); });
-on('onTrackChanged', () => { const v = $('#cvv'); if (v && v.dataset.np === '1' && Native.current()) v.innerHTML = coverHtml(trackAlbum(Native.current())); });
+on('onTrackChanged', () => { const v = $('#cvv'); if (v && v.dataset.np === '1' && Native.current()) { const t = Native.current(); v.innerHTML = viewHtml({ ...trackAlbum(t), _t: t, _c: v.dataset.cu === '1' }); } });
 {
   const ART = '.np .art, .detail-art';
   let g = null; const stop = () => { if (g) clearTimeout(g.t); g = null; };
-  const show = art => { if (art.closest('.np')) { const t = Native.current(); if (t) openCover({ ...trackAlbum(t), _np: true }); } else { const top = stack[stack.length - 1], al = top && top.t === 'album' ? byAlbum(top.id) : null; if (al) openCover(al); else if (top && top.t === 'playlist' && picsOf(playlists.find(x => x.id === top.id)).length) ppOpen(top.id, 0); } };   // v132: a playlist cover with pictures opens the viewer
+  const show = art => { if (art.closest('.np')) { const t = Native.current(); if (t) openCover({ ...trackAlbum(t), _np: true, _t: t, _c: set.npTapOrig === false }); } else { const top = stack[stack.length - 1], al = top && top.t === 'album' ? byAlbum(top.id) : null; if (al) openCover({ ...al, _c: true }); else if (top && top.t === 'playlist' && picsOf(playlists.find(x => x.id === top.id)).length) ppOpen(top.id, 0); } };   // v132: a playlist cover with pictures opens the viewer
   document.addEventListener('pointerdown', e => {
     const art = e.target.closest && e.target.closest(ART); if (!art || (e.button || 0) > 0 || $('#cvv') || e.isPrimary === false) return;
     stop();   // BUG-16: a new touch cancels the old long-press timer
@@ -2801,7 +2804,7 @@ document.addEventListener('click', e => {
     case 'shuf': Native.setShuffle(!Native.state.shuffle).catch(playFail); break;
     case 'rep': Native.setRepeat({ off: 'all', all: 'one', one: 'off' }[Native.state.repeat] || 'all').catch(playFail); break;
     case 'anim-preset': { set.anim = { ...(PRESETS[d.p] || PRESETS.default) }; applySettings(); for (const i of document.querySelectorAll('input[data-ak]')) { i.value = set.anim[i.dataset.ak]; const em = document.querySelector(`[data-av="${i.dataset.ak}"]`); if (em) em.textContent = Math.round(set.anim[i.dataset.ak]) + '%'; } break; }
-    case 'tg': { const dflt = d.k === 'albumInfo' || d.k === 'smartArtists'; set[d.k] = dflt ? set[d.k] === false : !set[d.k]; applySettings(); if (d.k === 'npImmersive') npApplyTint(Native.current()); b.classList.toggle('on', dflt ? set[d.k] !== false : !!set[d.k]); if (d.k === 'smartArtists') { stack = stack.filter(s => s.t !== 'artist' || artistInfo(s.id).count > 0); stack.forEach(s => { if (s.t === 'artist') s.id = unesc(artistName(E(s.id)) || E(s.id)); }); repaintAll(); toast(set.smartArtists !== false ? 'Smart artist grouping on' : 'Smart artist grouping off'); } break; }
+    case 'tg': { const dflt = d.k === 'albumInfo' || d.k === 'smartArtists' || d.k === 'npTapOrig'; set[d.k] = dflt ? set[d.k] === false : !set[d.k]; applySettings(); if (d.k === 'npImmersive') npApplyTint(Native.current()); b.classList.toggle('on', dflt ? set[d.k] !== false : !!set[d.k]); if (d.k === 'smartArtists') { stack = stack.filter(s => s.t !== 'artist' || artistInfo(s.id).count > 0); stack.forEach(s => { if (s.t === 'artist') s.id = unesc(artistName(E(s.id)) || E(s.id)); }); repaintAll(); toast(set.smartArtists !== false ? 'Smart artist grouping on' : 'Smart artist grouping off'); } break; }
     case 'abloop': abAction(); break;
     case 'apic-edit': apicEdit(d.id); break;
     case 'gp-edit': gpEdit(d.id); break;

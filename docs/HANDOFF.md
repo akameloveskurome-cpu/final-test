@@ -35,6 +35,8 @@ Current version is 0.146.0 (`package.json`, `package-lock.json`). New: `backgrou
 ## Custom pictures REPLACE originals (no version change, still 0.208.0)
 `gOf`, `gOfT`, `apicOf`, `genreCov` in `src/main.js` draw `url(custom) center/cover no-repeat, ${PIC_BASE}` (`PIC_BASE = '#111'`): nothing of the original cover is underneath. `plArt` shows a plain square while a playlist picture loads and the original mosaic only if it cannot be shown. `BG_DIM_DEF` is 0 (was 40). Do NOT put the original back under a custom picture. Reset buttons (`alpReset`, `spReset`, `gpReset`, `apic-reset`, `pp-reset`) restore the original.
 
+**v209 cover viewer (tap on a cover):** `coverHtml(a)` = the ORIGINAL cover (`a.g`); `coverHtmlC(a)` = the custom layer (`gOfT(a._t)` song first, else `gOf(a)` album); `viewHtml(a)` picks by `a._c`. Now Playing tap passes `_c: set.npTapOrig === false` (setting `npTapOrig`, default ON, Settings > Tap cover shows original); the album page tap always passes `_c: true`. Test: `tests/cover-tap-v209.test.mjs`. Stats, recap and widgets still use the original cover only.
+
 ## Lyrics colour wheel (no version change, still 0.208.0)
 The Lyrics colour sheet uses an in-app wheel (`lycolSheet`, `lycDrag`, `hsvHex`, `hexHSV` in `src/main.js`; `.lycwheel` CSS) instead of `<input type="color">`. Do not bring the system dialog or preset squares back. See `HANDOFF_STATUS.md`.
 Colours are EXACT: `coverPal()` returns `exactPal(hex)` for a picked colour; `coverTint()` (Auto) averages the RGB of the cover's main hue cluster (`avgOf`). Do not route them through `palFrom()` / `vivid()` (that made dark picks vivid). Auto is the average of the main colour area, not of the whole picture.

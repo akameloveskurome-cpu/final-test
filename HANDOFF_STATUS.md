@@ -7,6 +7,12 @@
 
 
 
+## Tap on a cover: original only on Now Playing, your own picture elsewhere (no version change, still 0.208.0)
+- **Changed:** `src/main.js` (new setting `npTapOrig`, default ON; new `coverHtmlC()` + `viewHtml()` next to `coverHtml()`; `openCover()` / the cover-tap `show()` / the track-change refresh pass `_c` and `_t`; one new row in Settings), `src/settingsio.js` (plain label for the import sheet), `tests/cover-tap-v209.test.mjs` (new), `README.md`, `docs/FEATURES.md`, `docs/HANDOFF.md`, `UPDATES.md`.
+- **Why:** owner: the original cover should open only when tapping the cover on the Now Playing screen; tapping an album cover anywhere else must show the custom picture / GIF the person uploaded; plus an option for what the Now Playing tap shows.
+- **Behaviour:** Now Playing tap = original cover by default; with Settings > Tap cover shows original OFF it shows the song's own picture, else the album's picture, else the original. The album page's big cover always shows the custom picture / GIF (no custom = original).
+- **DO NOT REDO / DO NOT UNDO:** `coverHtml()` stays exactly as it was (it is the original-cover viewer, and `picsync-v151`, `pics-v163` and `songpics-v165` guard its text). The listening stats, yearly recap and home screen widgets still always use the original cover. Do not make the custom viewer paint `a.g` underneath (a custom picture REPLACES the original).
+
 ## Launcher icon: the whole picture is visible, nothing cut (no version change, still 0.208.0)
 - **Changed:** `scripts/apply-app-logo.py` (`ADAPTIVE_VISIBLE = 72/108`; `adaptive_layers()` fits the picture into it), `tests/apply-app-logo.test.mjs`, `app-logo-pic/README.md`, `docs/FEATURES.md`, `docs/HANDOFF.md`, `UPDATES.md`.
 - **Why:** owner: a 4000x4000 full-bleed picture (Citrus) came out cut on the home screen while a picture with black space around the subject did not. Android shows only the middle 72 of 108 dp of an adaptive icon, so a full-size picture loses its outer third. Owner picked the "fit the whole picture" version.
