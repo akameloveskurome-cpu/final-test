@@ -2348,29 +2348,70 @@ const lycHexNorm = v => { let h = String(v).trim().replace(/^#/, '').toLowerCase
 async function lycolSheet() {
   const t = Native.current(); if (!t) return;
   const p = await coverTint(trackAlbum(t), t), o = lycMap()[p.ck];
-  const cur = o?.hex || '#fa243c', custom = !!o?.hex;
+  const cur = o?.hex || '#ffaa95', custom = !!o?.hex;
+  lycHSV = hexHSV(cur);
   $('#sheet').innerHTML = sheetHtml(`<b>Lyrics colour</b><p>${t.title}</p>
-    <div class="lycbig"><label class="lycring" aria-label="Pick any colour"><input type="color" id="lychex" value="${cur}"><i id="lycfill" style="background:${cur}"></i></label><div class="lycbigtx"><b>Pick any colour you like</b><span>Tap the circle and choose a colour, or type a hex code below.</span></div></div>
-    <label class="lychexbox"><span>Hex code</span><em>#</em><input type="text" id="lychextxt" value="${cur.slice(1).toUpperCase()}" maxlength="7" placeholder="FA243C" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Hex colour code, for example FA243C"></label>
+    <div class="lycrow"><div class="lycwheel" id="lycwheel" aria-label="Colour wheel: drag the circle to choose a colour"><i class="lycknob" id="lycknob"></i></div><div class="lycprev" id="lycprev" style="background:${cur}"></div></div>
+    <div class="lycbright" id="lycbright" aria-label="Brightness"><i class="lycbk" id="lycbk"></i></div>
+    <label class="lychexbox"><span>Hex code</span><em>#</em><input type="text" id="lychextxt" value="${cur.slice(1).toUpperCase()}" maxlength="7" placeholder="FFAA95" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Hex colour code, for example FFAA95"></label>
     <div class="lycauto${custom ? '' : ' on'}" id="lycauto"><i style="background:${p.a}"></i><span><b>Auto</b> takes the colour from this song's album cover (or the picture you set for the song). Shown here: the colour Auto uses now.</span></div>
-    <p class="lychint" id="lychint">${custom ? 'Your colour is used for this album\'s lyrics.' : 'Now: Auto, the colour comes from the album cover. Pick or type a colour to change it.'}</p>
+    <p class="lychint" id="lychint">${custom ? 'Your colour is used for this album\'s lyrics.' : 'Now: Auto, the colour comes from the album cover. Drag the circle to change it.'}</p>
     <div class="actions"><button data-act="lyc-pick" data-i="-1"${custom ? '' : ' disabled'}>Back to Auto (cover colour)</button><button data-act="sheet-close">Done</button></div>`);
+  lycPaint();
 }
-function lycSetHex(raw) {
+// v208+: the colour wheel is built in the app (drag the small circle round the wheel; slider = brightness). No Android colour dialog, no preset squares.
+let lycHSV = { h: 10, s: .42, v: 1 }, lycTimer = 0;
+function hsvHex(h, s, v) {
+  const f = n => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
+  return '#' + [f(5), f(3), f(1)].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join('');
+}
+function hexHSV(hex) {
+  const n = parseInt(hex.slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b); let h = 0;
+  if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360; }
+  return { h, s: mx ? d / mx : 0, v: mx };
+}
+function lycPaint(skipTxt) {
+  const w = $('#lycwheel'), k = $('#lycknob'); if (!w || !k) return;
+  const { h, s, v } = lycHSV, hex = hsvHex(h, s, v), a = h * Math.PI / 180;
+  k.style.left = (50 + 50 * s * Math.sin(a)) + '%'; k.style.top = (50 - 50 * s * Math.cos(a)) + '%'; k.style.background = hsvHex(h, s, 1);
+  const br = $('#lycbright'); if (br) br.style.background = 'linear-gradient(90deg,#000,' + hsvHex(h, s, 1) + ')';
+  const bk = $('#lycbk'); if (bk) { bk.style.left = (v * 100) + '%'; bk.style.background = hex; }
+  const pv = $('#lycprev'); if (pv) pv.style.background = hex;
+  const tx = $('#lychextxt'); if (tx && !skipTxt && document.activeElement !== tx) { tx.value = hex.slice(1).toUpperCase(); tx.classList.remove('bad'); }
+}
+function lycDrag(e) {
+  const w = e.target.closest?.('#lycwheel, #lycbright'); if (!w) return;
+  e.preventDefault(); w.setPointerCapture?.(e.pointerId);
+  const wheel = w.id === 'lycwheel', move = ev => {
+    const r = w.getBoundingClientRect();
+    if (wheel) {
+      const dx = ev.clientX - (r.left + r.width / 2), dy = ev.clientY - (r.top + r.height / 2), rad = r.width / 2;
+      lycHSV.h = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360; lycHSV.s = Math.min(1, Math.hypot(dx, dy) / rad);
+    } else lycHSV.v = Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width));
+    lycPaint(); lycSetHex(hsvHex(lycHSV.h, lycHSV.s, lycHSV.v), true);
+  };
+  const up = () => { w.removeEventListener('pointermove', move); w.removeEventListener('pointerup', up); w.removeEventListener('pointercancel', up); };
+  w.addEventListener('pointermove', move); w.addEventListener('pointerup', up); w.addEventListener('pointercancel', up); move(e);
+}
+document.addEventListener('pointerdown', lycDrag);
+function lycSetHex(raw, fromPicker) {
   const cur = Native.current(); if (!cur) return;
   const hex = lycHexNorm(raw);
-  const fill = $('#lycfill'), pick = $('#lychex'), hint = $('#lychint'), txt = $('#lychextxt');
-  if (fill) fill.style.background = hex; if (pick) pick.value = hex; if (txt && document.activeElement !== txt) txt.value = hex.slice(1).toUpperCase();
+  if (!fromPicker) { lycHSV = hexHSV(hex); lycPaint(true); }
+  const hint = $('#lychint'), txt = $('#lychextxt');
+  if (txt && document.activeElement !== txt) txt.value = hex.slice(1).toUpperCase();
   if (hint) hint.textContent = 'Your colour is used for this album\'s lyrics.'; $('#lycauto')?.classList.remove('on');
   document.querySelector('#sheet [data-act="lyc-pick"]')?.removeAttribute('disabled');
-  coverTint(trackAlbum(cur), cur).then(p => { lycSave(p.ck, { ...hexHS(hex), hex }); npApplyTint(cur); lyApplyTint(cur); });
+  clearTimeout(lycTimer);
+  lycTimer = setTimeout(() => coverTint(trackAlbum(cur), cur).then(p => { lycSave(p.ck, { ...hexHS(hex), hex }); npApplyTint(cur); lyApplyTint(cur); }), fromPicker ? 120 : 0);
 }
 document.addEventListener('input', e => {
   if (e.target.id === 'lychextxt') {
     const ok = lycHexOk(e.target.value); e.target.classList.toggle('bad', !ok && e.target.value.trim() !== '');
-    const hint = $('#lychint'); if (!ok && hint) hint.textContent = 'Type 6 hex digits, for example FA243C (0-9 and A-F).';
+    const hint = $('#lychint'); if (!ok && hint) hint.textContent = 'Type 6 hex digits, for example FFAA95 (0-9 and A-F).';
     if (ok) lycSetHex(e.target.value);
-  } else if (e.target.id === 'lychex') lycSetHex(e.target.value);
+  }
 });
 function setTintVars(el, p, k) { if (!el || !p) return; el.style.setProperty(k, p.a); el.style.setProperty(k + '2', p.b); el.style.setProperty(k + '3', p.c); }
 function clearTintVars(el, k) { if (!el) return; for (const n of [k, k + '2', k + '3']) el.style.removeProperty(n); }

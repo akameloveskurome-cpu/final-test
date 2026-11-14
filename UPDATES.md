@@ -6,6 +6,9 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+## Lyrics colour: a colour wheel you drag instead of colour squares (no version change, still 0.208.0)
+- Lyrics colour (not Auto) now shows a colour wheel. Drag the small circle round the wheel to choose any colour, use the slider for brightness, or type a hex code. The 8 colour squares and the system dialog are gone. "Back to Auto" still returns to the album cover colour.
+
 ## Fix: updates are no longer wrongly blocked with "signed with a different key" (no version change, still 0.208.0)
 - On some phones an update that downloaded correctly was stopped with "the downloaded APK is signed with a different key than the installed app", even though the key was the same. The app now only shows that message when it can read both signatures and they really differ. It first tries two different ways of reading the signature. If it still cannot read the new APK's signature, it lets Android's installer decide, which still refuses a truly different key. Nothing changes for phones where this already worked.
 - If your phone already shows this error, install `liquid-dark.apk` from Releases > Latest build once by hand over the old app (your library and settings stay). After that, updates, including new-logo updates, install from inside the app.

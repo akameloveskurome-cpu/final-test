@@ -960,11 +960,12 @@ html[data-immersive="1"] .np .times{color:rgba(255,255,255,.78)}
 
 /* v148+: Lyrics colour picker (Now Playing > ... > Lyrics colour) */
 .lycrow{display:flex;flex-wrap:wrap;gap:14px 8px;padding:6px 2px 14px}
-.lycbig{display:flex;align-items:center;gap:16px;padding:8px 2px 12px}
-.lycring{position:relative;flex:none;width:92px;height:92px;border-radius:50%;padding:7px;box-sizing:border-box;background:conic-gradient(#ff3b30,#ffcc00,#34c759,#00c7be,#0a84ff,#bf5af2,#ff2d92,#ff3b30);box-shadow:0 2px 12px rgba(0,0,0,.4)}
-.lycring i{display:block;width:100%;height:100%;border-radius:50%;box-shadow:0 0 0 3px #000,inset 0 0 0 2px rgba(255,255,255,.2)}
-.lycring input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;border-radius:50%;cursor:pointer}
-.lycbigtx{display:flex;flex-direction:column;gap:4px;min-width:0}.lycbigtx b{font-size:1.0625rem}.lycbigtx span{color:var(--text-2);font-size:.875rem;line-height:1.35}
+.lycrow{display:flex;align-items:flex-start;gap:14px;padding:6px 2px 12px}
+.lycwheel{position:relative;flex:1;max-width:240px;aspect-ratio:1;border-radius:50%;touch-action:none;cursor:pointer;background:radial-gradient(circle,#fff 0,rgba(255,255,255,0) 72%),conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);box-shadow:0 2px 12px rgba(0,0,0,.4)}
+.lycknob{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;box-sizing:border-box;border:3px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.5);pointer-events:none}
+.lycprev{flex:none;width:44px;align-self:stretch;max-height:240px;border-radius:10px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.lycbright{position:relative;height:16px;margin:2px 14px 16px;border-radius:8px;touch-action:none;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.lycbk{position:absolute;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;box-sizing:border-box;border:3px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.55);pointer-events:none}
 .lychexbox{display:flex;align-items:center;gap:8px;margin:0 2px;padding:10px 14px;border-radius:16px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 .lychexbox span{color:var(--text-2);font-size:.875rem;font-weight:600;margin-right:auto}.lychexbox em{font-style:normal;color:var(--text-2);font-weight:700}
 .lychexbox input{width:92px;background:transparent;border:0;border-bottom:1px solid var(--text-2);color:var(--text);font:inherit;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:left;outline:none}

@@ -9,10 +9,20 @@ const sheet = main.slice(main.indexOf('async function lycolSheet()'), main.index
 test('Lyrics colour sheet: no preset colours (no cover swatches, no Black), one circular picker and a hex box', () => {
   assert.ok(!/p\.sw\.map|lycdot|Colour ' \+ \(i \+ 1\)|'Black'/.test(sheet), 'no preset swatch buttons are built');
   assert.ok(!/lycdot/.test(css), 'the preset dot CSS is gone');
-  assert.match(sheet, /type="color" id="lychex"/);
+  assert.ok(!/type="color"/.test(sheet), 'no Android system colour dialog');
+  assert.match(sheet, /id="lycwheel"/);
+  assert.match(sheet, /id="lycknob"/);
+  assert.match(sheet, /id="lycbright"/);
   assert.match(sheet, /id="lychextxt"[^>]*maxlength="7"/);
-  assert.match(sheet, /Pick any colour you like/);
-  assert.match(sheet, /type a hex code/);
+  assert.match(css, /\.lycwheel\{[^}]*conic-gradient/);
+});
+
+test('wheel: pointer drag sets hue from the angle and saturation from the distance', () => {
+  assert.match(main, /Math\.atan2\(dx, -dy\)/);
+  assert.match(main, /document\.addEventListener\('pointerdown', lycDrag\)/);
+  const hsvHex = (h, s, v) => { const f = n => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); }; return '#' + [f(5), f(3), f(1)].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join(''); };
+  assert.equal(hsvHex(0, 1, 1), '#ff0000'); assert.equal(hsvHex(120, 1, 1), '#00ff00'); assert.equal(hsvHex(240, 1, 1), '#0000ff');
+  assert.equal(hsvHex(0, 0, 1), '#ffffff'); assert.equal(hsvHex(0, 1, 0), '#000000');
 });
 
 test('the hex box accepts 3 or 6 digits, with or without #, and the colour is saved with its hex', () => {

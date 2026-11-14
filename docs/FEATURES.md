@@ -28,7 +28,7 @@ Every AI must treat the **You** items as locked. Anything marked Suggested can b
 | B2 | Red is the main colour (Apple Music red, `#FA243C`) on pure black | You |
 | B3 | Visual glass is YOUR liquid glass from `liquid_all.py` (clear glass, rim light, gliding lens bubble), not Apple's | You |
 | B4 | Bottom bar = floating pill with 4 tabs: **Home, Albums, Library, Search** | You |
-| B4b | **Lyrics colour**: one circular colour picker with a rainbow ring plus a Hex code box (3 or 6 digits, with or without #). No preset colours. "Back to Auto" = the cover's colour | You |
+| B4b | **Lyrics colour**: built-in colour wheel (drag the circle), brightness slider, live preview and a Hex code box (3 or 6 digits, with or without #). No preset colours, no system colour dialog. "Back to Auto" = the cover's colour | You |
 | B5 | Sliding liquid bubble on the tab bar, with the flowing / moving glass feel. Its size is the **Glass bar size** slider (Display options and the Animation screen, one setting) | You |
 | B6 | Liquid glass used in a few places only, not everywhere (see usage map in `docs/HANDOFF.md`) | You |
 | B7 | Large titles, round header buttons (back, 3-dot), Recently Added 2-column grid, mini player above the tab bar | Screenshot |

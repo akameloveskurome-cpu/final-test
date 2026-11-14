@@ -157,7 +157,7 @@ A picture or a GIF works everywhere you can choose one. (GIFs are my favourite. 
 ### Look and feel
 
 - **Black liquid glass** throughout, with red as the only accent. There's no background blur, so long lists stay smooth. Large titles, round header buttons and a mini player above the tab bar.
-- **Lyrics colour: any colour.** Now Playing > ... > Lyrics colour has no preset colours. One big circle with a rainbow ring opens the colour picker, and a Hex code box lets you type any code such as FA243C. Auto takes the colour from the album cover (or the song's own picture); "Back to Auto" returns to it.
+- **Lyrics colour: any colour.** Now Playing > ... > Lyrics colour has no preset colour squares and no Android colour dialog. A colour wheel is built in: drag the small circle round the wheel to pick the colour, use the slider under it for brightness, or type a Hex code such as FFAA95. Auto takes the colour from the album cover (or the song's own picture); "Back to Auto" returns to it.
 - **Glass bar size.** One slider (40 % to 220 %) sets the size of the glass tab bar. It is in Settings > Display options and also in Settings > Liquid glass & wobble (the Animation screen), pinned under the test bar, and both are the same setting, so the size stays the same in the real bar, the test bar and every screen.
 - **Liquid tab bar.** Press and hold, then drag between tabs. The pill stretches like liquid, and the icons it passes over turn red. The same pill is used on the player controls and on button pairs such as Play and Shuffle. Toggles have a liquid knob, and buttons squash when pressed. (Squishy! I poked it for a whole afternoon.)
 - **Lens refraction.** The pill bends the picture behind its rim like thick glass. You can turn it off for plain glass.

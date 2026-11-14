@@ -26,6 +26,9 @@ Current version is 0.146.0 (`package.json`, `package-lock.json`). New: `backgrou
 ## Lyrics colour sheet: only a circular hex picker (no version change, still 0.208.0)
 `lycolSheet()` in `src/main.js` no longer builds preset dots (cover swatches, Black). It shows one big rainbow-ring circle (`<input type="color" id="lychex">`), a Hex code text box (`#lychextxt`, 3 or 6 digits, `#` optional, invalid input shows a red hint) and a "Back to Auto (cover colour)" button (`lyc-pick`, `data-i=-1`, disabled while Auto). `lycSetHex()` saves `{h, s, hex}` per album key (`lf.lycol`) and re-tints in place (no sheet re-render, so typing keeps focus). `.lycdot` CSS and `lycSame` were removed. Older saved black / swatch colours (no `hex`) still tint the lyrics; the sheet shows the default red in the circle for them until a colour is picked. Guard: `tests/lyrics-colour-hex.test.mjs`.
 
+## Lyrics colour wheel (no version change, still 0.208.0)
+The Lyrics colour sheet uses an in-app wheel (`lycolSheet`, `lycDrag`, `hsvHex`, `hexHSV` in `src/main.js`; `.lycwheel` CSS) instead of `<input type="color">`. Do not bring the system dialog or preset squares back. See `HANDOFF_STATUS.md`.
+
 ## Glass bar size (no version change, still 0.208.0)
 The setting `tabPct` (once "Tab bar size") is now called **Glass bar size** everywhere: Settings > Display options row, its aria labels, the import sheet (`GROUP_LABELS` in `src/settingsio.js`), docs. The same slider (`data-tabpct`, % label `data-tabv`) is also on the Animation screen above the animation sliders, so the size is kept and adjustable next to the test bar. One setting, one `setTabPct()`; `tests/glass-bar-size.test.mjs` guards the name and the second slider. Do not rename the stored key `tabPct`/`tabSize`: saved settings and exports use them.
 
