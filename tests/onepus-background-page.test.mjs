@@ -15,8 +15,11 @@ test('OnePlus, OPPO and Realme are detected by oplusPhone(); other brands are no
   assert.match(f, /com\.oplus\.battery/, 'a re-branded ColorOS phone is found by its battery app');
 });
 
-test('on those phones Allow opens App info FIRST (before every other page) and shows the two-tap hint', () => {
-  const a = open.indexOf('if (oplusPhone() && tryStart(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, u)))');
+test('on those phones the battery page found on THIS phone is tried first, then App info + the two-tap hint, all before every other page', () => {
+  const f = open.indexOf('openFoundBatteryPage(pkg)');
+  assert.ok(f > -1 && f < open.indexOf('ACTION_APPLICATION_DETAILS_SETTINGS'), 'discovered page before App info');
+  assert.match(open, /via = "battery-page:" \+ found/);
+  const a = open.indexOf('else if (tryStart(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, u)))');
   const b = open.indexOf('VIEW_ADVANCED_POWER_USAGE_DETAIL');
   assert.ok(a > -1 && a < b, 'App info before the generic battery page');
   assert.match(open, /bgHint\("Tap Battery usage, then turn on Allow background activity"\)/);
@@ -50,4 +53,16 @@ test('the Allow button and the repeat-every-open logic are untouched', () => {
   const B = readFileSync(new URL('../src/bgallow.js', import.meta.url), 'utf8');
   assert.ok(B.includes("trip = true; try { Native.openBackgroundSettings()"));
   assert.match(J, /public void isBackgroundAllowed\(PluginCall call\)/);
+});
+
+test('the battery page is FOUND from the phone\'s own manifests (nothing guessed), only real battery-detail entries are tried, best first, max 6, every one logged', () => {
+  const d = body('private List<String[]> bgDiscover()', 'private String openFoundBatteryPage');
+  assert.match(d, /openXmlResourceParser\("AndroidManifest\.xml"\)/);
+  assert.match(d, /Log\.i\("LiquidNative", "background: found rank "/);
+  const r = body('private static int bgRank', 'private List<String[]> bgDiscover()');
+  for (const k of ['POWER_CONSUMPTION', 'ADVANCED_POWER_USAGE_DETAIL', 'APP_BATTERY', 'SAVER', 'OPTIMIZ']) assert.ok(r.includes(k), k);
+  const o = body('private String openFoundBatteryPage', '@PluginMethod\n  public void openBackgroundSettings');
+  assert.match(o, /tries\+\+ >= 6/);
+  assert.match(o, /Log\.i\("LiquidNative", "background: try "/);
+  assert.match(d, /exported && !off/, 'only exported, enabled pages');
 });

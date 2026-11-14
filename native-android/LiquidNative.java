@@ -1913,6 +1913,80 @@ public class LiquidNative extends Plugin {
     ui.post(new Runnable() { @Override public void run() { try { android.widget.Toast.makeText(getContext(), text, android.widget.Toast.LENGTH_LONG).show(); } catch (Throwable ignored) { } } });
   }
 
+  /* ---------- OnePlus / OPPO / Realme: find the per-app battery page ("Battery usage" row of App info) on THIS phone ----------
+   * "Manage notifications" opens directly because Android has a public action for it. "Battery usage" has none, and its name differs per OxygenOS / ColorOS version, so nothing is guessed:
+   * the AndroidManifest.xml of the phone's own Settings / battery / power apps is read at run time and only entries that declare a battery-detail action (or a power-consumption / app-battery-detail page) are tried,
+   * best match first, max 6 tries. Every entry found and every try is logged as "background: ...". Nothing opens (or nothing matches) -> App info + toast as before. */
+  private static final String[] BG_PKGS = { "com.android.settings", "com.oplus.battery", "com.coloros.oppoguardelf", "com.oneplus.security", "com.coloros.safecenter", "com.oplus.safecenter", "com.coloros.phonemanager", "com.oplus.phonemanager" };
+  private volatile List<String[]> bgFound;   // { rank, action or "", package, class }
+
+  private static int bgRank(String action, String cls) {
+    String a = action == null ? "" : action.toUpperCase(java.util.Locale.ROOT), c = cls == null ? "" : cls.toLowerCase(java.util.Locale.ROOT).replace("_", "");
+    for (String bad : new String[]{"SAVER", "OPTIMIZ", "WIDGET", "CHARG", "HEALTH", "LOW_POWER", "DOZE", "SAVING", "SCHEDUL"}) if (a.contains(bad)) return -1;
+    if (a.contains("POWER_CONSUMPTION")) return 0;
+    if (a.contains("ADVANCED_POWER_USAGE_DETAIL") || a.contains("APP_POWER_USAGE")) return 1;
+    if (a.contains("APP_BATTERY") && (a.contains("DETAIL") || a.contains("USAGE") || a.contains("SETTING"))) return 2;
+    if (a.contains("BATTERY_DETAIL") || a.contains("POWER_DETAIL")) return 3;
+    if (a.isEmpty() && (c.contains("powerconsumption") || c.contains("appbatterydetail"))) return 4;
+    return -1;
+  }
+
+  private List<String[]> bgDiscover() {
+    List<String[]> cached = bgFound; if (cached != null) return cached;
+    final String NS = "http://schemas.android.com/apk/res/android";
+    List<String[]> out = new ArrayList<>();
+    android.content.pm.PackageManager pm = getContext().getPackageManager();
+    for (String pk : BG_PKGS) {
+      android.content.res.XmlResourceParser x = null;
+      try {
+        pm.getPackageInfo(pk, 0);
+        x = pm.getResourcesForApplication(pk).getAssets().openXmlResourceParser("AndroidManifest.xml");
+        String cls = null; boolean exported = false, hasFilter = false, off = false; String exportedAttr = null; List<String> actions = new ArrayList<>();
+        int ev = x.getEventType();
+        while (ev != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+          String tag = x.getName();
+          if (ev == org.xmlpull.v1.XmlPullParser.START_TAG) {
+            if ("activity".equals(tag) || "activity-alias".equals(tag)) {
+              cls = x.getAttributeValue(NS, "name"); exportedAttr = x.getAttributeValue(NS, "exported"); off = "false".equals(x.getAttributeValue(NS, "enabled")); hasFilter = false; actions = new ArrayList<>();
+              if (cls != null && cls.startsWith(".")) cls = pk + cls; else if (cls != null && cls.indexOf('.') < 0) cls = pk + "." + cls;
+            } else if ("intent-filter".equals(tag) && cls != null) hasFilter = true;
+            else if ("action".equals(tag) && cls != null) { String an = x.getAttributeValue(NS, "name"); if (an != null) actions.add(an); }
+          } else if (ev == org.xmlpull.v1.XmlPullParser.END_TAG && ("activity".equals(tag) || "activity-alias".equals(tag)) && cls != null) {
+            exported = exportedAttr != null ? "true".equals(exportedAttr) : hasFilter;
+            if (exported && !off) {
+              boolean any = false;
+              for (String an : actions) { int r = bgRank(an, cls); if (r >= 0) { out.add(new String[]{ String.valueOf(r), an, pk, cls }); any = true; } }
+              if (!any) { int r = bgRank("", cls); if (r >= 0) out.add(new String[]{ String.valueOf(r), "", pk, cls }); }
+            }
+            cls = null;
+          }
+          ev = x.next();
+        }
+      } catch (Throwable t) { Log.i("LiquidNative", "background: manifest of " + pk + " not read (" + t + ")"); }
+      finally { try { if (x != null) x.close(); } catch (Throwable ignored) { } }
+    }
+    java.util.Collections.sort(out, new java.util.Comparator<String[]>() { @Override public int compare(String[] a, String[] b) { return a[0].compareTo(b[0]); } });
+    for (String[] f : out) Log.i("LiquidNative", "background: found rank " + f[0] + " " + f[2] + "/" + f[3] + " action=" + f[1]);
+    bgFound = out; return out;
+  }
+
+  /** Tries the entries found by bgDiscover() (best first, max 6, package passed as data and extras). Returns "package/class" of the one that started, or "". */
+  private String openFoundBatteryPage(String pkg) {
+    int tries = 0;
+    for (String[] f : bgDiscover()) {
+      if (tries++ >= 6) break;
+      Intent i = new Intent();
+      if (!f[1].isEmpty()) i.setAction(f[1]);
+      i.setClassName(f[2], f[3]);
+      i.setData(Uri.parse("package:" + pkg));
+      i.putExtra("package_name", pkg); i.putExtra("packageName", pkg); i.putExtra("pkg_name", pkg); i.putExtra("package", pkg); i.putExtra("android.intent.extra.PACKAGE_NAME", pkg);
+      boolean ok = tryStart(i);
+      Log.i("LiquidNative", "background: try " + f[2] + "/" + f[3] + " action=" + f[1] + (ok ? " started" : " did not start"));
+      if (ok) return f[2] + "/" + f[3];
+    }
+    return "";
+  }
+
   @PluginMethod
   public void openBackgroundSettings(final PluginCall call) {
     // The package scan on OnePlus / OPPO / Realme is slow, so everything runs on LIB_POOL (same reason as BUG-399 for the equalizer); startActivity with NEW_TASK works from any thread.
@@ -1920,9 +1994,14 @@ public class LiquidNative extends Plugin {
       String pkg = getContext().getPackageName();
       Uri u = Uri.parse("package:" + pkg);
       String via = "";
-      if (oplusPhone() && tryStart(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, u))) {   // OnePlus / OPPO / Realme: App info first; Battery usage inside it is the Power consumption controls page
-        via = "app-info:battery-usage";
-        bgHint("Tap Battery usage, then turn on Allow background activity");
+      if (oplusPhone()) {   // OnePlus / OPPO / Realme: the per-app battery page found on this phone (Power consumption controls), else App info + toast
+        String found = "";
+        try { found = openFoundBatteryPage(pkg); } catch (Throwable t) { Log.w("LiquidNative", "background: discovery failed " + t); }
+        if (!found.isEmpty()) { via = "battery-page:" + found; bgHint("Turn on Allow background activity"); }
+        else if (tryStart(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, u))) {
+          via = "app-info:battery-usage";
+          bgHint("Tap Battery usage, then turn on Allow background activity");
+        }
       }
       if (via.isEmpty()) {
         if (tryStart(new Intent("android.settings.VIEW_ADVANCED_POWER_USAGE_DETAIL", u))) via = "battery-usage";
