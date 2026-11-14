@@ -6,6 +6,9 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+## Allow on the background card now opens the right page on OnePlus
+- **Changed:** on **OnePlus** phones, tapping **Allow** on the "Keep the music playing" card now opens Liquid Dark's own **Power consumption controls** page, where **Allow background activity** is. If the phone does not let apps open it, the same battery page as before opens. Other phone brands are unchanged. The card still comes back every time the app is opened until background activity is allowed.
+
 ## Equalizer opens your phone's own sound page: Dirac Audio Tuner on OnePlus
 - **Changed:** on **OnePlus** phones the Equalizer row in Settings now goes straight to **Dirac Audio Tuner** (Smart, Movie, Game, Music). On **OPPO and Realme** it still opens Real Sound Technology, exactly as before. On every other phone (Samsung, Vivo, Xiaomi, Huawei, Motorola...) it opens that phone's own sound effects page; if the phone does not let apps open it, you land on Sound & vibration and a short message tells you which row to tap.
 - Only the phone's built-in pages are used, never an equalizer app you installed yourself.

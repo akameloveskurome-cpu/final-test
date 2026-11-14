@@ -1894,24 +1894,95 @@ public class LiquidNative extends Plugin {
     return "";
   }
 
-  @PluginMethod
-  public void openBackgroundSettings(PluginCall call) {
-    String pkg = getContext().getPackageName();
-    Uri u = Uri.parse("package:" + pkg);
-    String via = "";
-    if (tryStart(new Intent("android.settings.VIEW_ADVANCED_POWER_USAGE_DETAIL", u))) via = "battery-usage";
-    else {
-      String oem = openOemBackgroundPage(pkg);   // v209: the phone brand's own page (Oppo / Realme / OnePlus, Vivo, Samsung, Huawei, Xiaomi...)
-      if (!oem.isEmpty()) via = "oem:" + oem;
-      else {
-        Intent mi = new Intent(); mi.setClassName("com.miui.powerkeeper", "com.miui.powerkeeper.ui.HiddenAppsConfigActivity"); mi.putExtra("package_name", pkg); mi.putExtra("package_label", "Liquid Dark");
-        if (tryStart(mi)) via = "miui";
-        else if (android.os.Build.VERSION.SDK_INT >= 23 && tryStart(new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, u))) via = "ignore-dialog";
-        else if (android.os.Build.VERSION.SDK_INT >= 23 && tryStart(new Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))) via = "optimization-list";
-        else if (tryStart(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, u))) via = "app-info";
+  /* ---------- OnePlus (OxygenOS): the app's own "Power consumption controls" page ----------
+   * That page (title = the app name; Allow foreground activity / Allow background activity / Allow auto launch / Force stop) is where the switch lives, so on OnePlus it is tried FIRST,
+   * before Android's generic battery page (which on OxygenOS is not that page). OPPO / Realme are NOT changed (same order as before). Its class name differs between OxygenOS / ColorOS versions, so:
+   *   1. the known class names are tried (package name passed as extra and as package: data)
+   *   2. otherwise an exported page of a pre-installed battery / power app whose class name says "power consumption" (or "app battery detail") is found at run time and remembered for the session
+   * Every try and every candidate is written to the app log as "background: ...". If nothing opens, the older order below runs unchanged. */
+  private static boolean onePlus() {
+    String m = ((android.os.Build.MANUFACTURER == null ? "" : android.os.Build.MANUFACTURER) + " " + (android.os.Build.BRAND == null ? "" : android.os.Build.BRAND)).toLowerCase(java.util.Locale.ROOT);
+    return m.contains("oneplus");   // OnePlus only: OPPO / Realme keep the order they had before
+  }
+
+  private boolean bgStart(ComponentName c, String pkg) {
+    Intent i = new Intent(); i.setComponent(c);
+    i.setData(Uri.parse("package:" + pkg));
+    i.putExtra("package_name", pkg); i.putExtra("packageName", pkg); i.putExtra("pkg_name", pkg); i.putExtra("android.intent.extra.PACKAGE_NAME", pkg);
+    boolean ok = tryStart(i);
+    Log.i("LiquidNative", "background: " + c.flattenToShortString() + (ok ? " opened" : " did not open"));
+    return ok;
+  }
+
+  private volatile ComponentName oplusPageCache;
+
+  /** An exported page of a pre-installed battery / power app that looks like the per-app power page, or null. Best match first: "power consumption", then "app battery detail / usage". */
+  private ComponentName oplusAppPageScan() {
+    android.content.pm.PackageManager pm = getContext().getPackageManager();
+    List<android.content.pm.PackageInfo> all;
+    try { all = pm.getInstalledPackages(android.content.pm.PackageManager.GET_ACTIVITIES); }
+    catch (Exception e) { Log.i("LiquidNative", "background: cannot list the apps"); return null; }
+    ComponentName best = null; int bestRank = 99;
+    List<String> candidates = new ArrayList<>();
+    for (android.content.pm.PackageInfo pi : all) {
+      if (pi.activities == null || !eqSystemApp(pi.applicationInfo)) continue;
+      String pk = eqNorm(pi.packageName);
+      if (!(pk.contains("battery") || pk.contains("power") || pk.contains("oppoguard") || pk.contains("oplus") || pk.contains("coloros") || pk.contains("oneplus") || pk.contains("settings"))) continue;
+      for (android.content.pm.ActivityInfo ai : pi.activities) {
+        if (ai.name == null) continue;
+        String name = eqNorm(ai.name);
+        int rank = name.contains("powerconsumption") ? 0
+                 : (name.contains("appbatterydetail") || name.contains("appbatteryusage") || name.contains("appbatterymanage")) ? 1
+                 : (name.contains("batterydetail") || name.contains("powerdetail") || (name.contains("fuelgaue") && name.contains("detail"))) ? 2 : -1;
+        if (rank < 0) continue;
+        if (candidates.size() < 30) candidates.add(ai.packageName + "/" + ai.name + " exported=" + ai.exported);
+        if (!ai.exported || !ai.enabled) continue;
+        if (rank < bestRank) { bestRank = rank; best = new ComponentName(ai.packageName, ai.name); }
       }
     }
-    JSObject o = new JSObject(); o.put("ok", !via.isEmpty()); o.put("via", via); call.resolve(o);
+    for (String d : candidates) Log.i("LiquidNative", "background: candidate " + d);
+    return best;
+  }
+
+  /** Returns the short name of the page that opened, or "". */
+  private String openOplusAppPage(String pkg) {
+    ComponentName cached = oplusPageCache;
+    if (cached != null) { if (bgStart(cached, pkg)) return cached.flattenToShortString(); oplusPageCache = null; }
+    String[][] known = {
+      { "com.oplus.battery", "com.oplus.powermanager.fuelgaue.PowerConsumptionActivity" },
+      { "com.coloros.oppoguardelf", "com.coloros.powermanager.fuelgaue.PowerConsumptionActivity" } };
+    for (String[] k : known) { ComponentName c = new ComponentName(k[0], k[1]); if (bgStart(c, pkg)) { oplusPageCache = c; return c.flattenToShortString(); } }
+    ComponentName found = null;
+    try { found = oplusAppPageScan(); } catch (Throwable t) { Log.w("LiquidNative", "background: scan failed " + t); }
+    if (found != null && bgStart(found, pkg)) { oplusPageCache = found; return found.flattenToShortString(); }
+    return "";
+  }
+
+  @PluginMethod
+  public void openBackgroundSettings(final PluginCall call) {
+    // The package scan on OnePlus is slow, so everything runs on LIB_POOL (same reason as BUG-399 for the equalizer); startActivity with NEW_TASK works from any thread.
+    LIB_POOL.execute(new Runnable() { @Override public void run() {
+      String pkg = getContext().getPackageName();
+      Uri u = Uri.parse("package:" + pkg);
+      String via = "";
+      if (onePlus()) { String page = openOplusAppPage(pkg); if (!page.isEmpty()) via = "oplus-app:" + page; }   // OnePlus: the app's own Power consumption controls page first
+      if (via.isEmpty()) {
+        if (tryStart(new Intent("android.settings.VIEW_ADVANCED_POWER_USAGE_DETAIL", u))) via = "battery-usage";
+        else {
+          String oem = openOemBackgroundPage(pkg);   // v209: the phone brand's own page (Oppo / Realme / OnePlus, Vivo, Samsung, Huawei, Xiaomi...)
+          if (!oem.isEmpty()) via = "oem:" + oem;
+          else {
+            Intent mi = new Intent(); mi.setClassName("com.miui.powerkeeper", "com.miui.powerkeeper.ui.HiddenAppsConfigActivity"); mi.putExtra("package_name", pkg); mi.putExtra("package_label", "Liquid Dark");
+            if (tryStart(mi)) via = "miui";
+            else if (android.os.Build.VERSION.SDK_INT >= 23 && tryStart(new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, u))) via = "ignore-dialog";
+            else if (android.os.Build.VERSION.SDK_INT >= 23 && tryStart(new Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))) via = "optimization-list";
+            else if (tryStart(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, u))) via = "app-info";
+          }
+        }
+      }
+      Log.i("LiquidNative", "background: settings opened via " + (via.isEmpty() ? "nothing" : via));
+      JSObject o = new JSObject(); o.put("ok", !via.isEmpty()); o.put("via", via); call.resolve(o);
+    } });
   }
 
   @PluginMethod

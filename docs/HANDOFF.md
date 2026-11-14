@@ -5,6 +5,9 @@
 # Liquid Dark: HANDOFF [v148]  (lives at `docs/HANDOFF.md` since v45; read this first; old long notes: docs/archive/HISTORY_v25.md, incl. the full v27 / v28 / v29 / v30 notes at the end)
 
 
+## Session: Allow on the background card opens the OnePlus power page - version stays 0.208.0
+`LiquidNative.openBackgroundSettings` now tries `openOplusAppPage()` FIRST on OnePlus only (known `PowerConsumptionActivity` classes, then a run-time scan of exported pages of pre-installed battery apps); the old order (generic battery page, brand list, ...) is the fallback and unchanged for every other brand. Runs on `LIB_POOL`. Test: `tests/onepus-background-page.test.mjs`. Details and DO NOT REDO: HANDOFF_STATUS.md. Not verified on a real phone.
+
 ## Session: equalizer per phone brand - version stays 0.208.0
 `LiquidNative.openEqualizer` now routes by brand (`eqBrand()`): OnePlus -> `diracRoute()` (Dirac Audio Tuner), OPPO / Realme -> `realSoundRoute()` (UNCHANGED), other brands -> `effectsRoute()` then `eqPanel()` then Sound & vibration. System apps only. Result is `{ via, brand }`; `Native.equalizerHint(brand)` (src/native.js) words the toast. Test: `tests/equalizer-brand-route.test.mjs`. Details and DO NOT REDO: HANDOFF_STATUS.md. Not verified on a real phone.
 
@@ -266,9 +269,9 @@ FLAC first (MP3 and AAC / M4A also play, FEATURES.md A2), local only, 4 tabs (Ho
 
 Web app (src/): a11y.js (44), abloop.js (25), animcfg.js (28), applogo.js (102), artistnames.js (61), artistpics.js (26), autocheck.js (25), bgallow.js (71), bgallowpic.js (35), bgmedia.js (51), blobsafe.js (20), creditpic.js (39), data.js (259), favorites.js (21), glidebar.js (160), greeting.js (94), homecfg.js (184), icons.js (36), idhash.js (4), idrelink.js (97), jelly.js (50), lens.js (35), liquidgroups.js (24), liquidui.js (74), listenio.js (230), listensrc.js (173), listenstats.js (157), log.js (30), lrc.js (72), lstats.js (384), lyanim.js (23), lysize.js (12), main.js (2967), native.js (327), picmirror.js (107), picretry.js (35), plexport.js (127), plforeign.js (228), plpics.js (98), popup.js (107), recent.js (16), reorder.js (14), scanview.js (110), session.js (39), settingsio.js (74), shuffle.js (16), sleep.js (36), snapshot.js (269), songinfo.js (163), sortlist.js (86), splashpic.js (62), statbanpic.js (38), stats.js (81), transfer.js (94), update.js (125), updpic.js (36), zipread.js (48). Also: morph.js, updgate.js.
 
-Android (native-android/): LiquidNative.java (2865), LiquidTiles.java (178), LiquidWidget.java (64), ListenDb.java (223), ListenTracker.java (221), MainActivity.java (119), NowPlayingWidget.java (65), PlaybackService.java (386), SleepTimer.java (18), StatsWidgets.java (383), UpdateDownloadService.java (302), UpdateInstallActivity.java (100), UpdateSupport.java (189). Also: CoverCleanup.java, LoopWatch.java, ScanSizing.java, UpdateGeneration.java.
+Android (native-android/): LiquidNative.java (2936), LiquidTiles.java (178), LiquidWidget.java (64), ListenDb.java (223), ListenTracker.java (221), MainActivity.java (119), NowPlayingWidget.java (65), PlaybackService.java (386), SleepTimer.java (18), StatsWidgets.java (383), UpdateDownloadService.java (302), UpdateInstallActivity.java (100), UpdateSupport.java (189). Also: CoverCleanup.java, LoopWatch.java, ScanSizing.java, UpdateGeneration.java.
 
-Tests (tests/): 201 files (134 *.test.mjs), run with `npm test`.
+Tests (tests/): 202 files (135 *.test.mjs), run with `npm test`.
 
 Not listed here: the workflow (.github/workflows/android.yml), scripts/ (install-native.sh, apply-app-logo.py), docs/. Session notes above are history; the map is the current layout.
 
