@@ -1894,15 +1894,21 @@ public class LiquidNative extends Plugin {
     return "";
   }
 
-  /* ---------- OnePlus (OxygenOS): the app's own "Power consumption controls" page ----------
-   * That page (title = the app name; Allow foreground activity / Allow background activity / Allow auto launch / Force stop) is where the switch lives, so on OnePlus it is tried FIRST,
-   * before Android's generic battery page (which on OxygenOS is not that page). OPPO / Realme are NOT changed (same order as before). Its class name differs between OxygenOS / ColorOS versions, so:
+  /* ---------- OnePlus / OPPO / Realme (OxygenOS / ColorOS / Realme UI): the app's own "Power consumption controls" page ----------
+   * That page (title = the app name; Allow foreground activity / Allow background activity / Allow auto launch / Force stop) is where the switch lives, so on these phones it is tried FIRST,
+   * before Android's generic battery page. (Owner's order after v208: it must work on all phones, so OPPO / Realme joined OnePlus; every other brand goes straight to Android's own
+   * per-app battery page, which is where "Allow background activity" / "Unrestricted" lives on Pixel, Samsung, Motorola, Nothing, Xiaomi... and then to its brand page / the one-tap dialog.)
+   * Its class name differs between OxygenOS / ColorOS versions, so:
    *   1. the known class names are tried (package name passed as extra and as package: data)
    *   2. otherwise an exported page of a pre-installed battery / power app whose class name says "power consumption" (or "app battery detail") is found at run time and remembered for the session
-   * Every try and every candidate is written to the app log as "background: ...". If nothing opens, the older order below runs unchanged. */
-  private static boolean onePlus() {
+   * Every try and every candidate is written to the app log as "background: ...". If nothing opens, the order below runs unchanged. */
+  private boolean oplusPhone() {
     String m = ((android.os.Build.MANUFACTURER == null ? "" : android.os.Build.MANUFACTURER) + " " + (android.os.Build.BRAND == null ? "" : android.os.Build.BRAND)).toLowerCase(java.util.Locale.ROOT);
-    return m.contains("oneplus");   // OnePlus only: OPPO / Realme keep the order they had before
+    if (m.contains("oneplus") || m.contains("oppo") || m.contains("realme") || m.contains("oplus")) return true;
+    for (String pk : new String[]{"com.oplus.battery", "com.coloros.oppoguardelf"}) {   // a re-branded ColorOS phone: its battery app is there
+      try { getContext().getPackageManager().getPackageInfo(pk, 0); return true; } catch (Throwable ignored) { }
+    }
+    return false;
   }
 
   private boolean bgStart(ComponentName c, String pkg) {
@@ -1960,12 +1966,12 @@ public class LiquidNative extends Plugin {
 
   @PluginMethod
   public void openBackgroundSettings(final PluginCall call) {
-    // The package scan on OnePlus is slow, so everything runs on LIB_POOL (same reason as BUG-399 for the equalizer); startActivity with NEW_TASK works from any thread.
+    // The package scan on OnePlus / OPPO / Realme is slow, so everything runs on LIB_POOL (same reason as BUG-399 for the equalizer); startActivity with NEW_TASK works from any thread.
     LIB_POOL.execute(new Runnable() { @Override public void run() {
       String pkg = getContext().getPackageName();
       Uri u = Uri.parse("package:" + pkg);
       String via = "";
-      if (onePlus()) { String page = openOplusAppPage(pkg); if (!page.isEmpty()) via = "oplus-app:" + page; }   // OnePlus: the app's own Power consumption controls page first
+      if (oplusPhone()) { String page = openOplusAppPage(pkg); if (!page.isEmpty()) via = "oplus-app:" + page; }   // OnePlus / OPPO / Realme: the app's own Power consumption controls page first
       if (via.isEmpty()) {
         if (tryStart(new Intent("android.settings.VIEW_ADVANCED_POWER_USAGE_DETAIL", u))) via = "battery-usage";
         else {

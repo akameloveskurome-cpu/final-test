@@ -5,6 +5,9 @@
 # Liquid Dark: HANDOFF [v148]  (lives at `docs/HANDOFF.md` since v45; read this first; old long notes: docs/archive/HISTORY_v25.md, incl. the full v27 / v28 / v29 / v30 notes at the end)
 
 
+## Session: Allow on the background card opens the Power consumption controls page on OnePlus, OPPO and Realme - version stays 0.208.0
+`LiquidNative.openBackgroundSettings` now runs `openOplusAppPage()` FIRST when `oplusPhone()` is true (OnePlus / OPPO / Realme, or a phone that ships `com.oplus.battery` / `com.coloros.oppoguardelf`); this replaced the OnePlus-only `onePlus()` guard by the owner's order ("it must work on all phones"). Every other brand: unchanged chain, first step Android's own per-app battery page (`VIEW_ADVANCED_POWER_USAGE_DETAIL`), then brand list, MIUI, ignore-battery dialog, optimization list, app info. Tests: `tests/onepus-background-page.test.mjs`, java-probe stubs got `getPackageInfo`. Details and DO NOT REDO: HANDOFF_STATUS.md. Not verified on a real phone.
+
 ## Session: Allow on the background card opens the OnePlus power page - version stays 0.208.0
 `LiquidNative.openBackgroundSettings` now tries `openOplusAppPage()` FIRST on OnePlus only (known `PowerConsumptionActivity` classes, then a run-time scan of exported pages of pre-installed battery apps); the old order (generic battery page, brand list, ...) is the fallback and unchanged for every other brand. Runs on `LIB_POOL`. Test: `tests/onepus-background-page.test.mjs`. Details and DO NOT REDO: HANDOFF_STATUS.md. Not verified on a real phone.
 

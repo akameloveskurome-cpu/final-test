@@ -6,6 +6,9 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+## Allow on the background card opens Power consumption controls on OnePlus, OPPO and Realme
+- **Changed:** tapping **Allow** on the "Keep the music playing" card now opens Liquid Dark's own **Power consumption controls** page (where **Allow background activity** is) on **OnePlus, OPPO and Realme** phones, not only OnePlus. On every other phone it opens that phone's own battery page for the app (on Pixel and other recent Android phones: the app's battery usage page, where you pick **Unrestricted**); if the phone does not allow that, it falls back to the one-tap "run in background" box or the app info page. You still have to tap the switch yourself: Android does not let an app turn it on. The card still comes back every time the app is opened until background activity is allowed.
+
 ## Allow on the background card now opens the right page on OnePlus
 - **Changed:** on **OnePlus** phones, tapping **Allow** on the "Keep the music playing" card now opens Liquid Dark's own **Power consumption controls** page, where **Allow background activity** is. If the phone does not let apps open it, the same battery page as before opens. Other phone brands are unchanged. The card still comes back every time the app is opened until background activity is allowed.
 

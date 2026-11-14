@@ -36,7 +36,7 @@ w('android/content/ComponentName.java', 'package android.content; public class C
 w('android/content/pm/ApplicationInfo.java', 'package android.content.pm; public class ApplicationInfo { public static final int FLAG_SYSTEM = 1, FLAG_UPDATED_SYSTEM_APP = 128; public int flags; }')
 w('android/content/pm/ActivityInfo.java', 'package android.content.pm; public class ActivityInfo { public String name, packageName; public boolean exported, enabled; public ApplicationInfo applicationInfo; public CharSequence loadLabel(PackageManager pm) { return ""; } }')
 w('android/content/pm/PackageInfo.java', 'package android.content.pm; public class PackageInfo { public String packageName; public ActivityInfo[] activities; public ApplicationInfo applicationInfo; }')
-w('android/content/pm/PackageManager.java', 'package android.content.pm; public class PackageManager { public static final int GET_ACTIVITIES = 1; public boolean canRequestPackageInstalls() { return true; } public java.util.List<PackageInfo> getInstalledPackages(int f) { return null; } }')
+w('android/content/pm/PackageManager.java', 'package android.content.pm; public class PackageManager { public static final int GET_ACTIVITIES = 1; public boolean canRequestPackageInstalls() { return true; } public java.util.List<PackageInfo> getInstalledPackages(int f) { return null; } public PackageInfo getPackageInfo(String n, int f) { return null; } }')
 wrapper = '''package com.liquid.flacplayer;
 import java.io.*; import java.util.*; import android.content.*; import android.net.Uri; import android.util.Log; import com.getcapacitor.*;
 public class LiquidNativeProbe extends Plugin {
