@@ -741,7 +741,7 @@ const sub = {
     <div class="sethead">Animation</div><div class="setcard">
       <button class="setrow" data-act="animopen" style="width:100%;text-align:left"><span class="tx"><b>Liquid glass &amp; wobble</b><span>Open the animation studio: Glass bar size, liquid wobble and presets. The test bar stays pinned while you change them.</span></span>${I.chev}</button></div>
     <div class="sethead">Playback</div><div class="setcard">${row('Autoplay', 'Add similar songs from your library when the queue runs out.', tg('autoplay', set.autoplay))}
-      <button class="setrow" data-act="eqopen" style="width:100%;text-align:left"><span class="tx"><b>Equalizer</b><span>Opens your phone's Sound & vibration settings, where Real Sound Technology (Smart, Movie, Game, Music) is. Any sound effect changes the sound, so it is no longer bit-perfect.</span></span>${I.chev}</button></div>
+      <button class="setrow" data-act="eqopen" style="width:100%;text-align:left"><span class="tx"><b>Equalizer</b><span>Opens your phone's own equalizer: Dirac Audio Tuner on OnePlus, Real Sound Technology on OPPO and Realme, and the phone's own sound effects page on other phones (Samsung, Vivo...). Any sound effect changes the sound, so it is no longer bit-perfect.</span></span>${I.chev}</button></div>
     <div class="sethead">Bluetooth</div><div class="setcard">
       <button class="setrow" data-act="btopen" style="width:100%;text-align:left"><span class="tx"><b>Bluetooth devices</b><span>Opens Bluetooth settings. A device that connects shows up here.</span></span>${I.chev}</button>
       ${bt.length ? bt.map(d => row(escH(d.name), 'Connected' + (typeof d.battery === 'number' ? ' · Battery ' + d.battery + '%' : ''))).join('') : row('No device connected', '')}</div>
@@ -2904,7 +2904,7 @@ document.addEventListener('click', e => {
     case 'hs-card': set.home = cleanHome({ ...set.home, card: d.v }); applySettings(); renderSub(true); break;
     case 'hs-reset': set.home = cleanHome(null); homeEditP = null; homeRen = null; applySettings(); renderSub(true); renderMain(); toast('Home screen reset'); break;
     case 'btopen': Native.requestBluetooth().catch(() => {}).then(() => Native.openBluetooth()).then(() => toast('Opened Bluetooth settings', 2500)).catch(e => toast(String((e && e.message) || e).replace(/^Error: /, '') || 'Could not open Bluetooth', 3500)); break;
-    case 'eqopen': Native.openEqualizer().then(r => { if (r && r.via === 'settings') toast('Opened Sound & vibration. Tap Real Sound Technology there.', 4500); }).catch(e => toast(String((e && e.message) || e).replace(/^Error: /, '') || 'Could not open the equalizer', 3500)); break;
+    case 'eqopen': Native.openEqualizer().then(r => { if (r && r.via === 'settings') toast(Native.equalizerHint(r.brand), 4500); }).catch(e => toast(String((e && e.message) || e).replace(/^Error: /, '') || 'Could not open the equalizer', 3500)); break;
     case 'lyricstyle': lyStyleSheet(); break;
     case 'lystyleset': set.lyricStyle = b.dataset.v === 'cover' ? 'cover' : 'classic'; applySettings(); closeSheet(); { const sp = document.querySelector('[data-act="lyricstyle"] .tx span'); if (sp) sp.textContent = LYSTYLE[set.lyricStyle]; } lyApplyTint(Native.current() || {}); npApplyTint(Native.current()); break;
     case 'nameedit': nameEdit = true; renderSub(true); nameFocus(); break;

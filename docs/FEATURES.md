@@ -151,7 +151,7 @@ Every AI must treat the **You** items as locked. Anything marked Suggested can b
 | K18 | **Various Artists** handling | T25 (DONE v36 merge, phone test pending) | You |
 | K19 | **Recent searches** | T25 (DONE v36 merge, phone test pending) | You |
 | K20 | **Accessibility** (TalkBack labels, touch size, font size) | T26 (DONE v36 merge, phone test pending; text still px) | You |
-| K21 | **Equalizer** (the AI must ask the user which kind first) | T27 (DONE v36: option A system EQ, phone test pending) | You |
+| K21 | **Equalizer** (the AI must ask the user which kind first) | T27 (DONE v36: option A system EQ, phone test pending). Per brand: OnePlus = Dirac Audio Tuner, OPPO / Realme = Real Sound Technology, other brands = their own sound effects page (`openEqualizer`) | You |
 | K25 | **Background style**: black with red lyrics (default) or the album cover's colour on Now Playing and the lyrics page | v95 | You |
 | K22 | **Cover images from the folder**: `cover.jpg`, `folder.jpg` (also front / albumart / album) count as album art when a FLAC has no picture inside | T4c step 3 (done v14) | You |
 | K23 | **Cover viewer**: tap the Now Playing / album cover = black screen with only the cover | v90 | You |

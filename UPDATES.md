@@ -6,6 +6,10 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+## Equalizer opens your phone's own sound page: Dirac Audio Tuner on OnePlus
+- **Changed:** on **OnePlus** phones the Equalizer row in Settings now goes straight to **Dirac Audio Tuner** (Smart, Movie, Game, Music). On **OPPO and Realme** it still opens Real Sound Technology, exactly as before. On every other phone (Samsung, Vivo, Xiaomi, Huawei, Motorola...) it opens that phone's own sound effects page; if the phone does not let apps open it, you land on Sound & vibration and a short message tells you which row to tap.
+- Only the phone's built-in pages are used, never an equalizer app you installed yourself.
+
 ## Allow cards now come one after the other
 - **Changed:** when both notifications and background activity are off, the notification card comes first (a few seconds after opening). The background-activity card comes 10 seconds after the notification card is gone (after you tap Allow, Later or go back), never at the same time. Each one still shows its own picture or GIF from `notification-popup-gif-pic/` and `background-allow-gif-pic/`.
 - **Allow background activity** now opens the right settings page on more phones (Oppo, Realme, OnePlus, Vivo, Samsung, Huawei, Xiaomi and others), with the normal Android battery page as the first choice.

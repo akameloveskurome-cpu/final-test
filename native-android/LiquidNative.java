@@ -2508,22 +2508,131 @@ public class LiquidNative extends Plugin {
     return soundEffects == null ? null : new Intent(Intent.ACTION_MAIN).setComponent(soundEffects);
   }
 
-  /** Opens Real Sound Technology directly when the phone allows it, otherwise Sound & vibration.
-   *  Resolves { via: "real-sound" } or { via: "settings" }. */
-  /** BUG-399: the Real Sound page found by the package scan is remembered for the session, so the scan runs at most until it finds the page once. */
+  /* ---------- Equalizer per phone brand (the Real Sound route above is for OPPO / Realme and is NOT changed) ----------
+   *   OPPO / Realme : Real Sound Technology (realSoundRoute, unchanged).
+   *   OnePlus       : the "Dirac Audio Tuner" page (Smart / Movie / Game / Music), found at run time by name or label (diracRoute).
+   *   Every other   : that phone's own sound-effects page (Samsung "Sound quality and effects", Vivo / iQOO, Xiaomi, Huawei / Honor, Motorola...):
+   *   brand          1. an exported sound-effects / equalizer page of a PRE-INSTALLED app (effectsRoute)
+   *                  2. else Android's standard equalizer panel, only when a pre-installed app answers it (eqPanel)
+   *                  3. else Sound & vibration (android.settings.SOUND_SETTINGS) and the user taps the row once.
+   * Only pre-installed (system) apps are used, so a Play Store equalizer is never opened by mistake.
+   * Every candidate page found is written to the app log as "equalizer: candidate ...", every try as "equalizer: ...". */
+
+  /** "oneplus", "oppo" (OPPO and Realme) or "other". OnePlus is checked first. */
+  private static String eqBrand() {
+    String s = ((Build.MANUFACTURER == null ? "" : Build.MANUFACTURER) + " " + (Build.BRAND == null ? "" : Build.BRAND)).toLowerCase(Locale.ROOT);
+    if (s.contains("oneplus")) return "oneplus";
+    if (s.contains("oppo") || s.contains("realme")) return "oppo";
+    return "other";
+  }
+
+  /** True for a pre-installed app (or an updated pre-installed app). */
+  private static boolean eqSystemApp(android.content.pm.ApplicationInfo a) {
+    return a != null && (a.flags & (android.content.pm.ApplicationInfo.FLAG_SYSTEM | android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
+  }
+
+  /** OnePlus: the exported "Dirac Audio Tuner" page of a pre-installed app, or null when there is none. Best match first: a page called "Dirac Audio Tuner", then any "Dirac" page, then an "audio / sound tuner" page. */
+  private Intent diracRoute() {
+    android.content.pm.PackageManager pm = getContext().getPackageManager();
+    List<android.content.pm.PackageInfo> all;
+    try { all = pm.getInstalledPackages(android.content.pm.PackageManager.GET_ACTIVITIES); }
+    catch (Exception e) { Log.i("LiquidNative", "equalizer: cannot list the apps"); return null; }
+    ComponentName best = null; int bestRank = 99;
+    List<String> candidates = new ArrayList<>();
+    for (android.content.pm.PackageInfo pi : all) {
+      if (pi.activities == null || !eqSystemApp(pi.applicationInfo)) continue;
+      for (android.content.pm.ActivityInfo ai : pi.activities) {
+        if (ai.name == null) continue;
+        String label = "";
+        try { label = eqNorm(String.valueOf(ai.loadLabel(pm))); } catch (Exception e) { /* no label: match by class name only */ }
+        String name = eqNorm(ai.name);
+        boolean dirac = name.contains("dirac") || label.contains("dirac");
+        boolean tuner = name.contains("audiotuner") || label.contains("audiotuner") || name.contains("soundtuner") || label.contains("soundtuner");
+        if (!dirac && !tuner) continue;
+        if (candidates.size() < 30) candidates.add(ai.packageName + "/" + ai.name + " label=" + label + " exported=" + ai.exported);
+        if (!ai.exported || !ai.enabled) continue;
+        int rank = (name.contains("diracaudiotuner") || label.contains("diracaudiotuner")) ? 0 : dirac ? 1 : 2;
+        if (rank < bestRank) { bestRank = rank; best = new ComponentName(ai.packageName, ai.name); }
+      }
+    }
+    for (String d : candidates) Log.i("LiquidNative", "equalizer: candidate " + d);
+    return best == null ? null : new Intent(Intent.ACTION_MAIN).setComponent(best);
+  }
+
+  /** Words (normalised, see eqNorm) that mark a sound-effects page, best first. */
+  private static final String[] EQ_KEYS = { "equalizer", "soundalive", "soundqualityandeffects", "soundquality", "audioeffect", "soundeffect", "musiceffect", "dolby" };
+
+  /** Other brands: the exported sound-effects / equalizer page of a pre-installed app (not this app), or null when there is none. */
+  private Intent effectsRoute() {
+    android.content.pm.PackageManager pm = getContext().getPackageManager();
+    List<android.content.pm.PackageInfo> all;
+    try { all = pm.getInstalledPackages(android.content.pm.PackageManager.GET_ACTIVITIES); }
+    catch (Exception e) { Log.i("LiquidNative", "equalizer: cannot list the apps"); return null; }
+    String own = getContext().getPackageName();
+    ComponentName best = null; int bestRank = EQ_KEYS.length;
+    List<String> candidates = new ArrayList<>();
+    for (android.content.pm.PackageInfo pi : all) {
+      if (pi.activities == null || own.equals(pi.packageName) || !eqSystemApp(pi.applicationInfo)) continue;
+      for (android.content.pm.ActivityInfo ai : pi.activities) {
+        if (ai.name == null) continue;
+        String label = "";
+        try { label = eqNorm(String.valueOf(ai.loadLabel(pm))); } catch (Exception e) { /* no label: match by class name only */ }
+        String name = eqNorm(ai.name);
+        int rank = -1;
+        for (int k = 0; k < EQ_KEYS.length; k++) { if (name.contains(EQ_KEYS[k]) || label.contains(EQ_KEYS[k])) { rank = k; break; } }
+        if (rank < 0) continue;
+        if (candidates.size() < 30) candidates.add(ai.packageName + "/" + ai.name + " label=" + label + " exported=" + ai.exported);
+        if (!ai.exported || !ai.enabled) continue;
+        if (rank < bestRank) { bestRank = rank; best = new ComponentName(ai.packageName, ai.name); }
+      }
+    }
+    for (String d : candidates) Log.i("LiquidNative", "equalizer: candidate " + d);
+    return best == null ? null : new Intent(Intent.ACTION_MAIN).setComponent(best);
+  }
+
+  /** Android's standard "audio effect control panel" for the song that is playing, only when a pre-installed app answers it. Built fresh every time (the audio session changes). */
+  private Intent eqPanel() {
+    try {
+      Intent i = new Intent(android.media.audiofx.AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL);
+      int session = PlaybackService.audioSession();
+      if (session != 0) i.putExtra(android.media.audiofx.AudioEffect.EXTRA_AUDIO_SESSION, session);
+      i.putExtra(android.media.audiofx.AudioEffect.EXTRA_PACKAGE_NAME, getContext().getPackageName());
+      i.putExtra(android.media.audiofx.AudioEffect.EXTRA_CONTENT_TYPE, android.media.audiofx.AudioEffect.CONTENT_TYPE_MUSIC);
+      android.content.pm.ResolveInfo ri = getContext().getPackageManager().resolveActivity(i, 0);
+      if (ri == null || ri.activityInfo == null || !eqSystemApp(ri.activityInfo.applicationInfo)) return null;
+      return i;
+    } catch (Throwable t) { return null; }
+  }
+
+  /** Opens the phone's own equalizer page for its brand (see the block above), otherwise Sound & vibration.
+   *  Resolves { via: "real-sound" | "dirac" | "effects" | "panel" | "settings", brand: "oppo" | "oneplus" | "other" }. */
+  /** BUG-399: the page found by the package scan is remembered for the session, so the scan runs at most until it finds the page once. */
   private volatile Intent eqRouteCache;
+  private volatile String eqRouteVia = "";
 
   @PluginMethod
   public void openEqualizer(final PluginCall call) {
     // BUG-399: the package scan is slow and used to run on the plugin thread, holding up every other plugin call. It now runs on LIB_POOL; the screen is opened on the main thread.
     LIB_POOL.execute(new Runnable() { @Override public void run() {
-      Intent rs = eqRouteCache;
-      if (rs == null) { try { rs = realSoundRoute(); } catch (Throwable t) { Log.w("LiquidNative", "equalizer: scan failed " + t); rs = null; } if (rs != null) eqRouteCache = rs; }
-      final Intent route = rs;
+      final String brand = eqBrand();
+      Intent rs = eqRouteCache; String found = eqRouteVia;
+      if (rs == null) {
+        try {
+          if ("oppo".equals(brand)) { rs = realSoundRoute(); found = "real-sound"; }
+          else if ("oneplus".equals(brand)) { rs = diracRoute(); found = "dirac"; }
+          else { rs = effectsRoute(); found = "effects"; }
+        } catch (Throwable t) { Log.w("LiquidNative", "equalizer: scan failed " + t); rs = null; }
+        if (rs != null) { eqRouteVia = found; eqRouteCache = rs; }
+      }
+      final Intent route = rs; final String routeVia = found;
       Runnable open = new Runnable() { @Override public void run() {
-        if (route != null && eqStart(new Intent(route), route.getComponent().flattenToShortString())) { JSObject o = new JSObject(); o.put("via", "real-sound"); call.resolve(o); return; }
+        if (route != null && eqStart(new Intent(route), route.getComponent().flattenToShortString())) { JSObject o = new JSObject(); o.put("via", routeVia); o.put("brand", brand); call.resolve(o); return; }
         if (route != null) eqRouteCache = null;   // the remembered page no longer opens: scan again next time
-        if (eqStart(new Intent("android.settings.SOUND_SETTINGS"), "Sound & vibration")) { JSObject o = new JSObject(); o.put("via", "settings"); call.resolve(o); return; }
+        if ("other".equals(brand)) {
+          Intent panel = eqPanel();
+          if (panel != null && eqStart(panel, "system equalizer panel")) { JSObject o = new JSObject(); o.put("via", "panel"); o.put("brand", brand); call.resolve(o); return; }
+        }
+        if (eqStart(new Intent("android.settings.SOUND_SETTINGS"), "Sound & vibration")) { JSObject o = new JSObject(); o.put("via", "settings"); o.put("brand", brand); call.resolve(o); return; }
         call.reject("Could not open Sound settings on this phone");
       } };
       try { getActivity().runOnUiThread(open); } catch (Throwable t) { call.reject("Could not open Sound settings on this phone"); }

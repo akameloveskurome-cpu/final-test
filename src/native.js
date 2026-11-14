@@ -125,8 +125,15 @@ export const Native = {
   /** Shuffle All: shuffle on, start on a random song of the list. */
   playShuffled(list) { if (!list || !list.length) return Promise.resolve(); s.shuffle = true; return Native.play(list, Math.floor(Math.random() * list.length)); },
   async setRepeat(m) { s.repeat = m; emit('onRepeatChanged', m); await nat('setRepeat', { mode: m }); },
-  /** T27: open Real Sound Technology (inside Settings > Sound & vibration) if the phone allows it, else Sound & vibration. Resolves { via: "real-sound" | "settings" }. Browser: rejects. */
+  /** T27: open the phone's own equalizer page for its brand: OPPO / Realme = Real Sound Technology, OnePlus = Dirac Audio Tuner, every other brand = its own sound-effects page (Samsung, Vivo...), else Sound & vibration.
+   *  Resolves { via: "real-sound" | "dirac" | "effects" | "panel" | "settings", brand: "oppo" | "oneplus" | "other" }. Browser: rejects. */
   async openEqualizer() { if (!N) throw new Error('Only on the phone'); return await N.openEqualizer(); },
+  /** What to tell the person when the equalizer could only open Sound & vibration (via "settings"): the name of the row to tap, per phone brand. */
+  equalizerHint(brand) {
+    if (brand === 'oneplus') return 'Opened Sound & vibration. Tap Dirac Audio Tuner there.';
+    if (brand === 'oppo') return 'Opened Sound & vibration. Tap Real Sound Technology there.';
+    return 'Opened Sound & vibration. Look for Sound effects, Audio effects or Equalizer there.';
+  },
   /** v77: open the phone's Bluetooth settings. Browser: rejects. */
   async openBluetooth() { if (!N) throw new Error('Only on the phone'); return await N.openBluetooth(); },
   /** v82: ask for the Bluetooth permission (battery %). Resolves { granted }. */
