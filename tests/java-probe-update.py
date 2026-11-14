@@ -30,6 +30,7 @@ w('android/app/ActivityManager.java', 'package android.app; public class Activit
 w('android/provider/Settings.java', 'package android.provider; public class Settings { public static final String ACTION_MANAGE_UNKNOWN_APP_SOURCES = "a", ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS = "b", ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS = "c", ACTION_APPLICATION_DETAILS_SETTINGS = "d"; }')
 w('android/content/Intent.java', '''package android.content; public class Intent { public static final String ACTION_VIEW = "v"; public static final int FLAG_GRANT_READ_URI_PERMISSION = 1, FLAG_ACTIVITY_NEW_TASK = 2; public Intent() {} public Intent(String a) {} public Intent(String a, android.net.Uri u) {} public Intent addFlags(int f) { return this; } public Intent setDataAndType(android.net.Uri u, String t) { return this; } public Intent setData(android.net.Uri u) { return this; } public Intent setClassName(String a, String b) { return this; } public Intent putExtra(String k, String v) { return this; } public Intent setComponent(ComponentName c) { return this; } }''')
 w('android/content/Context.java', '''package android.content; public class Context { public static final String POWER_SERVICE = "power"; public static final String ACTIVITY_SERVICE="activity"; public Object getSystemService(String n) { return null; } public android.content.pm.PackageManager getPackageManager() { return null; } public String getPackageName() { return "com.liquid.flacplayer"; } public void startActivity(Intent i) {} }''')
+w('android/widget/Toast.java', 'package android.widget; public class Toast { public static final int LENGTH_LONG = 1; public static Toast makeText(android.content.Context c, CharSequence t, int d) { return new Toast(); } public void show() { } }')
 # stubs for the OnePlus background-settings page (ComponentName, package scan, Log.i / Log.w, LIB_POOL); later w() calls replace the earlier versions
 w('android/util/Log.java', 'package android.util; public class Log { public static int i(String a,String b){return 0;} public static int w(String a,String b){return 0;} public static int e(String a,String b,Throwable t){return 0;} public static int e(String a,String b){return 0;} }')
 w('android/content/ComponentName.java', 'package android.content; public class ComponentName { public ComponentName(String p, String c) {} public String flattenToShortString() { return ""; } }')
@@ -41,6 +42,8 @@ wrapper = '''package com.liquid.flacplayer;
 import java.io.*; import java.util.*; import android.content.*; import android.net.Uri; import android.util.Log; import com.getcapacitor.*;
 public class LiquidNativeProbe extends Plugin {
   static final java.util.concurrent.ExecutorService LIB_POOL = null;
+  static class UiStub { void post(Runnable r) { } }
+  final UiStub ui = new UiStub();
   private static String eqNorm(String s) { return s == null ? "" : s.toLowerCase(java.util.Locale.ROOT).replace(" ", "").replace("_", ""); }
   private static boolean eqSystemApp(android.content.pm.ApplicationInfo a) { return a != null; }
 ''' + body + '\n}\n'
