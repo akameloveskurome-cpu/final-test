@@ -127,7 +127,7 @@ Seven places in the app can show a picture or GIF that you publish in the projec
 
 - **Notification popup** from `notification-popup-gif-pic/`, shown once per upload.
 - **Update popup** from `update-popup-gif-pic/`, on the Update available and Update ready screens.
-- **Opening screen** from `splash-pic/`, shown on a black screen, up to 80% of the screen width and height, fitted to the uploaded picture's shape (never cropped or stretched), for at least 2 seconds when the app opens (pictures only, no GIF). No blink: the saved picture is read and decoded before the app script loads, then faded in over the black cover; the library loads underneath and Home shows its own loading animation if it takes longer.
+- **Opening screen** from `splash-pic/`, shown on a black screen, up to 80% of the screen width and height, fitted to the uploaded picture's shape (never cropped or stretched), for at least 2.8 seconds when the app opens (pictures only, no GIF). No blink: the saved picture is read and decoded before the app script loads, then faded in over the black cover; the library loads underneath and Home shows its own loading animation if it takes longer.
 - **Credits** from `credit-gif-pic/`, under Settings > About > Credits.
 - **App logo** from `app-logo-pic/`, in Settings > About.
 - **Allow background activity** from `background-allow-gif-pic/`, a full-screen card that opens Android's battery settings.

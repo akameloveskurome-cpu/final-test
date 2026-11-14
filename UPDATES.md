@@ -6,9 +6,9 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
-## Splash picture: no more blink, stays 2 seconds
+## Splash picture: no more blink, stays 2.8 seconds
 - The splash picture now appears smoothly over black (no black-then-pop blink).
-- It stays on screen for at least 2 seconds while the library loads behind it. If loading takes longer, the usual library loading animation shows.
+- It stays on screen for at least 2.8 seconds while the library loads behind it. If loading takes longer, the usual library loading animation shows.
 
 ## Tap on a cover: original only on Now Playing, your picture everywhere else
 - Tapping the album cover on an album page now opens YOUR picture or GIF full screen (if you set one).
