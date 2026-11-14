@@ -6,6 +6,9 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+## Lyrics colour: exact colours (no vivid boost) (no version change, still 0.208.0)
+- The colour you pick on the wheel is now used exactly as chosen, so dark colours stay dark. Auto now uses the album cover's own colours as they are, with no extra brightening.
+
 ## Lyrics colour: a colour wheel you drag instead of colour squares (no version change, still 0.208.0)
 - Lyrics colour (not Auto) now shows a colour wheel. Drag the small circle round the wheel to choose any colour, use the slider for brightness, or type a hex code. The 8 colour squares and the system dialog are gone. "Back to Auto" still returns to the album cover colour.
 

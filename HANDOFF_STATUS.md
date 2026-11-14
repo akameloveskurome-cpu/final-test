@@ -7,6 +7,13 @@
 
 
 
+## Lyrics colour: picked colours and Auto are now EXACT, no vivid boost (no version change, still 0.208.0)
+- **Changed:** `src/main.js`: new `rgbHex`, `mixHex`, `exactPal`. `coverPal()` returns `exactPal(o.hex)` for a picked colour (before: only hue and saturation were kept, then `palFrom()` forced saturation to at least 0.45 and `vivid()` lowered lightness, so dark picks came out bright and punchy and never matched). `coverTint()` (Auto) now uses the plain average RGB of the cover's main hue cluster (hue bin plus its two neighbours) for the first colour, the average of the second cluster for the second colour, and a darker mix for the third; a grey cover uses the cover's average colour. `tests/lyrics-colour-hex.test.mjs` (new test).
+- **Why:** owner: picked colours did not match, dark picks looked too vivid, Auto must use the album cover's colours exactly.
+- **Docs updated:** `README.md`, `docs/FEATURES.md`, `docs/HANDOFF.md`, `UPDATES.md`. Auto = average of the cover's main colour cluster (grey / near-black / near-white pixels are skipped), not the average of every pixel.
+- **DO NOT REDO:** do not run picked or Auto colours through `palFrom()` / `vivid()` again. Those still exist for the no-picture fallback colour and the old `lyc-pick` path only. The lyrics page still fades to black at the bottom (CSS), the top colour is exact.
+- **Checked:** `node --check`, node tests. Not tested on a phone.
+
 ## Lyrics colour: in-app colour wheel with a draggable circle replaces the Android colour dialog (no version change, still 0.208.0)
 - **Changed:** `src/main.js` (`lycolSheet()` now builds `#lycwheel` (hue = angle, saturation = distance from the centre), `#lycknob`, a brightness slider `#lycbright`, a preview bar and the hex box; new `hsvHex()`, `hexHSV()`, `lycPaint()`, `lycDrag()` (pointer events, one `document` pointerdown listener); `lycSetHex(raw, fromPicker)` saves debounced 120 ms while dragging; the hidden `<input type="color">` and its `change` listener are gone), `src/styles/app.css` (new `.lycrow`, `.lycwheel`, `.lycknob`, `.lycprev`, `.lycbright`, `.lycbk`; removed `.lycbig`, `.lycring`, `.lycbigtx`), `tests/lyrics-colour-hex.test.mjs` (updated, new wheel test), `README.md`, `docs/FEATURES.md`, `docs/HANDOFF.md`, `HANDOFF_STATUS.md`, `UPDATES.md`.
 - **Why:** the owner's phone showed the Android system "Select colour" dialog with 8 colour squares. The owner wanted a wheel with a circle to move around (like the Windows picker), easier for everyone.

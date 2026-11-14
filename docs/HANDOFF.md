@@ -28,6 +28,7 @@ Current version is 0.146.0 (`package.json`, `package-lock.json`). New: `backgrou
 
 ## Lyrics colour wheel (no version change, still 0.208.0)
 The Lyrics colour sheet uses an in-app wheel (`lycolSheet`, `lycDrag`, `hsvHex`, `hexHSV` in `src/main.js`; `.lycwheel` CSS) instead of `<input type="color">`. Do not bring the system dialog or preset squares back. See `HANDOFF_STATUS.md`.
+Colours are EXACT: `coverPal()` returns `exactPal(hex)` for a picked colour; `coverTint()` (Auto) averages the RGB of the cover's main hue cluster (`avgOf`). Do not route them through `palFrom()` / `vivid()` (that made dark picks vivid). Auto is the average of the main colour area, not of the whole picture.
 
 ## Glass bar size (no version change, still 0.208.0)
 The setting `tabPct` (once "Tab bar size") is now called **Glass bar size** everywhere: Settings > Display options row, its aria labels, the import sheet (`GROUP_LABELS` in `src/settingsio.js`), docs. The same slider (`data-tabpct`, % label `data-tabv`) is also on the Animation screen above the animation sliders, so the size is kept and adjustable next to the test bar. One setting, one `setTabPct()`; `tests/glass-bar-size.test.mjs` guards the name and the second slider. Do not rename the stored key `tabPct`/`tabSize`: saved settings and exports use them.

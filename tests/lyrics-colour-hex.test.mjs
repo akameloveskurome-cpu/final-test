@@ -42,3 +42,14 @@ test('Auto: says it takes the colour from the album cover, and really does (no s
   assert.match(tint, /alpUrls\.get\(a\.id\) \|\| a\.cover/, 'the colour is read from the song picture, else the album cover');
   assert.match(main, /case 'lyc-pick'[^\n]*lycSave\(p\.ck, w \? [^\n]*: null\)/, 'Back to Auto deletes the stored colour');
 });
+
+test('exact colours: a picked hex is used as it is, Auto uses the cover\'s own average colour (no boost, no darkening)', () => {
+  const pal = main.slice(main.indexOf('async function coverPal('), main.indexOf('// v208: hex colour picker'));
+  assert.match(pal, /o\?\.hex[^\n]*exactPal\(o\.hex\)/, 'a stored hex goes straight to exactPal');
+  assert.match(main, /const exactPal = \(a, b\) =>/);
+  const tint = main.slice(main.indexOf('function coverTint('), main.indexOf('/* v148+: the person can pick'));
+  assert.match(tint, /const p = exactPal\(avgOf\(k1\)/, 'Auto: average colour of the cover\'s main hue');
+  assert.ok(!/p\.b = vivid\(/.test(tint), 'the second colour is no longer boosted');
+  const mix = (x, y, t) => { const a = parseInt(x.slice(1), 16), b = parseInt(y.slice(1), 16); const h = v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0'); return '#' + h((a >> 16) + ((b >> 16) - (a >> 16)) * t) + h((a >> 8 & 255) + ((b >> 8 & 255) - (a >> 8 & 255)) * t) + h((a & 255) + ((b & 255) - (a & 255)) * t); };
+  assert.equal(mix('#202830', '#000000', 0), '#202830', 'a dark colour stays as dark as chosen');
+});

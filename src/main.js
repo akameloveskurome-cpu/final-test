@@ -2287,6 +2287,10 @@ function vivid(h, s, l, maxLum) {   // keep hue + saturation; lower only the lig
   for (let i = 0; i < 60; i++) { const x = hsl2hex(h, s, l), n = parseInt(x.slice(1), 16); if (relLum(n >> 16, (n >> 8) & 255, n & 255) <= maxLum) return x; l -= .012; }
   return hsl2hex(h, s, l);
 }
+// v208+: EXACT colours (no boost, no darkening): Auto = the cover's own average colour; a picked colour = exactly that hex.
+const rgbHex = (r, g, b) => '#' + [r, g, b].map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0')).join('');
+const mixHex = (x, y, t) => { const a = parseInt(x.slice(1), 16), b = parseInt(y.slice(1), 16); return rgbHex((a >> 16) + ((b >> 16) - (a >> 16)) * t, (a >> 8 & 255) + ((b >> 8 & 255) - (a >> 8 & 255)) * t, (a & 255) + ((b & 255) - (a & 255)) * t); };
+const exactPal = (a, b) => ({ a, b: b || mixHex(a, '#ffffff', .08), c: mixHex(a, '#000000', .55) });
 function palFrom(h, s, neutral, avgL, minS = .78, mult = 1.25) {
   if (neutral) { const tinted = s >= .05; if (!tinted) h = 225; const k = tinted ? Math.max(.1, Math.min(.16, s)) : .1; const l = Math.max(.16, Math.min(.34, avgL * .55 + .1)); return { a: hsl2hex(h, k, l + .1), b: hsl2hex(h, k + .06, l + .02), c: hsl2hex(h, k + .02, Math.max(.07, l - .1)) }; }   // graphite: a soft lighter top, a deep bottom
   s = Math.max(minS, Math.min(1, s * mult));
@@ -2303,19 +2307,20 @@ function coverTint(a, t) {
     const im = new Image(); im.crossOrigin = 'anonymous';
     im.onload = () => { try {
       const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, 32, 32);
-      const d = x.getImageData(0, 0, 32, 32).data, BN = 24, bw = new Array(BN).fill(0), bs = new Array(BN).fill(0), bx = new Array(BN).fill(0), by = new Array(BN).fill(0); let tot = 0, aL = 0, cnt = 0, dk = 0, sr = 0, sg = 0, sb = 0; const SB = 30, qw = new Array(SB).fill(0), qs = new Array(SB).fill(0), qx = new Array(SB).fill(0), qy = new Array(SB).fill(0);
+      const d = x.getImageData(0, 0, 32, 32).data, BN = 24, bw = new Array(BN).fill(0), bs = new Array(BN).fill(0), bx = new Array(BN).fill(0), by = new Array(BN).fill(0); let tot = 0, aL = 0, cnt = 0, dk = 0, sr = 0, sg = 0, sb = 0; const er = new Array(BN).fill(0), eg = new Array(BN).fill(0), eb = new Array(BN).fill(0), en = new Array(BN).fill(0); const SB = 30, qw = new Array(SB).fill(0), qs = new Array(SB).fill(0), qx = new Array(SB).fill(0), qy = new Array(SB).fill(0);
       for (let i = 0; i < d.length; i += 4) { const [h, sa, l] = rgb2hsl(d[i], d[i + 1], d[i + 2]); aL += l; cnt++; sr += d[i]; sg += d[i + 1]; sb += d[i + 2]; if (l < .12) dk++;
         if (sa >= .15 && l >= .1 && l <= .93) { const w2 = (.35 + sa) * (1 - Math.abs(l - .5)), q = Math.floor(h / 12) % SB; qw[q] += w2; qs[q] += w2 * sa; qx[q] += w2 * Math.cos(h * Math.PI / 180); qy[q] += w2 * Math.sin(h * Math.PI / 180); }   // the picker sees quieter colours too (brown skin, a dull green)
         if (sa < .2 || l < .1 || l > .93) continue;   // grey, near black and near white say nothing about the colour
-        const w = sa * sa * (1 - Math.abs(l - .5)), k = Math.floor(h / 15) % BN; bw[k] += w; bs[k] += w * sa; bx[k] += w * Math.cos(h * Math.PI / 180); by[k] += w * Math.sin(h * Math.PI / 180); tot += w; }
+        const w = sa * sa * (1 - Math.abs(l - .5)), k = Math.floor(h / 15) % BN; er[k] += d[i]; eg[k] += d[i + 1]; eb[k] += d[i + 2]; en[k]++; bw[k] += w; bs[k] += w * sa; bx[k] += w * Math.cos(h * Math.PI / 180); by[k] += w * Math.sin(h * Math.PI / 180); tot += w; }
       const hueOf = k => (Math.atan2(by[k], bx[k]) * 180 / Math.PI + 360) % 360;
       const sm = k => bw[k] + .6 * (bw[(k + 1) % BN] + bw[(k + BN - 1) % BN]);   // a hue and its neighbours count together
       let k1 = 0; for (let k = 1; k < BN; k++) if (sm(k) > sm(k1)) k1 = k;
-      if (!tot || sm(k1) < 1.2 || tot / cnt < .03) { const [ah, asat] = rgb2hsl(sr / cnt, sg / cnt, sb / cnt); return done(palFrom(ah, asat, true, aL / cnt)); }   // a grey / black cover: keeps the cover's own hue (Kiss Land = deep green, not a cold blue-grey); a truly colourless cover still gets the neutral graphite
+      if (!tot || sm(k1) < 1.2 || tot / cnt < .03) { const [ah, asat] = rgb2hsl(sr / cnt, sg / cnt, sb / cnt); return done(exactPal(rgbHex(sr / cnt, sg / cnt, sb / cnt))); }   // a grey / black cover: keeps the cover's own hue (Kiss Land = deep green, not a cold blue-grey); a truly colourless cover still gets the neutral graphite
       const h1 = hueOf(k1), s1 = bs[k1] / (bw[k1] || 1);
       let k2 = -1; for (let k = 0; k < BN; k++) { const dist = Math.min((k - k1 + BN) % BN, (k1 - k + BN) % BN); if (dist >= 3 && bw[k] > .22 * bw[k1] && (k2 < 0 || bw[k] > bw[k2])) k2 = k; }
-      const p = palFrom(h1, s1, false, 0);
-      if (k2 >= 0) { const s2 = Math.max(.78, Math.min(1, (bs[k2] / (bw[k2] || 1)) * 1.25)); p.b = vivid(hueOf(k2), s2, .5, .22); }   // the cover's own second colour
+      const avgOf = k => { let r = 0, g = 0, b = 0, n = 0; for (const j of [k, (k + 1) % BN, (k + BN - 1) % BN]) { r += er[j]; g += eg[j]; b += eb[j]; n += en[j]; } return n ? rgbHex(r / n, g / n, b / n) : null; };
+      const p = exactPal(avgOf(k1) || palFrom(h1, s1, false, 0).a);
+      if (k2 >= 0) { const x2 = avgOf(k2); if (x2) p.b = x2; }   // the cover's own second colour
       p.sw = [];   // the colours of this cover the person can pick for the lyrics (strongest first, each a different hue; black when much of the picture is black)
       const qsm = k => qw[k], qorder = qw.map((_, k) => k).sort((x, y) => qsm(y) - qsm(x)), qtop = qsm(qorder[0]) || 1;
       for (const k of qorder) { if (p.sw.length >= 6 || qsm(k) < .1 * qtop || !qw[k]) break; if (p.sw.some(w => Math.min(Math.abs(w.k - k), SB - Math.abs(w.k - k)) < 2)) continue; p.sw.push({ k, h: Math.round((Math.atan2(qy[k], qx[k]) * 180 / Math.PI + 360) % 360), s: +(qs[k] / qw[k]).toFixed(2) }); }
@@ -2331,6 +2336,7 @@ const lycMap = () => { try { return JSON.parse(localStorage.getItem('lf.lycol'))
 const lycSave = (ck, o) => { try { const m = lycMap(); if (o) m[ck] = o; else delete m[ck]; localStorage.setItem('lf.lycol', JSON.stringify(m)); } catch {} };
 async function coverPal(t) {
   const p = await coverTint(trackAlbum(t), t), o = lycMap()[p.ck];
+  if (o?.hex && /^#[0-9a-f]{6}$/i.test(o.hex)) return { ...p, ...exactPal(o.hex) };   // the picked colour is used exactly
   if (!o || !(o.n || Number.isFinite(o.h))) return p;
   return { ...p, ...(o.n ? palFrom(225, 0, true, o.n === 2 ? .5 : .2) : palFrom(+o.h, Number.isFinite(+o.s) ? +o.s : .9, false, 0, .45, 1.15)) };
 }
