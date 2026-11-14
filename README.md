@@ -127,7 +127,7 @@ Seven places in the app can show a picture or GIF that you publish in the projec
 
 - **Notification popup** from `notification-popup-gif-pic/`, shown once per upload.
 - **Update popup** from `update-popup-gif-pic/`, on the Update available and Update ready screens.
-- **Opening screen** from `splash-pic/`, shown centered at medium size (about 300 dp) for 1 second when the app opens (pictures only, no GIF).
+- **Opening screen** from `splash-pic/`, shown on a black screen, up to 80% of the screen width and height, fitted to the uploaded picture's shape (never cropped or stretched), for 1 second when the app opens (pictures only, no GIF).
 - **Credits** from `credit-gif-pic/`, under Settings > About > Credits.
 - **App logo** from `app-logo-pic/`, in Settings > About.
 - **Allow background activity** from `background-allow-gif-pic/`, a full-screen card that opens Android's battery settings.
@@ -137,9 +137,9 @@ Seven places in the app can show a picture or GIF that you publish in the projec
 
 A picture or a GIF works everywhere you can choose one. (GIFs are my favourite. They smile forever and never get tired. I'm a little jealous.)
 
-- **Almost anything can have its own picture or GIF.** Albums, songs, artists, genres and playlists, each from its own menu. A song with its own picture shows it in song lists, search, the queue, Home cards, the mini player, Now Playing and the lock screen. A song without one shows its album's picture. Tapping the cover on Now Playing still opens the original cover full screen.
+- **Almost anything can have its own picture or GIF, and it REPLACES the original completely** (the original cover is not drawn under it, so a transparent GIF shows a plain dark square behind it, not the old cover). "Back to the original" in the same menu brings the original back. Albums, songs, artists, genres and playlists, each from its own menu. A song with its own picture shows it in song lists, search, the queue, Home cards, the mini player, Now Playing and the lock screen. A song without one shows its album's picture. Tapping the cover on Now Playing still opens the original cover full screen.
 - **Your profile.** A picture, a GIF or a short video, next to your name in Settings.
-- **Your background.** A picture or GIF behind the whole app, with Fill / Fit and a Darken slider.
+- **Your background.** A picture or GIF behind the whole app, with Fill / Fit and a Darken slider (starts at 0%, so your picture is shown exactly as it is).
 - **Any size, kept as it is.** Pictures and GIFs aren't shrunk, cropped or re-encoded, so a GIF keeps moving and a photo stays as sharp as the file you chose. That includes profile pictures and artist photos: the round or square shape is cut when the picture is drawn, not in the saved file.
 - **Ready the moment you open the app.** They're saved twice on your phone, so they come back straight away after you close the app, swipe it away and open it again. On the lock screen, Android shows a GIF as a still image.
 

@@ -26,6 +26,15 @@ Current version is 0.146.0 (`package.json`, `package-lock.json`). New: `backgrou
 ## Lyrics colour sheet: only a circular hex picker (no version change, still 0.208.0)
 `lycolSheet()` in `src/main.js` no longer builds preset dots (cover swatches, Black). It shows one big rainbow-ring circle (`<input type="color" id="lychex">`), a Hex code text box (`#lychextxt`, 3 or 6 digits, `#` optional, invalid input shows a red hint) and a "Back to Auto (cover colour)" button (`lyc-pick`, `data-i=-1`, disabled while Auto). `lycSetHex()` saves `{h, s, hex}` per album key (`lf.lycol`) and re-tints in place (no sheet re-render, so typing keeps focus). `.lycdot` CSS and `lycSame` were removed. Older saved black / swatch colours (no `hex`) still tint the lyrics; the sheet shows the default red in the circle for them until a colour is picked. Guard: `tests/lyrics-colour-hex.test.mjs`.
 
+## Launcher icon: nothing cut (no version change, still 0.208.0)
+`scripts/apply-app-logo.py`: `adaptive_layers()` fits the picture into `ADAPTIVE_VISIBLE = 72/108` of the adaptive icon (Android only shows that middle part). This replaces BUG-162's full-size fill, on the owner's order, because it cut the outer third of full-bleed pictures. Do not go back to full size. Legacy (Android 7-) icons are unchanged.
+
+## Splash before Home (no version change, still 0.208.0)
+`index.html` holds a black `#lf-splash` cover before `#app`; `splashReady.then(splashShow)` runs near the top of `src/main.js`. Do not move it back to the end of the file. See `HANDOFF_STATUS.md`.
+
+## Custom pictures REPLACE originals (no version change, still 0.208.0)
+`gOf`, `gOfT`, `apicOf`, `genreCov` in `src/main.js` draw `url(custom) center/cover no-repeat, ${PIC_BASE}` (`PIC_BASE = '#111'`): nothing of the original cover is underneath. `plArt` shows a plain square while a playlist picture loads and the original mosaic only if it cannot be shown. `BG_DIM_DEF` is 0 (was 40). Do NOT put the original back under a custom picture. Reset buttons (`alpReset`, `spReset`, `gpReset`, `apic-reset`, `pp-reset`) restore the original.
+
 ## Lyrics colour wheel (no version change, still 0.208.0)
 The Lyrics colour sheet uses an in-app wheel (`lycolSheet`, `lycDrag`, `hsvHex`, `hexHSV` in `src/main.js`; `.lycwheel` CSS) instead of `<input type="color">`. Do not bring the system dialog or preset squares back. See `HANDOFF_STATUS.md`.
 Colours are EXACT: `coverPal()` returns `exactPal(hex)` for a picked colour; `coverTint()` (Auto) averages the RGB of the cover's main hue cluster (`avgOf`). Do not route them through `palFrom()` / `vivid()` (that made dark picks vivid). Auto is the average of the main colour area, not of the whole picture.

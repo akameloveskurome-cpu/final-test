@@ -5,10 +5,10 @@ import { readFileSync } from 'node:fs';
 import { extract } from './extract.mjs';
 const rd = f => readFileSync(new URL('../' + f, import.meta.url), 'utf8');
 
-test('gOf: a custom album picture is a layer ON TOP of the original cover; none / album gone = the original only', () => {
+test('gOf: a custom album picture REPLACES the original cover (no original under it); none / album gone = the original only', () => {
   const alpUrls = new Map([['A', 'blob:x']]);
-  const gOf = extract('src/main.js', 'gOf', { alpUrls, byAlbum: id => id !== 'gone' });
-  assert.equal(gOf({ id: 'A', g: 'ORIG' }), "url('blob:x') center/cover no-repeat, ORIG");
+  const gOf = extract('src/main.js', 'gOf', { alpUrls, PIC_BASE: '#111', byAlbum: id => id !== 'gone' });
+  assert.equal(gOf({ id: 'A', g: 'ORIG' }), "url('blob:x') center/cover no-repeat, #111");
   assert.equal(gOf({ id: 'B', g: 'ORIG' }), 'ORIG')
   alpUrls.set('gone', 'blob:y'); assert.equal(gOf({ id: 'gone', g: 'ORIG' }), 'ORIG');
 });

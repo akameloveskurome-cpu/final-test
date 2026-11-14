@@ -43,7 +43,7 @@ import { fetchCreditPic, CREDIT_POLL_MS, creditPicFailed } from './creditpic.js'
 import { fetchBannerPic, BANNER_POLL_MS, bannerPicFailed } from './statbanpic.js';
 import { startBgAllow, bgAllowClose, bgAllowCheck, bgAllowHold, bgAllowDemo } from './bgallow.js';
 import { fetchSplashPic, splashLoad, splashSave, splashClear, SPLASH_POLL_MS, SPLASH_CACHE_KEY } from './splashpic.js';
-// v134: the splash picture (splash-pic/). v142: shown medium-sized (a 300 dp box, never wider than 80% of the screen), centered, any picture size scaled to fit with object-fit:contain. Last picture kept on the phone so it shows at once next launch.
+// v134: the splash picture (splash-pic/). v208+: shown inside an 80% x 80% box (80vw x 80vh) on a black screen, object-fit:contain: scaled to the uploaded picture's shape, never cropped, never stretched, centered. Last picture kept on the phone so it shows at once next launch.
 let splashPic = { src: '', stamp: '' };
 // v142: the saved picture lives in IndexedDB (any size). splashReady resolves once it has been read (the old small localStorage copy is dropped).
 try { localStorage.removeItem(SPLASH_CACHE_KEY); } catch {}
@@ -53,18 +53,20 @@ function splashEl() {
   if (!o) {
     o = document.createElement('div'); o.id = 'lf-splash';
     o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:none;align-items:center;justify-content:center;transition:opacity .4s';
-    o.innerHTML = '<img alt="" style="display:block;flex:none;width:min(300px,80vw);height:min(300px,80vh);object-fit:contain;object-position:center">';
+    o.innerHTML = '<img alt="" style="display:block;flex:none;width:80vw;height:80vh;object-fit:contain;object-position:center">';
     o.addEventListener('click', () => splashHide());
     document.body.appendChild(o);
   }
   return o;
 }
 function splashShow() {
-  if (!splashPic.src || !document.body) return;
-  const o = splashEl(), si = o.querySelector('img'); if (si.getAttribute('src') !== splashPic.src) si.src = splashPic.src; o.style.opacity = '1'; o.style.display = 'flex';
+  if (!splashPic.src) { splashHide(); return; }   // v208+: index.html already holds a black cover (so Home is never seen first); no saved picture = it is removed at once
+  if (!document.body) return;
+  const o = splashEl(), si = o.querySelector('img'); if (si.getAttribute('src') !== splashPic.src) si.src = splashPic.src; o.setAttribute('data-live', '1'); o.style.opacity = '1'; o.style.display = 'flex';
   clearTimeout(o._t); o._t = setTimeout(splashHide, 1000);
 }
-function splashHide() { const o = document.getElementById('lf-splash'); if (!o) return; o.style.opacity = '0'; setTimeout(() => { o.style.display = 'none'; }, 400); }
+function splashHide() { const o = document.getElementById('lf-splash'); if (!o) return; o.setAttribute('data-live', '1'); o.style.opacity = '0'; setTimeout(() => { o.style.display = 'none'; }, 400); }
+splashReady.then(splashShow);   // v208+: shown as soon as the saved picture is read, BEFORE the app draws Home (it used to be started at the very end of this file)
 let splashBusy = false;
 async function splashCheck() {
   await splashReady;
@@ -212,7 +214,9 @@ const alpUrls = new Map();
 let npArtT = 0;
 const npSoon = () => { clearTimeout(npArtT); npArtT = setTimeout(() => { if (Native.current()) renderNP(); }, 60); };
 const alpSet = (id, blob) => { const u = alpUrls.get(id); if (u) { try { URL.revokeObjectURL(u); } catch {} unwarm(u); alpUrls.delete(id); } if (blob) alpUrls.set(id, warmUrl(URL.createObjectURL(blob))); npSoon(); };
-const gOf = a => { const u = a && a.id && alpUrls.get(a.id); return u && byAlbum(a.id) ? `url('${u}') center/cover no-repeat, ${a.g}` : a.g; };   // v155: the custom picture is a layer ON TOP of the original cover (a.g): while it loads, or if it cannot be shown, the original is seen, never a blank square
+// v208+: a custom picture / GIF REPLACES the original completely. Nothing of the original is drawn under it (only a plain dark colour while it loads, or behind a transparent GIF).
+const PIC_BASE = '#111';
+const gOf = a => { const u = a && a.id && alpUrls.get(a.id); return u && byAlbum(a.id) ? `url('${u}') center/cover no-repeat, ${PIC_BASE}` : a.g; };   // v155: the custom picture is a layer ON TOP of the original cover (a.g): while it loads, or if it cannot be shown, the original is seen, never a blank square
 const cov = (a, cls = '') => `<span class="cover blk ${cls}" style="--g:${gOf(a)}"></span>`;   // a span with .blk: block layout, but valid inside a button element (block divs are not)
 /* v165: a SONG can have its own picture or GIF (one per song, kept like the album ones: IndexedDB + a file; lf.songpics lists which songs have one).
    It is a layer on top of the song's album picture (itself on top of the file cover), shown wherever that song is shown. Album screens keep showing the album picture. */
@@ -220,7 +224,7 @@ const spMap = () => { try { return JSON.parse(localStorage.getItem('lf.songpics'
 const spSave = m => { try { localStorage.setItem('lf.songpics', JSON.stringify(m)); return true; } catch { return false; } };
 const spUrls = new Map();
 const spSet = (id, blob) => { const u = spUrls.get(id); if (u) { try { URL.revokeObjectURL(u); } catch {} unwarm(u); spUrls.delete(id); } if (blob) spUrls.set(id, warmUrl(URL.createObjectURL(blob))); npSoon(); };
-const gOfT = t => { const g = gOf(trackAlbum(t)), u = t && t.id && spUrls.get(t.id); return u ? `url('${u}') center/cover no-repeat, ${g}` : g; };
+const gOfT = t => { const u = t && t.id && spUrls.get(t.id); return u ? `url('${u}') center/cover no-repeat, ${PIC_BASE}` : gOf(trackAlbum(t)); };
 const covT = (t, cls = '') => `<span class="cover blk ${cls}" style="--g:${gOfT(t)}"></span>`;
 const NOALBUM = { id: '', title: 'Unknown Album', artist: 'Unknown Artist', genre: '', year: '', g: 'var(--row-fill)' };   // B6: a song whose album vanished after a rescan
 /* v118: custom artist photo. Stored on this phone only: lf.apics = { artistName: 'data:image/jpeg...' | 'album:<id>' }. */
@@ -250,15 +254,15 @@ const apicNames = n => { const o = picNames(n, artistVariants(n), unesc); for (c
 const apicKey = n => picKey(apicMap(), apicNames(n), n);
 const apicGone = ks => { const m0 = apicMap(); let ch = false; for (const k of ks) { agDb.del(k).catch(() => {}); agSet(k, null); if (m0[k]) { delete m0[k]; ch = true; } } if (ch) apicSave(m0); };   // bytes deleted even when the list had lost the marker
 const apicDropOthers = keep => apicGone(picDrop(apicNames(keep), keep));
-const apicOf = n0 => { const n = apicKey(n0), v = apicMap()[n]; if (!v) return null; if (v.startsWith('gif:')) return agUrls[n] ? { g: `url('${agUrls[n]}') center/cover no-repeat, @BASE@` } : null; if (v.startsWith('album:')) return byAlbum(v.slice(6)) || null; return { g: `url('${v}') center/cover no-repeat, @BASE@` }; };
-const artistCov = (n, cls = '') => { const t = artistTracks(n)[0], base = t ? trackAlbum(t) : NOALBUM, c = apicOf(n); return cov(c && c.g ? { ...c, g: c.g.replace('@BASE@', gOf(base)) } : c || base, cls); };   // v155: the artist photo / GIF is a layer over the first album's cover (itself a layer over the file cover)
+const apicOf = n0 => { const n = apicKey(n0), v = apicMap()[n]; if (!v) return null; if (v.startsWith('gif:')) return agUrls[n] ? { g: `url('${agUrls[n]}') center/cover no-repeat, ${PIC_BASE}` } : null; if (v.startsWith('album:')) return byAlbum(v.slice(6)) || null; return { g: `url('${v}') center/cover no-repeat, ${PIC_BASE}` }; };
+const artistCov = (n, cls = '') => { const t = artistTracks(n)[0], base = t ? trackAlbum(t) : NOALBUM, c = apicOf(n); return cov(c || base, cls); };   // v155: the artist photo / GIF is a layer over the first album's cover (itself a layer over the file cover)
 let apicFor = '';
 /* v149: genre pictures and GIFs. Own storage (so a genre and an artist with the same name never share a photo): lf.gpics = { genre: 1 } marks which genres have one, the file itself is kept untouched in IndexedDB (lf-genrepics): any size, GIFs keep moving. */
 const gpMap = () => { try { return JSON.parse(localStorage.getItem('lf.gpics')) || {}; } catch { return {}; } };
 const gpSave = m => { try { localStorage.setItem('lf.gpics', JSON.stringify(m)); return true; } catch { return false; } };
 const gDb = kvDb('lf-genrepics'), gpUrls = {};
 const gpSet = (n, blob) => { if (gpUrls[n]) { try { URL.revokeObjectURL(gpUrls[n]); } catch {} unwarm(gpUrls[n]); delete gpUrls[n]; } if (blob) gpUrls[n] = warmUrl(URL.createObjectURL(blob)); };
-const genreCov = (n, cls = '') => { const t = genreTracks(n)[0], base = t ? trackAlbum(t) : NOALBUM; return gpUrls[n] ? cov({ g: `url('${gpUrls[n]}') center/cover no-repeat, ${gOf(base)}` }, cls) : cov(base, cls); };
+const genreCov = (n, cls = '') => { const t = genreTracks(n)[0], base = t ? trackAlbum(t) : NOALBUM; return gpUrls[n] ? cov({ g: `url('${gpUrls[n]}') center/cover no-repeat, ${PIC_BASE}` }, cls) : cov(base, cls); };
 let gpFor = '';
 const trackAlbum = t => byAlbum(t.albumId) || NOALBUM;
 const snap = {};   // B2: the list a Recently / Most Played screen was BUILT from (data-i points into it)
@@ -326,7 +330,7 @@ const ppStore = idbBackend(), ppUrl = new Map();   // ppUrl: picture id -> objec
 let ppView = null;   // { pid, i }: the playlist and picture number open in the full-screen viewer
 const picsOf = p => (p && Array.isArray(p.pics) ? p.pics : []);
 const ppImg = (pic, cls = '') => ppUrl.has(pic.id) ? `<img class="${cls}" data-ppid="${pic.id}" src="${ppUrl.get(pic.id)}" alt="${E(pic.name)}" decoding="async" draggable="false">` : `<span class="pp-wait ${cls}" aria-hidden="true"></span>`;
-const plArt = (p, ts, cls = '') => { const c = picsOf(p)[0]; return c && ppUrl.has(c.id) ? `<span class="pl-mosaic blk pp-cover ${cls}">${ppImg(c)}</span>` : mosaic(ts, cls); };
+const plArt = (p, ts, cls = '') => { const c = picsOf(p)[0]; return c && (ppUrl.has(c.id) || !ppBad.has(c.id)) ? `<span class="pl-mosaic blk pp-cover ${cls}">${ppImg(c)}</span>` : mosaic(ts, cls); };   // v208+: while the picture loads, a plain square (never the original mosaic under it)
 let ppBusy = false;
 const ppBad = new Set();   // pictures that could not be shown even from the database copy (this session): the playlist shows its mosaic instead
 async function ppHeal(id) {   // v155: <img> failed (a file address that does not work, a half-written file): switch to the copy in IndexedDB, forget the broken file address
@@ -2957,7 +2961,7 @@ if (Native.isNative) {
   Native.getSleepTimer().then(renderNP).catch(() => {});   // T22 timer state lives in the Android side
   loadLib(false);
 }
-updGateRestorePromise = updGateRestore().catch(() => {}); startAppLogoWatcher(); startPopup().catch(() => {}); creditPicCheck().catch(() => {}); splashReady.then(splashShow); splashCheck().catch(() => {}); setInterval(() => { splashCheck().catch(() => {}); }, SPLASH_POLL_MS); setInterval(() => { creditPicCheck().catch(() => {}); }, CREDIT_POLL_MS); startBgAllow(); banCheck(); setInterval(() => { banCheck().catch(() => {}); }, BANNER_POLL_MS); startUpdateCheck().catch(() => {}); setInterval(() => { if (!document.hidden) startUpdateCheck().catch(() => {}); }, UPDATE_POLL_MS);
+updGateRestorePromise = updGateRestore().catch(() => {}); startAppLogoWatcher(); startPopup().catch(() => {}); creditPicCheck().catch(() => {}); splashCheck().catch(() => {}); setInterval(() => { splashCheck().catch(() => {}); }, SPLASH_POLL_MS); setInterval(() => { creditPicCheck().catch(() => {}); }, CREDIT_POLL_MS); startBgAllow(); banCheck(); setInterval(() => { banCheck().catch(() => {}); }, BANNER_POLL_MS); startUpdateCheck().catch(() => {}); setInterval(() => { if (!document.hidden) startUpdateCheck().catch(() => {}); }, UPDATE_POLL_MS);
 // T4c step 2: Android Back button = close sheet > close Now Playing > go back one screen > minimise (never exits)
 // T18: coming back to the app = maybe check for new music (autoCheck itself limits this to once per 10 minutes)
 // v90: coming back to the app also re-reads the sleep timer (it may have fired while the app was away)

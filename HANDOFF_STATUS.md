@@ -7,6 +7,30 @@
 
 
 
+## Launcher icon: the whole picture is visible, nothing cut (no version change, still 0.208.0)
+- **Changed:** `scripts/apply-app-logo.py` (`ADAPTIVE_VISIBLE = 72/108`; `adaptive_layers()` fits the picture into it), `tests/apply-app-logo.test.mjs`, `app-logo-pic/README.md`, `docs/FEATURES.md`, `docs/HANDOFF.md`, `UPDATES.md`.
+- **Why:** owner: a 4000x4000 full-bleed picture (Citrus) came out cut on the home screen while a picture with black space around the subject did not. Android shows only the middle 72 of 108 dp of an adaptive icon, so a full-size picture loses its outer third. Owner picked the "fit the whole picture" version.
+- **Unchanged:** Android 7 and older icons; the Settings > About logo (original file); resizing is Lanczos only, no blur.
+- **DO NOT REDO:** do not put the picture back at full 108 dp (BUG-162). Takes effect on the next build after an upload or `resend`.
+- **Checked:** `tests/apply-app-logo.test.mjs` and `tests/logo-notification-workflow.test.mjs` pass (Pillow present). Not tested on a phone.
+
+## Splash picture: 80% of the screen on black (no version change, still 0.208.0)
+- **Changed:** `index.html` and `splashEl()` in `src/main.js`: the splash `<img>` is `width:80vw;height:80vh;object-fit:contain` on the black screen (first 300 px box, then full screen 100vw/100vh, now 80% as the owner asked; the picture fits its own shape inside that box); `README.md`, `splash-pic/README.md`, `UPDATES.md`. Never cropped or stretched. **Owner's order: black background, picture up to 80% of the screen, fitted to the size/shape uploaded.**
+- **DO NOT REDO:** do not go back to a small 300 px box or to a full-screen picture.
+
+## Splash picture now shows BEFORE Home (no version change, still 0.208.0)
+- **Changed:** `index.html` (a black `#lf-splash` cover before `#app`, with a 4 s safety timer that removes it), `src/main.js` (`splashReady.then(splashShow)` now runs right after the splash code at the top, not at the end of the file; `splashShow` removes the cover at once when no picture is saved; `splashHide` marks it done), `tests/lyrics-colour-hex.test.mjs`, `UPDATES.md`.
+- **Why:** the splash was started at the very end of `main.js`, after Home had already been drawn, so Home showed first.
+- **DO NOT REDO:** do not move the splash call back to the end of `main.js`; do not remove the cover from `index.html`.
+- **Not tested on a phone.** First install (no saved picture yet) shows no splash and the black cover goes away at once.
+
+## Custom pictures / GIFs now REPLACE the original completely (no version change, still 0.208.0)
+- **Changed:** `src/main.js` (new `PIC_BASE = '#111'`; `gOf`, `gOfT`, `apicOf`, `artistCov`, `genreCov` no longer put the original cover under the custom picture; `plArt` shows a plain square while a playlist picture loads), `src/styles/app.css` (`.pp-wait` fills the playlist cover), `src/bgmedia.js` (`BG_DIM_DEF` 40 -> 0, a saved Darken value is kept), tests `genrepics-v149`, `original-quality-v148`, `pics-v163`, `pics-v164`, `picsync-v151`, `songpics-v165` (changed to the new behaviour), `README.md`, `docs/FEATURES.md`, `docs/HANDOFF.md`, `UPDATES.md`.
+- **Why:** owner: an uploaded picture / GIF must BE the picture, not sit on top of the original. Back-to-original buttons already worked (they delete the custom file and repaint), they are unchanged.
+- **Covers:** albums, songs, artists, genres, playlists, Now Playing, mini player, Home cards. The background picture was already only the picture; its default dim is now 0%. The full-screen cover viewer and the home screen widgets still show the original cover on purpose.
+- **DO NOT REDO:** do not draw the original cover under a custom picture again.
+- **Checked:** `node --check`, node tests (604 pass, same 10 environment failures as before). Not tested on a phone.
+
 ## Lyrics colour: picked colours and Auto are now EXACT, no vivid boost (no version change, still 0.208.0)
 - **Changed:** `src/main.js`: new `rgbHex`, `mixHex`, `exactPal`. `coverPal()` returns `exactPal(o.hex)` for a picked colour (before: only hue and saturation were kept, then `palFrom()` forced saturation to at least 0.45 and `vivid()` lowered lightness, so dark picks came out bright and punchy and never matched). `coverTint()` (Auto) now uses the plain average RGB of the cover's main hue cluster (hue bin plus its two neighbours) for the first colour, the average of the second cluster for the second colour, and a darker mix for the third; a grey cover uses the cover's average colour. `tests/lyrics-colour-hex.test.mjs` (new test).
 - **Why:** owner: picked colours did not match, dark picks looked too vivid, Auto must use the album cover's colours exactly.

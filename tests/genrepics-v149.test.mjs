@@ -33,8 +33,8 @@ test('markPlaying updates live: [data-aid] elements get / lose aplay, [data-tid]
 });
 test('genre picture: its own store is used, the artist photo store is not; no picture = the first song cover', () => {
   const calls = []; const cov = (a, cls) => { calls.push(a); return 'C'; };
-  const mk = gpUrls => extract('src/main.js', 'genreCov', { genreTracks: () => [{ id: 't1' }], trackAlbum: () => ({ id: 'A', g: 'G' }), NOALBUM: { g: 'N' }, gpUrls, gOf: a => a.g, cov });
-  mk({ Rock: 'blob:r' })('Rock'); assert.match(calls[0].g, /url\('blob:r'\).*G$/);
+  const mk = gpUrls => extract('src/main.js', 'genreCov', { genreTracks: () => [{ id: 't1' }], trackAlbum: () => ({ id: 'A', g: 'G' }), NOALBUM: { g: 'N' }, gpUrls, gOf: a => a.g, PIC_BASE: '#111', cov });
+  mk({ Rock: 'blob:r' })('Rock'); assert.match(calls[0].g, /^url\('blob:r'\) center\/cover no-repeat, #111$/);   // v208+: replaces the original, nothing of it underneath
   mk({})('Rock'); assert.equal(calls[1].g, 'G');
 });
 test('CSS guard (needs a browser to run for real): playing album turns red', () => { assert.match(css, /\.row\.aplay \.meta b[^{]*\{color:var\(--accent\)\}/); });

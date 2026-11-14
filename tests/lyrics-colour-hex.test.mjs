@@ -53,3 +53,11 @@ test('exact colours: a picked hex is used as it is, Auto uses the cover\'s own a
   const mix = (x, y, t) => { const a = parseInt(x.slice(1), 16), b = parseInt(y.slice(1), 16); const h = v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0'); return '#' + h((a >> 16) + ((b >> 16) - (a >> 16)) * t) + h((a >> 8 & 255) + ((b >> 8 & 255) - (a >> 8 & 255)) * t) + h((a & 255) + ((b & 255) - (a & 255)) * t); };
   assert.equal(mix('#202830', '#000000', 0), '#202830', 'a dark colour stays as dark as chosen');
 });
+
+test('splash: a black splash cover is in index.html, shown before Home is drawn, removed at once when there is no picture', () => {
+  const idx = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.ok(idx.indexOf('id="lf-splash"') > -1 && idx.indexOf('id="lf-splash"') < idx.indexOf('id="app"'));
+  assert.match(main, /if \(!splashPic\.src\) \{ splashHide\(\); return; \}/);
+  assert.match(main, /splashReady\.then\(splashShow\);\s*\/\/ v208\+/);
+  assert.equal((main.match(/splashReady\.then\(splashShow\)/g) || []).length, 1, 'only the early call, not one at the end of the file');
+});

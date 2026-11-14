@@ -112,6 +112,7 @@ Every AI must treat the **You** items as locked. Anything marked Suggested can b
 | I8 | **Pictures and GIFs of any size in a playlist**: add many at once, view full screen, remove, first one = playlist cover (v132) | You |
 | I9 | Pictures are stored untouched on the phone (IndexedDB, plus a plain file copy in filesDir/lfpics since v150), only a small description is in the playlist file; export / import does not include them | Suggested |
 | I10 | **Update popup picture / GIF**: whatever is in the GitHub folder `update-popup-gif-pic/` shows on the update popups (live, no rebuild, checked every second; no picture = plain popup) (v132, every second in v133) | You |
+| I11a | **A custom picture or GIF REPLACES the original** (albums, songs, artists, genres, playlists): the original cover is not drawn under it. Each menu's "Back to ..." button restores the original. The background picture's Darken slider now starts at 0% | You |
 | I11 | **Your own background picture or GIF of any size** behind every screen (Home, tabs, album / artist / playlist pages, Settings, Now Playing, lyrics): Settings > Home > Background picture or GIF, Fill / Fit, Darken slider, Remove; stored untouched on the phone (IndexedDB, plus a plain file copy in filesDir/lfpics since v150) | You |
 
 ## J. Queue and loop
@@ -131,7 +132,7 @@ Every AI must treat the **You** items as locked. Anything marked Suggested can b
 | ID | Requirement | Ticket | Source |
 |---|---|---|---|
 | K1 | **Stable signing key**: every build is signed with one saved key so a new APK installs over the old one (no uninstall, no lost playlists) | T14 (done v14) | You |
-| K2 | **Own app icon and splash** (an uploaded launcher logo fills the whole icon, BUG-162): red liquid glass note on a black liquid glass tile (glass shine, rim light), black splash screen | T15 (done v14, glass look v51 round 6) | You |
+| K2 | **Own app icon and splash** (an uploaded launcher logo is fitted whole into the visible part of the icon so nothing is cut (v208+, replaces BUG-162's full-size fill)): red liquid glass note on a black liquid glass tile (glass shine, rim light), black splash screen | T15 (done v14, glass look v51 round 6) | You |
 | K3 | **"Copy log" button** in Settings that copies errors to paste to an AI (no Android Studio needed) | T16 (done v14) | You |
 | K4 | **Export / import playlists** (survive an uninstall) | T17 | You (DONE v28, phone test pending) |
 | K5 | **Scan progress** shown as "n / total" | T18 | You (DONE v29, phone test pending) |

@@ -52,7 +52,9 @@ test('the named picture becomes legacy, round and adaptive launcher icons and th
   }
   assert.deepEqual(pixel(root, 'mipmap-xxxhdpi/ic_launcher.png', 96, 96)[1], [250, 250, 250, 255], 'the picture itself is the square icon');
   assert.equal(pixel(root, 'mipmap-xxxhdpi/ic_launcher_round.png', 0, 0)[1][3], 0, 'the round icon is masked to a circle');
-  assert.equal(pixel(root, 'mipmap-xxxhdpi/lf_logo_fg.png', 0, 0)[1][3], 255, 'adaptive foreground fills the icon (BUG-162: no safe-zone margin)');
+  assert.equal(pixel(root, 'mipmap-xxxhdpi/lf_logo_fg.png', 0, 0)[1][3], 0, 'v208+: the picture is fitted into the visible 72 of 108 dp, the outer third is empty (dark background shows)');
+  assert.equal(pixel(root, 'mipmap-xxxhdpi/lf_logo_fg.png', 60, 60)[1][3], 0, 'just outside the fitted picture');
+  assert.equal(pixel(root, 'mipmap-xxxhdpi/lf_logo_fg.png', 76, 76)[1][3], 255, 'the fitted picture starts at 1/6 of the icon (72 px of 432)');
   assert.equal(pixel(root, 'mipmap-xxxhdpi/lf_logo_bg.png', 0, 0)[1][3], 255, 'adaptive background is opaque');
   for (const name of ['ic_launcher.xml', 'ic_launcher_round.xml']) {
     const xml = await readFile(join(res, 'mipmap-anydpi-v26', name), 'utf8');

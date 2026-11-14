@@ -4,7 +4,7 @@
 import { isPicFile } from './plpics.js';
 
 export { isPicFile };
-export const BG_DIM_MIN = 0, BG_DIM_MAX = 85, BG_DIM_DEF = 40;   // % of black laid over the picture so text stays readable
+export const BG_DIM_MIN = 0, BG_DIM_MAX = 85, BG_DIM_DEF = 0;   // v208+: 0 = your picture exactly as it is (nothing laid over it); the Darken slider is still there if you want text easier to read
 export const BG_FITS = ['fill', 'fit'];                           // fill = cover the whole screen (edges may be cropped); fit = show the whole picture (bars on the sides if the shapes differ)
 
 /** dim: whole number BG_DIM_MIN..BG_DIM_MAX, anything else = the default. */

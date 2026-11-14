@@ -6,6 +6,18 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+## Launcher icon: the whole picture is visible (no version change, still 0.208.0)
+- The home-screen icon now shows your whole logo picture instead of cutting its outer edges. It sits a bit smaller inside the icon, on a dark background. Takes effect on the next build.
+
+## Splash picture: 80% of the screen on black (no version change, still 0.208.0)
+- The splash picture now covers up to 80% of the screen on a black background, fitted to the shape of the picture you upload, never cut or stretched.
+
+## Splash picture first, then Home (no version change, still 0.208.0)
+- On launch the splash picture now appears first and Home only after it. Before, Home flashed for a moment before the splash.
+
+## Your pictures and GIFs replace the originals (no version change, still 0.208.0)
+- A picture or GIF you set for an album, song, artist, genre or playlist is now shown on its own, not on top of the original cover. "Back to the original" brings the original back. The background picture now starts with no darkening (Darken 0%).
+
 ## Lyrics colour: exact colours (no vivid boost) (no version change, still 0.208.0)
 - The colour you pick on the wheel is now used exactly as chosen, so dark colours stay dark. Auto now uses the album cover's own colours as they are, with no extra brightening.
 

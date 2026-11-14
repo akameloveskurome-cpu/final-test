@@ -15,10 +15,10 @@ test('song pictures have their own store, two copies, restore, retry and a picke
   assert.ok(/spDb\.put\(id, b\)\.then[\s\S]{0,400}if \(prev\) m2\[id\] = prev; else delete m2\[id\]/.test(M));   // a failed save keeps the old one
 });
 
-test('the song picture is a layer over the album picture (real gOfT): song picture first, then the album picture; none = album only', () => {
+test('the song picture REPLACES the album picture (real gOfT): song picture alone; none = album only', () => {
   const spUrls = new Map([['s1', 'blob:song1']]), gOf = a => 'GRAD-' + a.k, trackAlbum = t => ({ k: t && t.albumId });
-  const gOfT = extract('src/main.js', 'gOfT', { gOf, trackAlbum, spUrls });
-  assert.equal(gOfT({ id: 's1', albumId: 'al1' }), "url('blob:song1') center/cover no-repeat, GRAD-al1");
+  const gOfT = extract('src/main.js', 'gOfT', { gOf, trackAlbum, spUrls, PIC_BASE: '#111' });
+  assert.equal(gOfT({ id: 's1', albumId: 'al1' }), "url('blob:song1') center/cover no-repeat, #111");
   assert.equal(gOfT({ id: 's2', albumId: 'al2' }), 'GRAD-al2');
   assert.equal(gOfT(null), 'GRAD-null');
 });

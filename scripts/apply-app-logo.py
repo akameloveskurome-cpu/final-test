@@ -41,6 +41,7 @@ except ImportError:  # pragma: no cover - the workflow installs Pillow before ca
 
 EXTS = {'.gif', '.png', '.jpg', '.jpeg', '.webp', '.bmp'}
 LEGACY = {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144, 'xxxhdpi': 192}
+ADAPTIVE_VISIBLE = 72 / 108   # v208+ (owner's order): Android shows only the middle 72 dp of the 108 dp adaptive icon, so the picture is fitted into that part: nothing of it is cut by the phone's icon mask (the old full-size layout cut the outer third)
 ADAPTIVE = {'mdpi': 108, 'hdpi': 162, 'xhdpi': 216, 'xxhdpi': 324, 'xxxhdpi': 432}
 DARK = (14, 14, 18, 255)  # adaptive background behind transparent pictures
 MASTER = 1024
@@ -166,7 +167,7 @@ def circle(im: Image.Image) -> Image.Image:
 def adaptive_layers(im: Image.Image, size: int) -> tuple[Image.Image, Image.Image]:
     background = solid(size)   # BUG-162: no blurred frame any more; the picture fills the icon
     foreground = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-    small = contain(im, size)   # BUG-162: fills the icon (the launcher mask trims the outer edge)
+    small = contain(im, round(size * ADAPTIVE_VISIBLE))   # v208+: the whole picture fits the visible part of the icon (BUG-162's full-size fill cut the outer third on Android 8+)
     foreground.paste(small, ((size - small.width) // 2, (size - small.height) // 2), small)
     return foreground, background
 
