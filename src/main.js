@@ -42,18 +42,18 @@ import { fetchUpdatePic, UPD_PIC_MIN_MS } from './updpic.js';
 import { fetchCreditPic, CREDIT_POLL_MS, creditPicFailed } from './creditpic.js';
 import { fetchBannerPic, BANNER_POLL_MS, bannerPicFailed } from './statbanpic.js';
 import { startBgAllow, bgAllowClose, bgAllowCheck, bgAllowHold, bgAllowDemo } from './bgallow.js';
-import { fetchSplashPic, splashLoad, splashSave, splashClear, SPLASH_POLL_MS, SPLASH_CACHE_KEY } from './splashpic.js';
+import { fetchSplashPic, splashLoad, splashSave, splashClear, SPLASH_POLL_MS, SPLASH_MIN_MS, SPLASH_CACHE_KEY } from './splashpic.js';
 // v134: the splash picture (splash-pic/). v208+: shown inside an 80% x 80% box (80vw x 80vh) on a black screen, object-fit:contain: scaled to the uploaded picture's shape, never cropped, never stretched, centered. Last picture kept on the phone so it shows at once next launch.
 let splashPic = { src: '', stamp: '' };
 // v142: the saved picture lives in IndexedDB (any size). splashReady resolves once it has been read (the old small localStorage copy is dropped).
 try { localStorage.removeItem(SPLASH_CACHE_KEY); } catch {}
-const splashReady = splashLoad().then(c => { if (c && !splashPic.src) splashPic = { src: URL.createObjectURL(c.blob), stamp: c.stamp }; }).catch(() => {});
+const splashReady = (window.__lfSplashP || Promise.resolve(null)).then(e => (e && e.src ? (splashPic = { src: e.src, stamp: e.stamp }) : splashLoad().then(c => { if (c && !splashPic.src) splashPic = { src: URL.createObjectURL(c.blob), stamp: c.stamp }; }))).catch(() => {});   // v209: index.html already read + decoded the saved picture (window.__lfSplashP); this is only the fallback
 function splashEl() {
   let o = document.getElementById('lf-splash');
   if (!o) {
     o = document.createElement('div'); o.id = 'lf-splash';
     o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:none;align-items:center;justify-content:center;transition:opacity .4s';
-    o.innerHTML = '<img alt="" style="display:block;flex:none;width:80vw;height:80vh;object-fit:contain;object-position:center">';
+    o.innerHTML = '<img alt="" style="display:block;flex:none;width:80vw;height:80vh;object-fit:contain;object-position:center;opacity:0;transition:opacity .2s">';
     o.addEventListener('click', () => splashHide());
     document.body.appendChild(o);
   }
@@ -62,8 +62,10 @@ function splashEl() {
 function splashShow() {
   if (!splashPic.src) { splashHide(); return; }   // v208+: index.html already holds a black cover (so Home is never seen first); no saved picture = it is removed at once
   if (!document.body) return;
-  const o = splashEl(), si = o.querySelector('img'); if (si.getAttribute('src') !== splashPic.src) si.src = splashPic.src; o.setAttribute('data-live', '1'); o.style.opacity = '1'; o.style.display = 'flex';
-  clearTimeout(o._t); o._t = setTimeout(splashHide, 1000);
+  const o = splashEl(), si = o.querySelector('img'); o.setAttribute('data-live', '1'); o.style.opacity = '1'; o.style.display = 'flex';
+  if (si.getAttribute('src') !== splashPic.src) { window.__lfSplashAt = 0; si.style.opacity = '0'; si.src = splashPic.src; }   // v209: a picture that index.html already showed keeps its src and its start time
+  const go = () => { si.style.opacity = '1'; if (!window.__lfSplashAt) window.__lfSplashAt = Date.now(); clearTimeout(o._t); o._t = setTimeout(splashHide, Math.max(0, SPLASH_MIN_MS - (Date.now() - window.__lfSplashAt))); };   // v209: at least 2 s of a fully visible picture, never a half-drawn one
+  (si.decode ? si.decode() : Promise.resolve()).then(go, splashHide);
 }
 function splashHide() { const o = document.getElementById('lf-splash'); if (!o) return; o.setAttribute('data-live', '1'); o.style.opacity = '0'; setTimeout(() => { o.style.display = 'none'; }, 400); }
 splashReady.then(splashShow);   // v208+: shown as soon as the saved picture is read, BEFORE the app draws Home (it used to be started at the very end of this file)

@@ -7,6 +7,11 @@
 
 
 
+## Splash: no blink before the picture, shown at least 2 seconds (no version change, still 0.208.0)
+- **Changed:** `index.html` (early inline script reads + decodes the saved picture from IndexedDB `lf-splash` BEFORE `src/main.js` loads; the picture starts at opacity 0 and fades in once decoded), `src/main.js` (`splashReady` reuses `window.__lfSplashP`; `splashShow` waits for `decode()` and hides after `SPLASH_MIN_MS` counted from `window.__lfSplashAt`), `src/splashpic.js` (`SPLASH_MIN_MS = 2000`), `tests/splash-v209.test.mjs` (new), `README.md`, `UPDATES.md`.
+- **Why:** the black cover was in `index.html` but the picture was attached only when the big app script ran: black screen, then the picture popped in (the blink). Also the picture used to stay 1 s.
+- **DO NOT UNDO:** the early script must open the DB exactly like `idb()` in `src/splashpic.js` (name `lf-splash`, version 1, store `pic`, key `current`), or the app script could find a database without its store. No saved picture = the cover is removed at once (no 2 s of empty black). The native Android 12 splash icon is already a plain black rectangle, so the system splash and the black cover are one continuous black. `.github/workflows/android.yml` was NOT touched (it is identical to the owner's own Android.yml; its comment still says 1 second).
+
 ## Tap on a cover: original only on Now Playing, your own picture elsewhere (no version change, still 0.208.0)
 - **Changed:** `src/main.js` (new setting `npTapOrig`, default ON; new `coverHtmlC()` + `viewHtml()` next to `coverHtml()`; `openCover()` / the cover-tap `show()` / the track-change refresh pass `_c` and `_t`; one new row in Settings), `src/settingsio.js` (plain label for the import sheet), `tests/cover-tap-v209.test.mjs` (new), `README.md`, `docs/FEATURES.md`, `docs/HANDOFF.md`, `UPDATES.md`.
 - **Why:** owner: the original cover should open only when tapping the cover on the Now Playing screen; tapping an album cover anywhere else must show the custom picture / GIF the person uploaded; plus an option for what the Now Playing tap shows.

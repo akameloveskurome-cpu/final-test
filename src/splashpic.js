@@ -7,6 +7,7 @@ const REPO = (import.meta.env && import.meta.env.VITE_REPO) || '';
 const BRANCH = (import.meta.env && import.meta.env.VITE_BRANCH) || 'main';
 export const SPLASH_DIR = 'splash-pic';
 export const SPLASH_POLL_MS = 1000;
+export const SPLASH_MIN_MS = 2000;   // v209: the splash picture stays on screen at least this long (counted from the moment the picture is really visible); the library keeps loading underneath, and Home shows its own loading animation if it takes longer
 export const SPLASH_CACHE_KEY = 'lf.splashCache';
 const DB_NAME = 'lf-splash', STORE = 'pic', KEY = 'current';
 const base = (repo, br) => `https://raw.githubusercontent.com/${repo}/${br}/${SPLASH_DIR}/`;

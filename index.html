@@ -8,7 +8,19 @@
 <title>Liquid Dark</title>
 </head>
 <body>
-<div id="lf-splash" style="position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;transition:opacity .4s"><img alt="" style="display:block;flex:none;width:80vw;height:80vh;object-fit:contain;object-position:center"></div>
+<div id="lf-splash" style="position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;transition:opacity .4s"><img alt="" style="display:block;flex:none;width:80vw;height:80vh;object-fit:contain;object-position:center;opacity:0;transition:opacity .2s"></div>
+<script>
+/* v209: the saved splash picture is read and decoded HERE, before the big app script has even loaded, and only then faded in over the black cover.
+   Before, the picture was attached by the app script (late): black screen, then the picture popped in = the blink. */
+(function(){var w=window;w.__lfSplashP=new Promise(function(done){function fin(v){done(v||null)}
+try{var q=indexedDB.open('lf-splash',1);q.onupgradeneeded=function(){q.result.createObjectStore('pic')};q.onerror=function(){fin()};
+q.onsuccess=function(){var db=q.result;try{var g=db.transaction('pic','readonly').objectStore('pic').get('current');g.onerror=function(){db.close();fin()};
+g.onsuccess=function(){db.close();var v=g.result;if(!v||!v.blob||!v.stamp||v.blob.type==='image/gif')return fin();
+var src=URL.createObjectURL(v.blob),o=document.getElementById('lf-splash'),im=o&&o.querySelector('img');if(!im)return fin({src:src,stamp:v.stamp});
+var show=function(){im.style.opacity='1';w.__lfSplashAt=Date.now();fin({src:src,stamp:v.stamp})};
+im.src=src;if(im.decode)im.decode().then(show,function(){fin()});else{im.onload=show;im.onerror=function(){fin()}}};
+}catch(e){try{db.close()}catch(_){}fin()}}}catch(e){fin()}})})();
+</script>
 <script>setTimeout(function(){var o=document.getElementById('lf-splash');if(o&&!o.getAttribute('data-live')){o.style.display='none'}},4000)</script>
 <div id="app"></div>
 <script type="module" src="/src/main.js"></script>
