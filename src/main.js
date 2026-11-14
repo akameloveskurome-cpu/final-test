@@ -41,7 +41,7 @@ import { fetchPopupPic, peekManifest, popFit, popupUrl, POPUP_POLL_MS } from './
 import { fetchUpdatePic, UPD_PIC_MIN_MS } from './updpic.js';
 import { fetchCreditPic, CREDIT_POLL_MS, creditPicFailed } from './creditpic.js';
 import { fetchBannerPic, BANNER_POLL_MS, bannerPicFailed } from './statbanpic.js';
-import { startBgAllow, bgAllowClose, bgAllowCheck, bgAllowHold, bgAllowDemo } from './bgallow.js';
+import { startBgAllow, bgAllowClose, bgAllowCheck, bgAllowHold, bgAllowDemo, setBgAllowGate } from './bgallow.js';
 import { fetchSplashPic, splashLoad, splashSave, splashClear, SPLASH_POLL_MS, SPLASH_MIN_MS, SPLASH_CACHE_KEY } from './splashpic.js';
 // v134: the splash picture (splash-pic/). v208+: shown inside an 80% x 80% box (80vw x 80vh) on a black screen, object-fit:contain: scaled to the uploaded picture's shape, never cropped, never stretched, centered. Last picture kept on the phone so it shows at once next launch.
 let splashPic = { src: '', stamp: '' };
@@ -1660,6 +1660,15 @@ function updSheet() {
 let popRetryT = 0;
 /** BUG-39: one retry path: capped at 44 tries, one timer at a time */
 function popRetry() { if (popTries >= 44) return; const delay = popTries++ < 24 ? 5000 : 30000; clearTimeout(popRetryT); popRetryT = setTimeout(() => startPopup().catch(() => {}), delay); }
+/* v208: "Allow notifications" card: while notifications are OFF it is shown every time the app is opened (cold start, or coming back after the app was away 10 s or more) until the person allows them.
+   permShownOpen = already shown during this open; permTrip = the person is on the Android prompt / settings page (coming back from there is not a new open). Later / Back only hide it until the next open. */
+let permShownOpen = false, permTrip = false, permHiddenAt = 0, permOff = false;
+setBgAllowGate(() => permOff && !permShownOpen);   // v209: the background-activity card waits for the notification card (shown first), then 10 s more
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { permHiddenAt = Date.now(); return; }
+  if (permTrip) { permTrip = false; return; }   // back from the Android prompt / settings: same open
+  if (permHiddenAt && Date.now() - permHiddenAt >= 10000) permShownOpen = false;   // a new open: ask again if still off
+});
 let popWaiting = false, popUnseen = null, popTries = 0, popRun = false, popQueued = false, popTriedStamp = '';   // v129: popTriedStamp = the upload whose picture was already tried: the 1-second check does not retry it (the 5 s / 30 s retry timers do)
 async function startPopup() {
   // Defer delivery until the saved update gate is restored and the current
@@ -1670,16 +1679,18 @@ async function startPopup() {
   try {
     await updGateRestorePromise;
     if (updPending || updBusy) { popWaiting = true; return; }
+    if (document.getElementById('lf-bgallow')) { setTimeout(() => startPopup().catch(() => {}), 1500); return; }   // v208: never on top of the background-activity card
     let granted = true, asked = false;
     try { granted = !!(await Native.notificationStatus()).granted; } catch {}
     if (updPending || updBusy) { popWaiting = true; return; }
+    permOff = !granted;   // v209: tells the background card whether the notification card is still due
     try { asked = !!localStorage.getItem('lf.notifAsked'); } catch {}
     // v129: decide from the tiny manifest FIRST; the picture is downloaded only when it is new to this person, and never while another sheet blocks the popup.
     const man = await peekManifest();
     if (updPending || updBusy) { popWaiting = true; return; }
     let seen = '', seenStamp = ''; try { seen = localStorage.getItem('lf.popupSeen') || ''; seenStamp = localStorage.getItem('lf.popupStamp') || ''; } catch {}
     const stampNew = man ? (man.stamp ? man.stamp !== seenStamp : true) : true;   // no stamp / no manifest: only the bytes can tell, so the picture is read
-    const wantsPerm = !granted && !asked;
+    const wantsPerm = !granted && !permShownOpen;   // v208: every open while notifications are off (was: once ever)
     if (!stampNew && !wantsPerm) return;   // already seen this upload, nothing to ask: no download at all
     popTriedStamp = man?.stamp || '';
     let pic = await fetchPopupPic(undefined, undefined, undefined, man);
@@ -1701,9 +1712,10 @@ async function startPopup() {
     const needPerm = !granted;   // v130: notifications already on -> picture + OK only; off -> picture + Allow / Later
     // v208: the first time, the card shows once without a picture; after that only for an uploaded picture.
     let firstTime = false; try { firstTime = !localStorage.getItem('lf.popFirst'); } catch {}
-    if (!pic && !firstTime) return;
+    if (!pic && wantsPerm && man && popTries < 3) { popRetry(); return; }   // v208: a picture IS uploaded but slow: it gets about 10 s before the plain card shows
+    if (!pic && !firstTime && !wantsPerm) return;
     if (pic && !fresh && !wantsPerm) { URL.revokeObjectURL(pic.src); return; }
-    if (notifSheet(pic, needPerm)) { freePopBlob(); popBlob = pic ? pic.src : ''; if (!pic) { try { localStorage.setItem('lf.popFirst', '1'); } catch {} } }   // v208: the plain first-time card is shown once
+    if (notifSheet(pic, needPerm)) { if (needPerm) permShownOpen = true; freePopBlob(); popBlob = pic ? pic.src : ''; if (!pic) { try { localStorage.setItem('lf.popFirst', '1'); } catch {} } }   // v208: the plain first-time card is shown once
     else if (pic) { try { URL.revokeObjectURL(pic.src); } catch {} }   // identical card already on screen: keep it, drop the duplicate download
     // The image was pre-decoded above. Confirm the actual sheet image too before persisting its stamp.
     const shown = $('#sheet .popimg');
@@ -1777,6 +1789,16 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) { popTries = 0; popTriedStamp = ''; startPopup().catch(() => {}); checkLatestPopup().catch(() => {}); }
 });
 window.addEventListener('online', () => { if (!document.hidden) { popTries = 0; popTriedStamp = ''; checkLatestPopup().catch(() => {}); startUpdateCheck().catch(() => {}); } });
+/** v208: Allow on the notification card. Android's own prompt first; when it cannot appear (Android 12 and older, or refused twice) it returns at once, so the app's Notifications page in Android settings is opened instead. */
+async function notifAllow() {
+  permTrip = true; const t0 = Date.now(); let r = { granted: false };
+  try { r = (await Native.requestNotifications()) || r; } catch {}
+  if (r.granted) { permTrip = false; toast('Notifications on'); return; }
+  if (Date.now() - t0 < 700) {
+    try { const o = await Native.openNotificationSettings(); if (o && o.ok === false) throw new Error('no settings'); toast('Switch on Notifications for Liquid Dark', 4000); }
+    catch { permTrip = false; toast('Open Android Settings > Apps > Liquid Dark > Notifications', 4500); }
+  } else { setTimeout(() => { permTrip = false; }, 2500); toast('Notifications are off'); }
+}
 async function notifTest() {
   try { let r = await Native.notificationStatus(); if (!r.granted) r = await Native.requestNotifications(); if (!r.granted) return toast('Notifications are off. Allow them in Android settings.'); await Native.notificationTest(); toast('Notification sent'); }
   catch (e) { toast(e === 'Android only' ? 'Notification test works on the phone only' : 'Notification: ' + (e.message || e)); }
@@ -2900,7 +2922,7 @@ document.addEventListener('click', e => {
         case 'addwidget': Native.addWidget(d.kind).then(r => { if (!r || !r.requested) toast('Long-press your home screen, tap Widgets, then pick Liquid Dark', 4500); }).catch(() => toast('Long-press your home screen, tap Widgets, then pick Liquid Dark', 4500)); break;
     case 'notiftest': notifTest(); break;
     case 'notif-later': try { localStorage.setItem('lf.notifAsked', '1'); } catch {} closeSheet(); break;
-    case 'notif-allow': try { localStorage.setItem('lf.notifAsked', '1'); } catch {} closeSheet(); Native.requestNotifications().then(r => toast(r.granted ? 'Notifications on' : 'Notifications are off')).catch(() => {}); break;
+    case 'notif-allow': try { localStorage.setItem('lf.notifAsked', '1'); } catch {} closeSheet(); bgAllowHold(notifAllow()); break;   // v209: the background card waits for the Android prompt, then 10 s
     case 'plexport': fmtSheet('pl'); break;
     case 'xp-pl': { const q = curPl(); if (q) fmtSheet('pl', q.id); break; }
     case 'xp-go': closeSheet(); if (d.k === 'ls') exportLs(d.f, lsPeriod); else exportPl(d.f, d.pid || ''); break;

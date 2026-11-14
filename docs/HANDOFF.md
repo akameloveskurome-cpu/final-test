@@ -5,6 +5,9 @@
 # Liquid Dark: HANDOFF [v148]  (lives at `docs/HANDOFF.md` since v45; read this first; old long notes: docs/archive/HISTORY_v25.md, incl. the full v27 / v28 / v29 / v30 notes at the end)
 
 
+## Session: permission cards on every open - version stays 0.208.0
+Background-activity card (`src/bgallow.js`) and Allow-notifications card (`startPopup()` in `src/main.js`) show on every app open while the permission is OFF, until allowed; pictures stay separate (`background-allow-gif-pic/` vs `notification-popup-gif-pic/`). New Java `openNotificationSettings`. `isBackgroundAllowed` = not battery-optimized AND not background-restricted (OEM switch). Test: `tests/permission-cards-every-open-v208.test.mjs`. Details and DO NOT REDO: HANDOFF_STATUS.md. v209 order: notification card first, the background card starts a 10 s countdown only after it is gone (`sequence()` + `setBgAllowGate()`); `openBackgroundSettings` tries the phone brand's own page (`openOemBackgroundPage()`) before the generic ones; test `tests/permission-sequence-v209.test.mjs`.
+
 ## Session: version is 208 everywhere - version stays 0.208.0
 All `v209` / `v210` labels were renamed to `v208` (code comments, docs, test names). `package.json`, `package-lock.json`, the workflow and the in-app version all give 0.208.0 / build 208. Do not label new work with another version.
 

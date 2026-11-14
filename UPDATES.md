@@ -6,6 +6,16 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+## Allow cards now come one after the other
+- **Changed:** when both notifications and background activity are off, the notification card comes first (a few seconds after opening). The background-activity card comes 10 seconds after the notification card is gone (after you tap Allow, Later or go back), never at the same time. Each one still shows its own picture or GIF from `notification-popup-gif-pic/` and `background-allow-gif-pic/`.
+- **Allow background activity** now opens the right settings page on more phones (Oppo, Realme, OnePlus, Vivo, Samsung, Huawei, Xiaomi and others), with the normal Android battery page as the first choice.
+
+## Allow cards come back on every open until you allow (background activity and notifications)
+- **Changed:** if Android's **Allow background activity** is off for Liquid Dark, its card is shown every time you open the app until you allow it. The same for **notifications**: while they are off, the **Allow notifications** card is shown every time you open the app. **Later** only hides a card until the next open. Once allowed, the card stops (a new picture you upload still shows once, as before).
+- **Pictures:** the background card shows the picture or GIF from `background-allow-gif-pic/`, the notification card the one from `notification-popup-gif-pic/`. They are two separate pictures. With no picture uploaded, the card shows plain text.
+- **Background activity check made stricter:** the card now counts background activity as ON only when Android reports the app as not battery-optimized and not background-restricted, so a phone with its own switch (for example OnePlus: Battery usage > Allow background activity) is covered better.
+- **Allow notifications** opens Android's prompt; when Android can no longer show it (Android 12 and older, or it was refused twice) it opens the app's Notifications page in Android settings instead.
+
 ## Very large .zip files import too
 - **Added:** .zip files in the zip64 format (very big archives, or ones with more than 65,535 files) can be picked for import now. Before, they asked you to unzip them first. With this, no import file is refused for its size any more.
 

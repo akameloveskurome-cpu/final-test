@@ -228,6 +228,7 @@ export const Native = {
   insets: () => (N && N.insets ? N.insets() : Promise.resolve(null)),   // v53: status / navigation bar heights in CSS px (edge-to-edge)
   notificationStatus: () => (N ? N.notificationStatus() : Promise.resolve({ granted: true })),
   requestNotifications: () => (N ? N.requestNotifications() : Promise.resolve({ granted: true })),
+  openNotificationSettings: () => (N ? N.openNotificationSettings() : Promise.resolve({})),   // v208: Android > App info > Notifications for Liquid Dark
   notificationTest: () => (N ? N.notificationTest() : Promise.reject('Android only')),
   // T3: folder + library. Browser mock returns nothing.
   addWidget: kind => (N ? N.addWidget({ kind: kind || '' }) : Promise.resolve({ requested: false })),

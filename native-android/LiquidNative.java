@@ -1844,11 +1844,54 @@ public class LiquidNative extends Plugin {
     try { i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); getContext().startActivity(i); return true; } catch (Throwable t) { return false; }
   }
 
+  /** v208: "Allow background activity" counts as ON only when BOTH Android signals say so: the app is not battery-optimized (isIgnoringBatteryOptimizations) AND background use is not restricted
+   *  (ActivityManager.isBackgroundRestricted, API 28+: the switch on phones such as OnePlus / Oppo / Realme "Battery usage > Allow background activity"). Either one off = OFF = the card is shown on every open.
+   *  Returns { allowed, ignoring, restricted } (the two raw signals are for diagnosis). */
   @PluginMethod
   public void isBackgroundAllowed(PluginCall call) {
-    boolean ok = true;
-    try { android.os.PowerManager pm = (android.os.PowerManager) getContext().getSystemService(Context.POWER_SERVICE); ok = android.os.Build.VERSION.SDK_INT < 23 || pm.isIgnoringBatteryOptimizations(getContext().getPackageName()); } catch (Throwable ignored) { }
-    JSObject o = new JSObject(); o.put("allowed", ok); call.resolve(o);
+    boolean ignoring = true, restricted = false;
+    try { android.os.PowerManager pm = (android.os.PowerManager) getContext().getSystemService(Context.POWER_SERVICE); ignoring = android.os.Build.VERSION.SDK_INT < 23 || pm.isIgnoringBatteryOptimizations(getContext().getPackageName()); } catch (Throwable ignored) { }
+    try { if (android.os.Build.VERSION.SDK_INT >= 28) { android.app.ActivityManager am = (android.app.ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE); restricted = am != null && am.isBackgroundRestricted(); } } catch (Throwable ignored) { }
+    JSObject o = new JSObject(); o.put("allowed", ignoring && !restricted); o.put("ignoring", ignoring); o.put("restricted", restricted); call.resolve(o);
+  }
+
+  /** v209: phone-brand pages (Oppo / Realme / OnePlus ColorOS, Vivo / iQOO, Samsung, Huawei / Honor, Xiaomi, Asus...) that hold the app's "Allow background activity" / auto-start / battery switch.
+   *  Each one is tried only on that brand (Build.MANUFACTURER / BRAND); a page that does not exist on this phone just fails quietly and the next one is tried. Returns the name of the page that opened, or "". */
+  private String openOemBackgroundPage(String pkg) {
+    String m = ((android.os.Build.MANUFACTURER == null ? "" : android.os.Build.MANUFACTURER) + " " + (android.os.Build.BRAND == null ? "" : android.os.Build.BRAND)).toLowerCase(java.util.Locale.ROOT);
+    java.util.List<String[]> c = new java.util.ArrayList<>();   // { component package, component class }
+    if (m.contains("oppo") || m.contains("realme") || m.contains("oneplus")) {
+      c.add(new String[]{"com.oplus.battery", "com.oplus.powermanager.fuelgaue.PowerUsageModelActivity"});
+      c.add(new String[]{"com.coloros.oppoguardelf", "com.coloros.powermanager.fuelgaue.PowerUsageModelActivity"});
+      c.add(new String[]{"com.coloros.oppoguardelf", "com.coloros.powermanager.fuelgaue.PowerConsumptionActivity"});
+      c.add(new String[]{"com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"});
+      c.add(new String[]{"com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity"});
+    }
+    if (m.contains("vivo") || m.contains("iqoo")) {
+      c.add(new String[]{"com.vivo.abe", "com.vivo.applicationbehaviorengine.ui.ExcessivePowerManagerActivity"});
+      c.add(new String[]{"com.iqoo.powersaving", "com.iqoo.powersaving.PowerSavingManagerActivity"});
+      c.add(new String[]{"com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"});
+      c.add(new String[]{"com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity"});
+    }
+    if (m.contains("samsung")) {
+      c.add(new String[]{"com.samsung.android.lool", "com.samsung.android.sm.battery.ui.usage.CheckableAppListActivity"});
+      c.add(new String[]{"com.samsung.android.lool", "com.samsung.android.sm.ui.battery.BatteryActivity"});
+      c.add(new String[]{"com.samsung.android.sm_cn", "com.samsung.android.sm.ui.battery.BatteryActivity"});
+    }
+    if (m.contains("huawei") || m.contains("honor")) {
+      c.add(new String[]{"com.huawei.systemmanager", "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"});
+      c.add(new String[]{"com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity"});
+    }
+    if (m.contains("xiaomi") || m.contains("redmi") || m.contains("poco")) {
+      c.add(new String[]{"com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"});
+    }
+    if (m.contains("asus")) c.add(new String[]{"com.asus.mobilemanager", "com.asus.mobilemanager.autostart.AutoStartActivity"});
+    if (m.contains("tecno") || m.contains("infinix") || m.contains("itel")) c.add(new String[]{"com.transsion.phonemaster", "com.cyin.himgr.autostart.AutoStartActivity"});
+    for (String[] x : c) {
+      Intent i = new Intent(); i.setClassName(x[0], x[1]); i.putExtra("package_name", pkg); i.putExtra("packageName", pkg);
+      if (tryStart(i)) return x[0];
+    }
+    return "";
   }
 
   @PluginMethod
@@ -1858,11 +1901,15 @@ public class LiquidNative extends Plugin {
     String via = "";
     if (tryStart(new Intent("android.settings.VIEW_ADVANCED_POWER_USAGE_DETAIL", u))) via = "battery-usage";
     else {
-      Intent mi = new Intent(); mi.setClassName("com.miui.powerkeeper", "com.miui.powerkeeper.ui.HiddenAppsConfigActivity"); mi.putExtra("package_name", pkg); mi.putExtra("package_label", "Liquid Dark");
-      if (tryStart(mi)) via = "miui";
-      else if (android.os.Build.VERSION.SDK_INT >= 23 && tryStart(new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, u))) via = "ignore-dialog";
-      else if (android.os.Build.VERSION.SDK_INT >= 23 && tryStart(new Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))) via = "optimization-list";
-      else if (tryStart(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, u))) via = "app-info";
+      String oem = openOemBackgroundPage(pkg);   // v209: the phone brand's own page (Oppo / Realme / OnePlus, Vivo, Samsung, Huawei, Xiaomi...)
+      if (!oem.isEmpty()) via = "oem:" + oem;
+      else {
+        Intent mi = new Intent(); mi.setClassName("com.miui.powerkeeper", "com.miui.powerkeeper.ui.HiddenAppsConfigActivity"); mi.putExtra("package_name", pkg); mi.putExtra("package_label", "Liquid Dark");
+        if (tryStart(mi)) via = "miui";
+        else if (android.os.Build.VERSION.SDK_INT >= 23 && tryStart(new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, u))) via = "ignore-dialog";
+        else if (android.os.Build.VERSION.SDK_INT >= 23 && tryStart(new Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))) via = "optimization-list";
+        else if (tryStart(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, u))) via = "app-info";
+      }
     }
     JSObject o = new JSObject(); o.put("ok", !via.isEmpty()); o.put("via", via); call.resolve(o);
   }
@@ -2680,6 +2727,16 @@ public class LiquidNative extends Plugin {
 
   @PermissionCallback
   private void notifResult(PluginCall call) { notificationStatus(call); }
+
+  /** v208: the app's own Notifications page in Android settings. Used by the "Allow notifications" card when the system prompt cannot be shown (Android 12 and older, or the person already refused it twice). */
+  @PluginMethod
+  public void openNotificationSettings(PluginCall call) {
+    String pkg = getContext().getPackageName();
+    boolean ok = false;
+    if (Build.VERSION.SDK_INT >= 26) { Intent i = new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS); i.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, pkg); ok = tryStart(i); }
+    if (!ok) ok = tryStart(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + pkg)));
+    JSObject o = new JSObject(); o.put("ok", ok); call.resolve(o);
+  }
 
   @PluginMethod
   public void notificationTest(PluginCall call) {

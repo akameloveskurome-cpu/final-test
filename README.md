@@ -131,7 +131,7 @@ Seven places in the app can show a picture or GIF that you publish in the projec
 - **Opening screen** from `splash-pic/`, shown on a black screen, up to 80% of the screen width and height, fitted to the uploaded picture's shape (never cropped or stretched), for at least 2.8 seconds when the app opens (pictures only, no GIF). No blink: the saved picture is read and decoded before the app script loads, then faded in over the black cover; the library loads underneath and Home shows its own loading animation if it takes longer.
 - **Credits** from `credit-gif-pic/`, under Settings > About > Credits.
 - **App logo** from `app-logo-pic/`, in Settings > About.
-- **Allow background activity** from `background-allow-gif-pic/`, a full-screen card that opens Android's battery settings.
+- **Allow background activity** from `background-allow-gif-pic/`, a full-screen card that opens Android's battery settings. While Android's background activity is **off**, the card is shown **every time the app is opened** until the person allows it (your picture if one is uploaded, otherwise plain text). When it is already allowed, only a new upload shows it, once. **Order (v209):** when both are off, the notification card comes first and the background card follows **10 seconds after the notification card is gone** (Allow, Later or Back), never together. Allow opens Android's battery page, or the phone brand's own page (Oppo, Realme, OnePlus, Vivo, Samsung, Huawei, Xiaomi and others).
 - **Home picture box** from `stats-banner-gif-pic/`, a glass box above Listening Stats on Home.
 
 ### Your own pictures and GIFs
@@ -151,7 +151,7 @@ A picture or a GIF works everywhere you can choose one. (GIFs are my favourite. 
 - Playback pauses for phone calls and when headphones are unplugged.
 - **Bluetooth:** a chip under the title and a banner when a device connects, plus a device list in Settings.
 - **Equalizer** opens your phone's own sound settings. Using it means the output is no longer bit-perfect. (A small lie of the audio kind. I won't hide it from you.)
-- A notification permission prompt on first start (Android 13 and later), and a **Notification test** button.
+- An **Allow notifications** card with the picture from `notification-popup-gif-pic/`. While notifications are **off** it is shown **every time the app is opened** until the person allows them (Allow opens Android's prompt, or the app's Notifications settings when the prompt can no longer appear; Later only hides it until the next open). Plus a **Notification test** button. **Order (v209):** when both are off, the notification card comes first and the background card follows **10 seconds after the notification card is gone** (Allow, Later or Back), never together.
 - **Updates inside the app.** The app checks for a newer version about once a second while it's open. When one is published, it downloads in the background by itself, and then shows **Update ready**. Tap Install, confirm on the next screen (the update is required: there's no Later), and it installs over the old app. You never download an APK by hand, and your library and settings stay.
 - **A message from the author.** When a new picture or GIF is published with the project, it appears once on a black background the next time you open the app. Any shape fits, it's never cropped or stretched, and the liquid glass buttons match the rest of the app. That's me, saying hi from behind the glass.
 
