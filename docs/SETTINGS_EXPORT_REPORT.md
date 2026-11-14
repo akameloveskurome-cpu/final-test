@@ -4,7 +4,7 @@
 - **23 settings groups = 54 single values** (before this change) **+ 1 small extra** (Canvas on/off; the profile photo is NOT saved, see below). The Export toast and the Import sheet now show the real number of values, not the number of groups (before they said "23 settings").
 - Anything you add later (renamed sections, pinned items, your own Home sections, your name) is inside those values and travels too.
 
-## What IS saved (all of it, one file `liquid-flac-settings.json`)
+## What IS saved (all of it, one file `liquid-dark-settings.json`)
 | Area | Values |
 |---|---|
 | Display toggles | Motion, Album details, Smart artist grouping, Bigger covers, Lens refraction, Cover shortcuts, Increase Contrast, Red hover |

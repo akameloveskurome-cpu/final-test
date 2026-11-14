@@ -6,6 +6,28 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+## Very large .zip files import too
+- **Added:** .zip files in the zip64 format (very big archives, or ones with more than 65,535 files) can be picked for import now. Before, they asked you to unzip them first. With this, no import file is refused for its size any more.
+
+## No size limit on import and export files (no version change, still 0.208.0)
+- **Removed:** the 80 MB limit on a file you pick to import or save as an export, and the 200 MB limit per file inside a .zip. Big listening histories, playlists and backups now import and export at any size.
+- **Still true:** the phone's own limits. A plain .json / .csv is read into memory as text (a phone with little free memory may say "file too large to read", and over about 2 GB it asks you to put the file in a .zip). Very big files simply take longer.
+
+## Imported playlists, settings and listening data stay in the app (no version change, still 0.208.0)
+- **Once imported, it is the app's own data.** Playlists are written into the app's own file, settings into the app's own settings, and listening history into the app's own history database. The import file is only read once: you can delete it, move it or remove its folder and nothing changes.
+- **Imported playlists only go away when you delete them** (Delete Playlist). Loading the app, the library or the saved file can no longer replace or drop them. A playlist that could not be written yet is kept and saved again on the next start.
+- **Honest messages:** "Imported" is shown only after the data is really written. If a save fails the app says so (playlists: "could not be saved yet, please import again"; settings: "Could not save the settings"; listening: the play counts note).
+
+## Fix: imported playlists no longer vanish after closing the app (no version change, still 0.208.0)
+- **Fixed:** playlists you imported (and your other playlists) could be missing from Library after you closed and opened the app. They were still in the saved file, but the app emptied its list when the music library finished loading after them, and the next save then overwrote the file. The library loading no longer touches playlists that were already loaded.
+- **Checked, nothing to fix:** Settings import (saved before the app reloads) and listening data import (stored in the history database in one step) both keep their data after a restart.
+- **If playlists are already gone:** import your playlist file again (Settings > Export / import). The app keeps one earlier copy of the playlists file (`playlists.bak`) as a safety net.
+
+## Song: Back to original cover, album Back to default resets every song, files named Liquid Dark (no version change, still 0.208.0)
+- **One song, back to its original cover.** Press and hold a song > Song picture or GIF now also has **Back to original cover**. It deletes that song's own picture or GIF and shows the cover from the song's own file, even when its album has your own picture or GIF. (**Back to default** still means "follow the album picture again".)
+- **Album Back to default now overrides the songs.** In an album's picture menu, **Back to default** brings back the original cover for the album AND for every song in it, even songs that have their own picture or GIF or were set to "original". Songs of other albums are not touched. The button also shows when only some songs of the album have their own picture.
+- **Export / import files say Liquid Dark, not FLAC.** Settings, playlists and listening data files are now named `liquid-dark-settings...`, `liquid-dark-playlists...` and `liquid-dark-listening...`, and the format names read "Liquid Dark backup (.json)". Old `liquid-flac` files still import.
+
 ## Home screen without the big Home title
 The large "Home" heading above the greeting is gone. Everything else on Home is unchanged.
 

@@ -2,9 +2,9 @@
 // The settings live in ONE object (localStorage 'lf.settings'), plus a few small items stored beside it (EXTRA_KEYS). Big device files (background / playlist / artist / album pictures, GIFs, videos, profile GIF / video) are NOT part of the backup: NOT_INCLUDED lists them for the app to show.
 import { stamp } from './transfer.js';
 export const KIND = 'settings';
-export const FILE_NAME = 'liquid-flac-settings.json';
+export const FILE_NAME = 'liquid-dark-settings.json';
 /** v159: a new name each day, so an older backup is never overwritten by a new export. */
-export const fileName = (now = new Date()) => `liquid-flac-settings-${stamp(now)}.json`;
+export const fileName = (now = new Date()) => `liquid-dark-settings-${stamp(now)}.json`;
 export const SETTINGS_KEY = 'lf.settings';
 const EXTRA_KEYS = ['lf.canvasOn'];                        // stored beside the settings object: the Canvas on/off switch only (v163: the profile photo is NOT exported; the owner adds it again)
 const okExtra = (k, v) => k === 'lf.canvasOn' && typeof v === 'string' && (v === '0' || v === '1');
@@ -15,7 +15,7 @@ const SKIP = new Set(['recent', '__proto__', 'constructor', 'prototype']);   // 
 export function buildExport(set, extras = {}, appVersion = '', now = new Date()) {
   const settings = {}; for (const [k, v] of Object.entries(set || {})) if (!SKIP.has(k)) settings[k] = v;
   const ex = {}; for (const k of EXTRA_KEYS) if (okExtra(k, extras[k])) ex[k] = extras[k];
-  return { app: 'liquid-flac', kind: KIND, version: 1, appVersion, exported: now.toISOString(), settings, extras: ex };
+  return { app: 'liquid-dark', kind: KIND, version: 1, appVersion, exported: now.toISOString(), settings, extras: ex };
 }
 /** Number of single values in a settings object (an object counts its members, a list counts as one): a truer number than the count of top-level keys. */
 export const countValues = o => Object.values(o || {}).reduce((n, v) => n + (v && typeof v === 'object' && !Array.isArray(v) ? Math.max(1, countValues(v)) : 1), 0);

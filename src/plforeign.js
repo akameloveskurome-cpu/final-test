@@ -1,12 +1,12 @@
 // Playlists from / to OTHER apps. PURE (no DOM, no Native): covered by tests/plforeign.test.mjs.
-// Export: Liquid FLAC JSON (plexport.js), M3U8, XSPF, CSV (Exportify-style columns).
+// Export: Liquid Dark JSON (plexport.js), M3U8, XSPF, CSV (Exportify-style columns).
 // Import: our JSON, M3U / M3U8, PLS, XSPF, JSPF, CSV / TSV (Spotify Exportify, Soundiiz, TuneMyMusic, Apple Music text export, most spreadsheets),
 // Spotify's own data download (Playlist1.json), a plain list of "Artist - Title" lines. Songs are matched to the local library (path, tags, then looser name matching).
 import { unesc, norm, parseImport, makeIndex, matchSong, freeName, nameKey } from './plexport.js';
 import { csvParse, csvText, headerMap, xmlEsc, xmlUnesc, safeName, uniqueNames, stamp } from './transfer.js';
 
 export const FORMATS = [
-  { id: 'json', label: 'Liquid FLAC backup (.json)', note: 'Best for moving between your own phones. Keeps every song.', ext: 'json', mime: 'application/json' },
+  { id: 'json', label: 'Liquid Dark backup (.json)', note: 'Best for moving between your own phones. Keeps every song.', ext: 'json', mime: 'application/json' },
   { id: 'm3u8', label: 'M3U8 playlist (.m3u8)', note: 'Works in VLC, Poweramp, foobar2000, Apple Music (Mac), most players. Several playlists = one .zip.', ext: 'm3u8', mime: 'audio/x-mpegurl' },
   { id: 'xspf', label: 'XSPF playlist (.xspf)', note: 'Open standard (VLC, Strawberry, Clementine). Several playlists = one .zip.', ext: 'xspf', mime: 'application/xspf+xml' },
   { id: 'csv', label: 'CSV spreadsheet (.csv)', note: 'Title, artist, album per row. For Soundiiz, TuneMyMusic-style converters and Spotify / Apple Music / YouTube Music transfers.', ext: 'csv', mime: 'text/csv' },
@@ -35,7 +35,7 @@ const encPath = p => {   // BUG-305: XSPF <location> is a URI: an absolute path 
 };
 export function toXspf(pl) {
   const t = pl.songs.map(s => `    <track>\n      <location>${xmlEsc(encPath(String(s.path).replace(/\\/g, '/')))}</location>\n      <title>${xmlEsc(s.title)}</title>\n      <creator>${xmlEsc(s.artist)}</creator>\n      <album>${xmlEsc(s.album)}</album>\n${s.dur ? `      <duration>${s.dur * 1000}</duration>\n` : ''}    </track>`).join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<playlist version="1" xmlns="http://xspf.org/ns/0/">\n  <title>${xmlEsc(pl.name)}</title>\n  <creator>Liquid FLAC</creator>\n  <trackList>\n${t}\n  </trackList>\n</playlist>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<playlist version="1" xmlns="http://xspf.org/ns/0/">\n  <title>${xmlEsc(pl.name)}</title>\n  <creator>Liquid Dark</creator>\n  <trackList>\n${t}\n  </trackList>\n</playlist>\n`;
 }
 /** One CSV with every playlist. Columns follow Exportify so tools that read it keep working. */
 export function toCsv(pls) {
@@ -52,11 +52,11 @@ export function toCsv(pls) {
 export function buildFiles(fmt, pls, now = new Date()) {
   const f = FORMATS.find(x => x.id === fmt); if (!f) throw new Error('Unknown format');
   const d = stamp(now);
-  if (fmt === 'csv') return { name: `liquid-flac-playlists-${d}.csv`, mime: f.mime, text: toCsv(pls) };
+  if (fmt === 'csv') return { name: `liquid-dark-playlists-${d}.csv`, mime: f.mime, text: toCsv(pls) };
   const conv = fmt === 'm3u8' ? toM3u8 : toXspf;
   if (pls.length === 1) return { name: safeName(pls[0].name, 'playlist') + '.' + f.ext, mime: f.mime, text: conv(pls[0]) };
   const names = uniqueNames(pls.map(p => safeName(p.name, 'playlist') + '.' + f.ext));
-  return { name: `liquid-flac-playlists-${fmt}-${d}.zip`, mime: 'application/zip', files: pls.map((p, i) => ({ name: names[i], text: conv(p) })) };
+  return { name: `liquid-dark-playlists-${fmt}-${d}.zip`, mime: 'application/zip', files: pls.map((p, i) => ({ name: names[i], text: conv(p) })) };
 }
 
 /* ---------- import: one parser per format. Each returns [{ name, songs:[{ id, path, title, artist, album }] }] ---------- */
@@ -220,7 +220,7 @@ export function mergeIds(existing, ids) {
 export function missingCsv(missing, now = new Date()) {
   const rows = [['Playlist', 'Track', 'Artist']];
   for (const m of missing || []) rows.push([m.list, m.title, m.artist]);
-  return { name: `liquid-flac-missing-songs-${stamp(now)}.csv`, mime: 'text/csv', text: csvText(rows) };
+  return { name: `liquid-dark-missing-songs-${stamp(now)}.csv`, mime: 'text/csv', text: csvText(rows) };
 }
 export const summaryForeign = ({ lists, matched, total, already = [] }) => `Imported ${lists.length} playlist${lists.length === 1 ? '' : 's'}: ${matched} of ${total} songs matched` + (already.length ? ` · ${already.length} already in the app` : '');
 

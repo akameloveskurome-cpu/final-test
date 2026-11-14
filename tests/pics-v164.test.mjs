@@ -72,7 +72,7 @@ test('picWatch retries every 15 s while something is missing, skips a hidden pag
 });
 
 const covT = t => `<c ${t.id}>`;
-const world = (spUrls = new Map()) => { const mosaic = extract('src/main.js', 'mosaic', { spUrls, covT }, '};'); const picsOf = extract('src/main.js', 'picsOf', {}); const ppUrl = new Map(); const ppBad = new Set(); const ppImg = p => `<img ${p.id}>`; return { mosaic, ppUrl, ppBad, plArt: extract('src/main.js', 'plArt', { picsOf, ppUrl, ppImg: p => ppUrl.has(p.id) ? ppImg(p) : '<wait>', ppBad, mosaic }) }; };
+const world = (spUrls = new Map()) => { const mosaic = extract('src/main.js', 'mosaic', { spUrls, covT, soHas: () => false }, '};'); const picsOf = extract('src/main.js', 'picsOf', {}); const ppUrl = new Map(); const ppBad = new Set(); const ppImg = p => `<img ${p.id}>`; return { mosaic, ppUrl, ppBad, plArt: extract('src/main.js', 'plArt', { picsOf, ppUrl, ppImg: p => ppUrl.has(p.id) ? ppImg(p) : '<wait>', ppBad, mosaic }) }; };
 test('a playlist shows only its own first picture (a plain square while it loads); the original 4-square mosaic only when there is none or it cannot be shown', () => {
   const w = world(); const ts = ['a', 'b', 'c', 'd', 'e'].map((x, i) => ({ id: 't' + i, albumId: x }));
   assert.match(w.plArt({ pics: [{ id: 'p1' }] }, ts, 'thumb'), /pp-cover thumb"><wait>/);   // v208+: still loading = plain square, never the original mosaic under it

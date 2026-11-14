@@ -1,4 +1,4 @@
-// v209: the splash picture: no blink before it, and it stays at least 2.8 seconds.
+// v208: the splash picture: no blink before it, and it stays at least 2.8 seconds.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

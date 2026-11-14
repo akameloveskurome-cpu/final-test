@@ -17,7 +17,7 @@ test('song pictures have their own store, two copies, restore, retry and a picke
 
 test('the song picture REPLACES the album picture (real gOfT): song picture alone; none = album only', () => {
   const spUrls = new Map([['s1', 'blob:song1']]), gOf = a => 'GRAD-' + a.k, trackAlbum = t => ({ k: t && t.albumId });
-  const gOfT = extract('src/main.js', 'gOfT', { gOf, trackAlbum, spUrls, PIC_BASE: '#111' });
+  const gOfT = extract('src/main.js', 'gOfT', { gOf, trackAlbum, spUrls, PIC_BASE: '#111', soHas: () => false });
   assert.equal(gOfT({ id: 's1', albumId: 'al1' }), "url('blob:song1') center/cover no-repeat, #111");
   assert.equal(gOfT({ id: 's2', albumId: 'al2' }), 'GRAD-al2');
   assert.equal(gOfT(null), 'GRAD-null');
@@ -27,9 +27,9 @@ test('guard (needs the running app): every place a song is shown uses gOfT/covT,
   assert.equal((M.match(/gOf\(trackAlbum\(/g) || []).length, 1);   // only inside gOfT itself
 });
 test('lock screen / notification: the song picture first, then the album picture; colours follow the song picture', () => {
-  assert.ok(M.includes("Native.setCoverOverride(t => (t ? mirrorPathSync('lf-songpics:' + t.id) || mirrorPathSync('lf-albumpics:' + t.albumId) : ''));"));
+  assert.ok(M.includes("Native.setCoverOverride(t => (t ? (soHas(t) ? '' : mirrorPathSync('lf-songpics:' + t.id) || mirrorPathSync('lf-albumpics:' + t.albumId)) : ''));"));   // v208: a song marked "original cover" gives the notification no override
   assert.ok(N.includes('(coverFor && coverFor(t))'));
-  assert.ok(M.includes('function coverTint(a, t)') && M.includes("ck = sp ? t.id + '|s'"));
+  assert.ok(M.includes('function coverTint(a, t)') && M.includes("sp ? t.id + '|s'"));
   assert.ok(M.includes('coverTint(trackAlbum(t), t)'));
 });
 

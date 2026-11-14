@@ -144,7 +144,7 @@ export function setLibrary(raw) {
   lyricTwins(ts);
   ts.sort((x, y) => x.title.localeCompare(y.title));
   albums = [...am.values()].sort((x, y) => x.title.localeCompare(y.title));
-  tracks = ts; playlists = []; reindex();
+  tracks = ts; if (!plLoaded) playlists = []; reindex();   // v208: only the built-in demo playlists are dropped here. Playlists that were already loaded (or imported) are the person's own: the library loading AFTER them used to wipe them from memory (they were still in the file, but Library showed none, and the next save overwrote the file)
   buildArtistIndex();
   const gc = ['--v-pink', '--v-blue', '--v-orange', '--v-green', '--v-yellow', '--v-magenta'];
   const gcount = new Map(); tracks.forEach(t => t.genres.forEach(n => gcount.set(n, (gcount.get(n) || 0) + 1)));
@@ -252,7 +252,8 @@ export function folderEntries(dir) {
 export const recentAlbums = n => (albums.some(a => a.added) ? albums.slice().sort((x, y) => (y.added || 0) - (x.added || 0)) : albums).slice(0, n);
 
 /* ---------- T6: playlists. `playlists` is a live binding: main.js mutates it, then Native.savePlaylists() persists it ---------- */
-export const setPlaylists = list => { playlists = (list || []).filter(p => p && typeof p === 'object').map(p => ({ id: String(p.id), name: esc(p.name ?? ''), ids: Array.isArray(p.ids) ? p.ids.slice() : [], pics: normalizePics(p.pics) })); };   // v132: pics = descriptions of the playlist's pictures / GIFs (the pictures live in IndexedDB, plpics.js)
+let plLoaded = false;   // v208: true once setPlaylists() ran (the saved playlists are in memory)
+export const setPlaylists = list => { plLoaded = true; playlists = (list || []).filter(p => p && typeof p === 'object').map(p => ({ id: String(p.id), name: esc(p.name ?? ''), ids: Array.isArray(p.ids) ? p.ids.slice() : [], pics: normalizePics(p.pics) })); };   // v132: pics = descriptions of the playlist's pictures / GIFs (the pictures live in IndexedDB, plpics.js)
 export const plTracks = p => p.ids.map(i => trackById.get(i)).filter(Boolean);   // ids of deleted files are skipped, not crashed on
 /** Bug 2: positions in p.ids of the rows plTracks(p) shows (same order). Row i of the screen = p.ids[plPositions(p)[i]], correct even when a song is in the list twice or an id was skipped. */
 export const plPositions = p => { const out = []; p.ids.forEach((id, k) => { if (trackById.has(id)) out.push(k); }); return out; };

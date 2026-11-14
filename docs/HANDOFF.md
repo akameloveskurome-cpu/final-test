@@ -5,6 +5,21 @@
 # Liquid Dark: HANDOFF [v148]  (lives at `docs/HANDOFF.md` since v45; read this first; old long notes: docs/archive/HISTORY_v25.md, incl. the full v27 / v28 / v29 / v30 notes at the end)
 
 
+## Session: version is 208 everywhere - version stays 0.208.0
+All `v209` / `v210` labels were renamed to `v208` (code comments, docs, test names). `package.json`, `package-lock.json`, the workflow and the in-app version all give 0.208.0 / build 208. Do not label new work with another version.
+
+## Session: import / export size limits removed - version stays 0.208.0
+No 80 MB cap in `LiquidNative.java` (pick and save), no 200 MB per-file cap in `src/zipread.js`. Details and limits that remain (phone memory, ~2 GB text file): HANDOFF_STATUS.md. Test: `tests/no-size-limit-v208.test.mjs`. zip64 archives are read too (`src/zipread.js`, test `tests/zip64-v208.test.mjs`).
+
+## Session: imports live in the app's own data - version stays 0.208.0
+Playlist import awaits the real save before "Imported"; `loadPlaylists()` keeps unsaved in-memory playlists; settings import reads `lf.settings` back before the reload; listening import awaits the play-count save. The import file is only read (Java copies its text, deletes the temp file). Test: `tests/import-kept-v208.test.mjs`. Details: HANDOFF_STATUS.md.
+
+## Session: imported playlists vanished after a restart - version stays 0.208.0
+`setLibrary()` (src/data.js) used to reset `playlists = []`; when the saved playlists were read before the library arrived (parallel start-up in `main.js`) they were wiped from memory and the next save overwrote the file. Now a `plLoaded` flag (set by `setPlaylists()`) keeps loaded playlists; only the demo playlists are dropped. Test: `tests/playlists-survive-v208.test.mjs`. Details: HANDOFF_STATUS.md.
+
+## Session: song "Back to original cover", album Back to default resets its songs, Liquid Dark file names - version stays 0.208.0
+New store `lf.songorig` (songs that show the cover from their own file); `gOfT`, `coverTint`, `Native.setCoverOverride` and `mosaic` honour it. Song menu: Back to default = follow the album picture, Back to original cover = the file's cover. `alpReset()` clears the picture / GIF / original mark of every song in the album. Export files and labels (settings, playlists, listening data, other formats) say Liquid Dark; the `app` field in files is `liquid-dark`, but import accepts `liquid-flac` files too. New test `tests/song-original-v208.test.mjs`. Details: HANDOFF_STATUS.md.
+
 ## Session: in-app update no longer blocked by an unreadable APK signature - version stays 0.208.0
 `UpdateSupport.sameSigner()` (called by `verifyApk()`) used to refuse the downloaded APK on Android 9+ when no signature could be read from it, and the app then showed the "different key" text even though the key was the same. Now an unreadable APK signature (or an unreadable installed certificate) means "no objection, Android's installer decides"; only two readable, different certificates are a mismatch. The SHA-256 and exact build-number checks still bind the update to our APK. New `tests/same-signer-unreadable.test.mjs` and a `verify28` command in `tests/update-java-harness.mjs`. `.github/workflows/android.yml` unchanged. `sameSigner()` also retries with the old `GET_SIGNATURES` flag on Android 9+ before treating a signature as unreadable. Phones that already have the old app must install the new APK once by hand. Full entry with DO NOT REDO at the top of `HANDOFF_STATUS.md`.
 
@@ -38,7 +53,7 @@ The `home:` screen in `src/main.js` no longer prints `<h1 class="large">Home</h1
 ## Custom pictures REPLACE originals (no version change, still 0.208.0)
 `gOf`, `gOfT`, `apicOf`, `genreCov` in `src/main.js` draw `url(custom) center/cover no-repeat, ${PIC_BASE}` (`PIC_BASE = '#111'`): nothing of the original cover is underneath. `plArt` shows a plain square while a playlist picture loads and the original mosaic only if it cannot be shown. `BG_DIM_DEF` is 0 (was 40). Do NOT put the original back under a custom picture. Reset buttons (`alpReset`, `spReset`, `gpReset`, `apic-reset`, `pp-reset`) restore the original.
 
-**v209 cover viewer (tap on a cover):** `coverHtml(a)` = the ORIGINAL cover (`a.g`); `coverHtmlC(a)` = the custom layer (`gOfT(a._t)` song first, else `gOf(a)` album); `viewHtml(a)` picks by `a._c`. Now Playing tap passes `_c: set.npTapOrig === false` (setting `npTapOrig`, default ON, Settings > Tap cover shows original); the album page tap always passes `_c: true`. Test: `tests/cover-tap-v209.test.mjs`. Stats, recap and widgets still use the original cover only.
+**v208 cover viewer (tap on a cover):** `coverHtml(a)` = the ORIGINAL cover (`a.g`); `coverHtmlC(a)` = the custom layer (`gOfT(a._t)` song first, else `gOf(a)` album); `viewHtml(a)` picks by `a._c`. Now Playing tap passes `_c: set.npTapOrig === false` (setting `npTapOrig`, default ON, Settings > Tap cover shows original); the album page tap always passes `_c: true`. Test: `tests/cover-tap-v208.test.mjs`. Stats, recap and widgets still use the original cover only.
 
 ## Lyrics colour wheel (no version change, still 0.208.0)
 The Lyrics colour sheet uses an in-app wheel (`lycolSheet`, `lycDrag`, `hsvHex`, `hexHSV` in `src/main.js`; `.lycwheel` CSS) instead of `<input type="color">`. Do not bring the system dialog or preset squares back. See `HANDOFF_STATUS.md`.

@@ -6,7 +6,7 @@ const SET = { lyricSize: 'Small', lyricStyle: 'cover', anim: { wobble: 70 }, hom
 test('export holds every setting except the search history, plus the small extra switches', () => {
   const o = buildExport(SET, { 'lf.canvasOn': '1', 'lf.other': 'x' }, '0.145.0', new Date('2026-11-07T10:00:00Z'));
   assert.equal(o.kind, 'settings'); assert.equal(o.version, 1); assert.equal(o.appVersion, '0.145.0'); assert.deepEqual(Object.keys(o.settings).sort(), ['anim', 'bgDim', 'home', 'lyricSize', 'lyricStyle', 'tabPct', 'userName']);
-  assert.deepEqual(o.extras, { 'lf.canvasOn': '1' }); assert.equal(FILE_NAME, 'liquid-flac-settings.json'); assert.deepEqual(EXTRA_KEYS, ['lf.canvasOn']);
+  assert.deepEqual(o.extras, { 'lf.canvasOn': '1' }); assert.equal(FILE_NAME, 'liquid-dark-settings.json'); assert.deepEqual(EXTRA_KEYS, ['lf.canvasOn']);
 });
 test('round trip: export -> text -> import gives the same values', () => {
   const r = parseImport(exportText(buildExport(SET, { 'lf.canvasOn': '1' }))); assert.equal(r.count, 7); assert.equal(r.settings.lyricSize, 'Small'); assert.deepEqual(r.settings.anim, { wobble: 70 }); assert.deepEqual(r.extras, { 'lf.canvasOn': '1' });

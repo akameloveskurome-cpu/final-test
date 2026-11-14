@@ -155,7 +155,7 @@ Every AI must treat the **You** items as locked. Anything marked Suggested can b
 | K25 | **Background style**: black with red lyrics (default) or the album cover's colour on Now Playing and the lyrics page | v95 | You |
 | K22 | **Cover images from the folder**: `cover.jpg`, `folder.jpg` (also front / albumart / album) count as album art when a FLAC has no picture inside | T4c step 3 (done v14) | You |
 | K23 | **Cover viewer**: tap the Now Playing / album cover = black screen with only the cover | v90 | You |
-| K25 | **Tap cover shows original**: Now Playing tap = original cover (default, switch on) or your own picture / GIF (switch off); album page tap always = your own picture / GIF (Settings > Tap cover shows original) | v209 | You |
+| K25 | **Tap cover shows original**: Now Playing tap = original cover (default, switch on) or your own picture / GIF (switch off); album page tap always = your own picture / GIF (Settings > Tap cover shows original) | v208 | You |
 | K24 | **Cover shortcut**: press and hold the Now Playing cover = open lyrics (Settings > Cover shortcuts) | v90 | You |
 | K26 | **Popup that fits any picture**: the author's message and "Update available" share one look (black background, picture, text, liquid glass buttons); any shape or size is scaled to fit | v104 | You |
 | K27 | **In-app updates**: "Update available" when a newer build is published; the update is mandatory since v138 (no Later, the screen cannot be closed); picture or docs changes never trigger it; an update whose signature the phone cannot read is no longer blocked as a "different key" (Android's installer still refuses a truly different key) | v95 to v104 | You |
@@ -169,6 +169,8 @@ Every AI must treat the **You** items as locked. Anything marked Suggested can b
 | K34 | **Earphone and headset buttons** (wired: 1 / 2 / 3 presses; Bluetooth media keys); a play button starts the saved queue after the app was closed. Not yet tested on a phone | v119 | You |
 | K35 | **Background-allow popup picture** (`background-allow-gif-pic/`): live picture / GIF on the Allow background activity popup, shown once per upload | v146 | You |
 | K36 | **Home picture box above Listening Stats** (`stats-banner-gif-pic/`): liquid-glass box, empty without a picture, sized to the picture | v146 | You |
+| K37 | **Song back to original cover + album reset**: a song can go back to the cover from its own file even when its album has your picture; Back to default on an album resets the album and every song in it (their own pictures, GIFs and marks too) | v208 | You |
+| K38 | **Import / export files of any size**: no 80 MB pick / save cap, no 200 MB per-file cap inside a .zip, zip64 .zip files are read; only the phone's own limits remain (storage, memory, ~2 GB plain text file) | v208 | You |
 
 ## Not in scope
 OGG and other formats beyond FLAC, MP3 and AAC / M4A. Streaming, accounts, cloud sync, Apple Music subscription features, "Automatically Send" diagnostics.

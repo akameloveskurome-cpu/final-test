@@ -32,7 +32,7 @@ def close_sheets(pg):
 
 def main():
     vdir = pathlib.Path(tempfile.mkdtemp(prefix='rec208_'))
-    exported = pathlib.Path(tempfile.mkdtemp(prefix='exp208_')) / 'liquid-flac-settings.json'
+    exported = pathlib.Path(tempfile.mkdtemp(prefix='exp208_')) / 'liquid-dark-settings.json'
     with sync_playwright() as pw:
         br = pw.chromium.launch(executable_path=str(exe) if exe else None, args=['--no-sandbox'])
         ctx, pg, errors = new_page(br, video_dir=vdir)

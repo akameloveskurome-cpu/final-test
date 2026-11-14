@@ -61,7 +61,7 @@ test('exportLists drops songs not in the library; the count of the drop is what 
 });
 
 test('settings file name is dated, so a new export never overwrites an older backup', () => {
-  assert.equal(SIO.fileName(new Date(2026, 10, 8, 9)), 'liquid-flac-settings-20261108.json');
+  assert.equal(SIO.fileName(new Date(2026, 10, 8, 9)), 'liquid-dark-settings-20261108.json');
   assert.notEqual(SIO.fileName(new Date(2026, 10, 8)), SIO.fileName(new Date(2026, 10, 9)));
 });
 

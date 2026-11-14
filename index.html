@@ -10,7 +10,7 @@
 <body>
 <div id="lf-splash" style="position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;transition:opacity .4s"><img alt="" style="display:block;flex:none;width:80vw;height:80vh;object-fit:contain;object-position:center;opacity:0;transition:opacity .2s"></div>
 <script>
-/* v209: the saved splash picture is read and decoded HERE, before the big app script has even loaded, and only then faded in over the black cover.
+/* v208: the saved splash picture is read and decoded HERE, before the big app script has even loaded, and only then faded in over the black cover.
    Before, the picture was attached by the app script (late): black screen, then the picture popped in = the blink. */
 (function(){var w=window;w.__lfSplashP=new Promise(function(done){function fin(v){done(v||null)}
 try{var q=indexedDB.open('lf-splash',1);q.onupgradeneeded=function(){q.result.createObjectStore('pic')};q.onerror=function(){fin()};

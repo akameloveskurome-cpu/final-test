@@ -27,7 +27,7 @@ test('buildExport writes RAW strings, keeps order and duplicates, keeps unknown 
   assert.deepEqual(p.songs.map(s => s.id), ['t4', 't1', 'gone', 't4']);
   assert.deepEqual(p.songs[0], { id: 't4', path: 'Pop/Tom & Jerry/01 Hello <3.flac', title: 'Hello <3', artist: 'Tom & Jerry', album: 'Tom & Jerry' });
   assert.deepEqual(p.songs[2], { id: 'gone' });
-  assert.equal(FILE_NAME, 'liquid-flac-playlists.json');
+  assert.equal(FILE_NAME, 'liquid-dark-playlists.json');
 });
 
 test('parseImport accepts our file, ids-only playlists.json, and rejects junk', () => {

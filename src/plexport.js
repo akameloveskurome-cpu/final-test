@@ -1,10 +1,10 @@
 // T17: playlist export / import. PURE (no DOM, no Native): everything here is covered by tests/plexport.test.mjs.
-// File format (version 1): { app:'liquid-flac', kind:'playlists', version:1, exported:'<ISO date>', playlists:[ { name, songs:[ { id, path, title, artist, album } ] } ] }
+// File format (version 1): { app:'liquid-dark', kind:'playlists', version:1, exported:'<ISO date>', playlists:[ { name, songs:[ { id, path, title, artist, album } ] } ] }
 // All strings in the file are RAW (not HTML-escaped). Song ids are 't'+hash(uri) and can change after a reinstall with a re-picked folder,
 // so import matches by folder-relative path first, then by title+artist+album, and only then by id.
 
 export const KIND = 'playlists';
-export const FILE_NAME = 'liquid-flac-playlists.json';
+export const FILE_NAME = 'liquid-dark-playlists.json';
 
 /** Library strings are stored HTML-escaped (data.js); the file must hold raw text. */
 export const unesc = s => String(s ?? '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
@@ -23,7 +23,7 @@ const tagKey = (title, artist, album) => norm(title) + '\u0001' + norm(artist) +
 export function buildExport(lists, tracks, artistAlbumOf, now = new Date()) {
   const byId = new Map(tracks.map(t => [t.id, t]));
   return {
-    app: 'liquid-flac', kind: KIND, version: 1, exported: now.toISOString(),
+    app: 'liquid-dark', kind: KIND, version: 1, exported: now.toISOString(),
     playlists: lists.map(p => ({
       name: String(p.name),
       songs: p.ids.map(id => {

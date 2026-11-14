@@ -35,7 +35,7 @@ test('CSV export re-imports and several playlists stay separate', () => {
 test('buildFiles: one playlist = one file, several = zip, csv = single file', () => {
   const one = buildFiles('m3u8', [ex[0]], new Date(2026, 10, 7)); assert.equal(one.name, 'Road trip.m3u8'); assert.ok(one.text);
   const many = buildFiles('xspf', ex, new Date(2026, 10, 7)); assert.equal(many.mime, 'application/zip'); assert.deepEqual(many.files.map(f => f.name), ['Road trip.xspf', 'Road trip (2).xspf']);
-  assert.equal(buildFiles('csv', ex, new Date(2026, 10, 7)).name, 'liquid-flac-playlists-20261107.csv');
+  assert.equal(buildFiles('csv', ex, new Date(2026, 10, 7)).name, 'liquid-dark-playlists-20261107.csv');
   assert.throws(() => buildFiles('nope', ex), /format/); assert.equal(FORMATS.length, 4);
 });
 test('M3U from another device: absolute paths, EXTINF without album, file:// urls', () => {
@@ -68,8 +68,8 @@ test('Spotify data download (Playlist1.json), JSPF, PLS, bare track array, "Arti
   assert.equal(planForeign(parseAny('Miles Davis - So What\nThe Beatles - Something\n', 'notes.txt'), LIB, aaOf, []).matched, 2);
 });
 test('our own backup still imports; junk and empty files are refused; name clash gets (2)', () => {
-  const own = JSON.stringify({ app: 'liquid-flac', kind: 'playlists', version: 1, playlists: [{ name: 'Mine', songs: [{ id: 't1', path: 'Rock/Abbey Road/01 Come Together.flac', title: 'Come Together', artist: 'The Beatles', album: 'Abbey Road' }] }] });
-  const r = parseAny(own, 'liquid-flac-playlists.json'); assert.equal(planForeign(r, LIB, aaOf, ['mine']).lists[0].name, 'Mine (2)');
+  const own = JSON.stringify({ app: 'liquid-dark', kind: 'playlists', version: 1, playlists: [{ name: 'Mine', songs: [{ id: 't1', path: 'Rock/Abbey Road/01 Come Together.flac', title: 'Come Together', artist: 'The Beatles', album: 'Abbey Road' }] }] });
+  const r = parseAny(own, 'liquid-dark-playlists.json'); assert.equal(planForeign(r, LIB, aaOf, ['mine']).lists[0].name, 'Mine (2)');
   for (const bad of ['', 'hello world', '{"a":1}', '[]', 'a,b\n1,2']) assert.throws(() => parseAny(bad, 'x'), /Not a playlist file/, bad);
   assert.throws(() => parseAny(JSON.stringify({ kind: 'playlists', version: 9, playlists: [{ name: 'x', songs: [{ id: 'a' }] }] }), 'f.json'), /newer/);
 });

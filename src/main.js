@@ -47,7 +47,7 @@ import { fetchSplashPic, splashLoad, splashSave, splashClear, SPLASH_POLL_MS, SP
 let splashPic = { src: '', stamp: '' };
 // v142: the saved picture lives in IndexedDB (any size). splashReady resolves once it has been read (the old small localStorage copy is dropped).
 try { localStorage.removeItem(SPLASH_CACHE_KEY); } catch {}
-const splashReady = (window.__lfSplashP || Promise.resolve(null)).then(e => (e && e.src ? (splashPic = { src: e.src, stamp: e.stamp }) : splashLoad().then(c => { if (c && !splashPic.src) splashPic = { src: URL.createObjectURL(c.blob), stamp: c.stamp }; }))).catch(() => {});   // v209: index.html already read + decoded the saved picture (window.__lfSplashP); this is only the fallback
+const splashReady = (window.__lfSplashP || Promise.resolve(null)).then(e => (e && e.src ? (splashPic = { src: e.src, stamp: e.stamp }) : splashLoad().then(c => { if (c && !splashPic.src) splashPic = { src: URL.createObjectURL(c.blob), stamp: c.stamp }; }))).catch(() => {});   // v208: index.html already read + decoded the saved picture (window.__lfSplashP); this is only the fallback
 function splashEl() {
   let o = document.getElementById('lf-splash');
   if (!o) {
@@ -63,8 +63,8 @@ function splashShow() {
   if (!splashPic.src) { splashHide(); return; }   // v208+: index.html already holds a black cover (so Home is never seen first); no saved picture = it is removed at once
   if (!document.body) return;
   const o = splashEl(), si = o.querySelector('img'); o.setAttribute('data-live', '1'); o.style.opacity = '1'; o.style.display = 'flex';
-  if (si.getAttribute('src') !== splashPic.src) { window.__lfSplashAt = 0; si.style.opacity = '0'; si.src = splashPic.src; }   // v209: a picture that index.html already showed keeps its src and its start time
-  const go = () => { si.style.opacity = '1'; if (!window.__lfSplashAt) window.__lfSplashAt = Date.now(); clearTimeout(o._t); o._t = setTimeout(splashHide, Math.max(0, SPLASH_MIN_MS - (Date.now() - window.__lfSplashAt))); };   // v209: at least 2 s of a fully visible picture, never a half-drawn one
+  if (si.getAttribute('src') !== splashPic.src) { window.__lfSplashAt = 0; si.style.opacity = '0'; si.src = splashPic.src; }   // v208: a picture that index.html already showed keeps its src and its start time
+  const go = () => { si.style.opacity = '1'; if (!window.__lfSplashAt) window.__lfSplashAt = Date.now(); clearTimeout(o._t); o._t = setTimeout(splashHide, Math.max(0, SPLASH_MIN_MS - (Date.now() - window.__lfSplashAt))); };   // v208: at least 2 s of a fully visible picture, never a half-drawn one
   (si.decode ? si.decode() : Promise.resolve()).then(go, splashHide);
 }
 function splashHide() { const o = document.getElementById('lf-splash'); if (!o) return; o.setAttribute('data-live', '1'); o.style.opacity = '0'; setTimeout(() => { o.style.display = 'none'; }, 400); }
@@ -190,7 +190,7 @@ const alpMap = () => { try { return JSON.parse(localStorage.getItem('lf.albpics'
 const alpSave = m => { try { localStorage.setItem('lf.albpics', JSON.stringify(m)); return true; } catch { return false; } };
 /* v150: keep every custom picture decoded in memory (a few MB each, more RAM on purpose): shows instantly, never blank while it loads. */
 useMirror(Native.pics);
-Native.setCoverOverride(t => (t ? mirrorPathSync('lf-songpics:' + t.id) || mirrorPathSync('lf-albumpics:' + t.albumId) : ''));   // v165: the song's own picture first, then its album's   // v152: songs started from now on show the custom album picture in the notification and on the lock screen too   // v150: second copy of custom pictures as plain files (Android)
+Native.setCoverOverride(t => (t ? (soHas(t) ? '' : mirrorPathSync('lf-songpics:' + t.id) || mirrorPathSync('lf-albumpics:' + t.albumId)) : ''));   // v165: the song's own picture first, then its album's   // v152: songs started from now on show the custom album picture in the notification and on the lock screen too   // v150: second copy of custom pictures as plain files (Android)
 const picKeep = new Set(), quickKeys = new Set(), warmed = new Map();
 const warmUrl = u => { try { if (warmed.has(u)) return u; const im = new Image(); im.decoding = 'async'; im.onerror = () => { if (warmed.get(u) === im) { warmed.delete(u); picKeep.delete(im); } }; im.src = u; picKeep.add(im); warmed.set(u, im); if (im.decode) im.decode().catch(() => {}); } catch {} return u; };   // v166: a picture that failed to load is forgotten, so the next warm-up tries it again (it used to stay 'warmed' and broken)
 const unwarm = u => { try { const im = warmed.get(u); if (im) { picKeep.delete(im); warmed.delete(u); im.onerror = null; im.src = ''; } } catch {} };   // BUG #7: a replaced / removed custom picture is forgotten here, so it is not kept decoded in RAM or decoded again on every resume (rewarmAll walks warmed)
@@ -226,7 +226,13 @@ const spMap = () => { try { return JSON.parse(localStorage.getItem('lf.songpics'
 const spSave = m => { try { localStorage.setItem('lf.songpics', JSON.stringify(m)); return true; } catch { return false; } };
 const spUrls = new Map();
 const spSet = (id, blob) => { const u = spUrls.get(id); if (u) { try { URL.revokeObjectURL(u); } catch {} unwarm(u); spUrls.delete(id); } if (blob) spUrls.set(id, warmUrl(URL.createObjectURL(blob))); npSoon(); };
-const gOfT = t => { const u = t && t.id && spUrls.get(t.id); return u ? `url('${u}') center/cover no-repeat, ${PIC_BASE}` : gOf(trackAlbum(t)); };
+/* v208: "Back to original cover" for ONE song. lf.songorig lists songs that must show the cover from their own file, even when the album has a custom picture or GIF. */
+const soMap = () => { try { return JSON.parse(localStorage.getItem('lf.songorig')) || {}; } catch { return {}; } };
+let soCache = null;
+const soIds = () => soCache || (soCache = new Set(Object.keys(soMap())));
+const soSave = m => { try { localStorage.setItem('lf.songorig', JSON.stringify(m)); soCache = new Set(Object.keys(m)); return true; } catch { return false; } };
+const soHas = t => !!(t && t.id && soIds().has(t.id));
+const gOfT = t => { if (soHas(t)) return trackAlbum(t).g; const u = t && t.id && spUrls.get(t.id); return u ? `url('${u}') center/cover no-repeat, ${PIC_BASE}` : gOf(trackAlbum(t)); };
 const covT = (t, cls = '') => `<span class="cover blk ${cls}" style="--g:${gOfT(t)}"></span>`;
 const NOALBUM = { id: '', title: 'Unknown Album', artist: 'Unknown Artist', genre: '', year: '', g: 'var(--row-fill)' };   // B6: a song whose album vanished after a rescan
 /* v118: custom artist photo. Stored on this phone only: lf.apics = { artistName: 'data:image/jpeg...' | 'album:<id>' }. */
@@ -321,7 +327,7 @@ const header = ({ back, right = 'more' } = {}) => `<div class="top">
   ${right === 'more' ? `<button class="gbtn" data-act="settings">${I.more}</button>` : right === 'plus' ? `<button class="gbtn" data-act="newpl">${I.plus}</button>` : right === 'plmenu' ? `<button class="gbtn" data-act="plmenu">${I.more}</button>` : '<span></span>'}</div>`;
 const mosaic = (ts, cls = '') => {   // v165: four different pictures; a song with its own picture counts as its own square
   const seen = new Set(), cs = [];
-  for (const t of ts) { const k = spUrls.has(t.id) ? 's' + t.id : t.albumId; if (seen.has(k)) continue; seen.add(k); cs.push(t); if (cs.length === 4) break; }
+  for (const t of ts) { const k = spUrls.has(t.id) || soHas(t) ? 's' + t.id : t.albumId; if (seen.has(k)) continue; seen.add(k); cs.push(t); if (cs.length === 4) break; }
   if (!cs.length) return `<span class="pl-mosaic blk ${cls}">${'<span class="cover blk" style="--g:var(--row-fill)"></span>'.repeat(4)}</span>`;
   while (cs.length < 4) cs.push(cs[cs.length % cs.length]);
   return `<span class="pl-mosaic blk ${cls}">${cs.map(t => covT(t)).join('')}</span>`;
@@ -1010,11 +1016,15 @@ function initDemoBar() {   // the Animation screen's test bar: the same glass ba
 }
 /* v119: the Artist photo sheet (Choose a photo / Use an album cover / Back to default). Opened from the artist screen and by pressing and holding an artist card on Home. */
 /* v145c: ONE simple sheet for every custom picture: choose one (it replaces the old one and the old file is deleted) or go back to what it originally shows. */
-function picSheet(title, has, pickAct, resetAct, backText, extra = '') {
-  $('#sheet').innerHTML = sheetHtml(`<b>${title}</b><button class="row" data-act="${pickAct}"><span class="lbl" style="font-size:1.0625rem">${has ? 'Choose another picture or GIF' : 'Choose a picture or GIF'}</span></button>${extra}${has ? `<button class="row" data-act="${resetAct}"><span class="lbl" style="font-size:1.0625rem">Back to default</span><span class="s">${backText}</span></button>` : ''}<div class="actions"><button data-act="sheet-close">Close</button></div>`);
+function picSheet(title, has, pickAct, resetAct, backText, extra = '', forceBack = false) {
+  $('#sheet').innerHTML = sheetHtml(`<b>${title}</b><button class="row" data-act="${pickAct}"><span class="lbl" style="font-size:1.0625rem">${has ? 'Choose another picture or GIF' : 'Choose a picture or GIF'}</span></button>${extra}${has || forceBack ? `<button class="row" data-act="${resetAct}"><span class="lbl" style="font-size:1.0625rem">Back to default</span><span class="s">${backText}</span></button>` : ''}<div class="actions"><button data-act="sheet-close">Close</button></div>`);
 }
 let spFor = '';
-function spEdit(id) { spFor = id; const t = tracks.find(x => x.id === id); picSheet('Picture for ' + (t ? t.title : 'song'), !!spMap()[id], 'sp-pick', 'sp-reset', 'The album picture it showed before'); }
+function spEdit(id) {   // v208: besides "Back to default" (= the album's picture), a song can go back to ITS OWN original cover, even when the album has a custom picture or GIF
+  spFor = id; const t = tracks.find(x => x.id === id), so = soIds().has(id), hasPic = !!spMap()[id], albPic = !!(t && alpUrls.get(t.albumId));
+  const orig = !so && (hasPic || albPic) ? `<button class="row" data-act="sp-orig"><span class="lbl" style="font-size:1.0625rem">Back to original cover</span><span class="s">The cover from this song's own file</span></button>` : '';
+  picSheet('Picture for ' + (t ? t.title : 'song'), hasPic || so, 'sp-pick', 'sp-reset', so ? 'Follow the album picture again' : 'The album picture it showed before', orig);
+}
 function closeIfStill(mine) { if (!mine || $('#sheet').firstElementChild === mine) closeSheet(); }   // BUG-79: close only the sheet the picker opened from
 function spDone(msg, mine) { closeIfStill(mine); toast(msg); [...covTint.keys()].forEach(k => { if (k.startsWith(spFor + '|')) covTint.delete(k); }); repaintAll(); const t = tracks.find(x => x.id === spFor); if (t) Native.updateArtwork(t.albumId).catch(() => {}); }
 function spPick() {   // any picture or GIF, any size, stored untouched; choosing again REPLACES it (same key)
@@ -1023,15 +1033,17 @@ function spPick() {   // any picture or GIF, any size, stored untouched; choosin
     const mine = $('#sheet').firstElementChild; const f = i.files && i.files[0]; if (!f) return; const id = spFor;
     if (!isPicFile(f)) { toast('Please choose a picture or a GIF'); return; }
     const probe = new Image(), url = URL.createObjectURL(f);
-    probe.onload = async () => { URL.revokeObjectURL(url); const b = await ownBlob(f), prev = spMap()[id]; const m = spMap(); m[id] = 1; spSave(m); spSet(id, b); spDone('Song picture set', mine); spDb.put(id, b).then(() => { const t = tracks.find(x => x.id === id); if (t) Native.updateArtwork(t.albumId).catch(() => {}); }, () => { const m2 = spMap(); if (prev) m2[id] = prev; else delete m2[id]; spSave(m2); spSet(id, null); repaintPics(); toast('Could not save that file'); }); };
+    probe.onload = async () => { URL.revokeObjectURL(url); const b = await ownBlob(f), prev = spMap()[id]; const m = spMap(); m[id] = 1; spSave(m); spOrigOff(id); spSet(id, b); spDone('Song picture set', mine); spDb.put(id, b).then(() => { const t = tracks.find(x => x.id === id); if (t) Native.updateArtwork(t.albumId).catch(() => {}); }, () => { const m2 = spMap(); if (prev) m2[id] = prev; else delete m2[id]; spSave(m2); spSet(id, null); repaintPics(); toast('Could not save that file'); }); };
     probe.onerror = () => { URL.revokeObjectURL(url); toast('Could not read that picture'); };
     probe.src = url;
   };
   i.click();
 }
-function spReset() { const id = spFor; spDb.del(id).catch(() => {}); spSet(id, null); const m = spMap(); delete m[id]; spSave(m); spDone('Back to the album picture'); }
+function spOrigOff(id) { const o = soMap(); if (o[id]) { delete o[id]; soSave(o); } }
+function spReset() { const id = spFor; spDb.del(id).catch(() => {}); spSet(id, null); const m = spMap(); delete m[id]; spSave(m); spOrigOff(id); spDone('Back to the album picture'); }
+function spOrig() { const id = spFor; spDb.del(id).catch(() => {}); spSet(id, null); const m = spMap(); delete m[id]; spSave(m); const o = soMap(); o[id] = 1; soSave(o); spDone('Back to the song\'s original cover'); }   // v208: the song's own picture is deleted and the song is marked to show the cover from its file
 let alpFor = '';
-function alpEdit(id) { alpFor = id; const a = byAlbum(id); picSheet('Picture for ' + (a ? a.title : 'album'), !!alpMap()[id], 'alp-pick', 'alp-reset', 'The cover from the music files'); }
+function alpEdit(id) { alpFor = id; const a = byAlbum(id), mine = alpSongsCustom(id).length; picSheet('Picture for ' + (a ? a.title : 'album'), !!alpMap()[id], 'alp-pick', 'alp-reset', mine ? 'The cover from the music files, for the album and for every song in it' : 'The cover from the music files', '', !!mine); }
 function alpDone(msg, mine) { closeIfStill(mine); toast(msg); [...covTint.keys()].forEach(k => { if (k.startsWith(alpFor + '|')) covTint.delete(k); }); repaintAll(); pushWidgetCovers(); Native.updateArtwork(alpFor).catch(() => {}); }
 function alpPick() {   // any picture or GIF, any size, stored untouched; choosing again REPLACES it (same key), nothing old is kept
   const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*,.gif';
@@ -1045,7 +1057,13 @@ function alpPick() {   // any picture or GIF, any size, stored untouched; choosi
   };
   i.click();
 }
-function alpReset() { const id = alpFor; alDb.del(id).catch(() => {}); alpSet(id, null); const m = alpMap(); delete m[id]; alpSave(m); alpDone('Back to the original cover'); }
+function alpSongsCustom(id) { const sm = spMap(), so = soIds(); return tracks.filter(t => t.albumId === id && (sm[t.id] || so.has(t.id))); }
+function alpReset() {   // v208: Back to default on an ALBUM also clears the picture / GIF / "original" mark of every song in it, so every song shows the original cover again
+  const id = alpFor; alDb.del(id).catch(() => {}); alpSet(id, null); const m = alpMap(); delete m[id]; alpSave(m);
+  const songs = alpSongsCustom(id);
+  if (songs.length) { const sm = spMap(), so = soMap(); for (const t of songs) { if (sm[t.id]) { spDb.del(t.id).catch(() => {}); spSet(t.id, null); delete sm[t.id]; } delete so[t.id]; [...covTint.keys()].forEach(k => { if (k.startsWith(t.id + '|')) covTint.delete(k); }); } spSave(sm); soSave(so); }
+  alpDone('Back to the original cover');
+}
 function gpEdit(id) { gpFor = E(id); picSheet('Picture for ' + gpFor, !!gpMap()[gpFor], 'gp-pick', 'gp-reset', 'Back to default genre picture or GIF'); }
 function gpDone(msg, mine) { closeIfStill(mine); toast(msg); repaintAll(); }
 function gpPick() {   // any picture or GIF, any size, stored untouched; choosing again REPLACES it
@@ -1767,8 +1785,9 @@ async function notifTest() {
 /* ---------- T6: playlists (create, rename, delete, add / remove / reorder, persist) ---------- */
 const sheetHtml = inner => `<div class="scrim" data-act="sheet-close"></div><div class="sheetbox" role="dialog" aria-modal="true">${inner}</div>`;
 const curPl = () => { const top = stack[stack.length - 1]; return top && top.t === 'playlist' ? playlists.find(p => p.id === top.id) : null; };
-const savePl = () => Native.savePlaylists({ playlists: savablePlaylists() }).catch(() => toast('Could not save playlists'));
-async function loadPlaylists() { try { const r = await Native.getPlaylists(); if (r && Array.isArray(r.playlists)) setPlaylists(r.playlists); } catch {} let trimmed = false; playlists.forEach(p => { if (picsOf(p).length > 1) { const extra = picsOf(p).slice(1); p.pics = picsOf(p).slice(0, 1); ppDrop(p, extra.map(x => x.id)); trimmed = true; } }); if (trimmed) savePl(); playlists.forEach(p => { ppEnsure(p).catch(() => {}); }); }   // v132: playlist covers (first picture). v145c: one picture per playlist, extra old ones are deleted load in the background
+const savePl = () => Native.savePlaylists({ playlists: savablePlaylists() }).then(() => true, () => { toast('Could not save playlists'); return false; });   // v208: resolves true / false, so an import can say whether it was really written to the app's own storage
+/* v208: a playlist that is in memory but was never written (a save that failed, or an import that finished while this read was running) is KEPT and saved again, never replaced by the older file. */
+async function loadPlaylists() { let unsaved = []; try { const r = await Native.getPlaylists(); if (r && Array.isArray(r.playlists)) { const mem = savablePlaylists(), inFile = new Set(r.playlists.map(p => p && String(p.id))); unsaved = Native.isNative ? mem.filter(p => !inFile.has(p.id)) : []; setPlaylists(r.playlists.concat(unsaved)); } } catch {} if (unsaved.length) savePl(); let trimmed = false; playlists.forEach(p => { if (picsOf(p).length > 1) { const extra = picsOf(p).slice(1); p.pics = picsOf(p).slice(0, 1); ppDrop(p, extra.map(x => x.id)); trimmed = true; } }); if (trimmed) savePl(); playlists.forEach(p => { ppEnsure(p).catch(() => {}); }); }   // v132: playlist covers (first picture). v145c: one picture per playlist, extra old ones are deleted load in the background
 
 /* ---------- T17: export / import playlists (Settings > Playlists). Logic lives in plexport.js (tested). ---------- */
 const aaOf = t => { const a = byAlbum(t.albumId) || {}; return { artist: a.artist, album: a.title }; };
@@ -1800,7 +1819,7 @@ async function exportPl(fmt = 'json', pid = '', ids = null) {   // ids (v159): a
   if (!src.length) return toast('No playlists to export');
   try {
     let left = 0;   // v159: songs that are not in this library any more are left out of the foreign formats (the Liquid backup keeps them)
-    if (fmt === 'json') await Native.saveFile({ name: pid ? safeName(src[0].name, 'playlist') + '.json' : `liquid-flac-playlists-${dateStamp()}.json`, mime: 'application/json', text: exportText((() => { const ob = buildExport(src, tracks, aaOf); if (!pid && favs.length) ob.favorites = buildExport([{ name: 'Favorites', ids: favs }], tracks, aaOf).playlists[0].songs; return ob; })()) });   // BUG-14: favorites travel in the backup
+    if (fmt === 'json') await Native.saveFile({ name: pid ? safeName(src[0].name, 'playlist') + '.json' : `liquid-dark-playlists-${dateStamp()}.json`, mime: 'application/json', text: exportText((() => { const ob = buildExport(src, tracks, aaOf); if (!pid && favs.length) ob.favorites = buildExport([{ name: 'Favorites', ids: favs }], tracks, aaOf).playlists[0].songs; return ob; })()) });   // BUG-14: favorites travel in the backup
     else { const out = PX.exportLists(src, tracks, aaOf); left = src.reduce((n, p) => n + p.ids.length, 0) - out.reduce((n, p) => n + p.songs.length, 0); await saveOut(PX.buildFiles(fmt, out)); }
     toast(`Exported ${pl(src.length, 'playlist')}` + (left > 0 ? ` · ${pl(left, 'song')} not in your library, left out` : ''), left > 0 ? 4200 : 2600);
   } catch (e) { if (!isCancel(e)) { logLine('W', 'export playlists failed:', failMsg(e)); toast('Export failed: ' + failMsg(e)); } }
@@ -1844,7 +1863,7 @@ function plTargetSheet(i) {
     .concat(playlists.map(p => `<button class="row ${cur === p.id ? 'on' : ''}" data-act="plimport-set" data-i="${i}" data-t="${p.id}"><span class="lbl" style="font-size:1.0625rem">Merge into ${p.name}</span><span class="cnt">${p.ids.length}</span></button>`)).join('');
   $('#sheet').innerHTML = sheetHtml(`<b>Where should “${escH(plan.lists[i].raw)}” go?</b><p>Merging adds its songs to the end of that playlist. Songs already in it are not repeated.</p><div class="picklist">${rows}</div><div class="actions"><button data-act="plimport-back">Back</button></div>`);
 }
-function plImportOk() {
+async function plImportOk() {
   if (!plPending) return;
   const { plan, targets, favIds } = plPending; plPending = null;
   const fAdded = favIds && favIds.length ? addFavs(favIds) : 0;
@@ -1858,10 +1877,11 @@ function plImportOk() {
     let id = 'p' + tag + i; while (used.has(id)) id += 'x'; used.add(id);
     playlists.push({ id, name: E(freeName(l.raw, names)), ids: l.ids }); added++;   // the final name is chosen now, so a list merged elsewhere does not take a number
   });
-  savePl(); renderMain(); renderSub(); closeSheet();
+  const saved = await savePl();   // v208: the playlists are written into the app's own storage (playlists.json) BEFORE we say "Imported"; the import file is not needed afterwards
+  renderMain(); renderSub(); closeSheet();
   const parts = []; if (added) parts.push(pl(added, 'new playlist')); if (merged) parts.push(`${merged} merged (${mergedSongs} songs added)`); if (left) parts.push(`${left} not imported`);
   if (fAdded) parts.push(`${fAdded} favorites`);
-  toast(`Imported ${parts.join(', ') || 'nothing'}`, 3400);
+  toast(saved ? `Imported ${parts.join(', ') || 'nothing'}` : `Imported ${parts.join(', ') || 'nothing'}, but they could not be saved yet. Please import again`, saved ? 3400 : 6000);
 }
 async function saveMissing(missing) {
   try { await saveOut(PX.missingCsv(missing)); toast(`Saved ${pl(missing.length, 'song')} not in your library`); }
@@ -1928,7 +1948,7 @@ async function lsImportOk() {
   const { rows, matched, skipped } = lsPending; lsPending = null;
   try {
     toast('Importing ' + rows.length.toLocaleString() + ' listens…', 6000);
-    const fresh = [], have = new Set(tracks.map(t => t.id));
+    const fresh = [], have = new Set(tracks.map(t => t.id)); let statsSaveFailed = false;
     const applyBatch = list => {   // BUG-12: play counts follow every batch that was really stored, so a later failed batch cannot leave them stale
       const counted = list.filter(x => x.q && have.has(x.i)).sort((a, b) => a.s - b.s);
       for (const x of counted) { const c = stats[x.i]; stats[x.i] = { plays: (c ? c.plays : 0) + 1, last: Math.max(c ? c.last : 0, x.s) }; }
@@ -1938,10 +1958,10 @@ async function lsImportOk() {
     try {
       for (let i = 0; i < rows.length; i += 1500) { const res = await Native.importListens(rows.slice(i, i + 1500)), add = (res && res.added) || []; for (const a of add) fresh.push(a); changed += applyBatch(add); }
     } finally {
-      if (changed) { saveUser(STATS_FILE, stats).catch(() => logLine('W', 'stats: could not save after import')); }
+      if (changed) { try { await saveUser(STATS_FILE, stats); } catch { statsSaveFailed = true; logLine('W', 'stats: could not save after import'); } }   // v208: waited for, so the play counts are on disk before "Imported" is shown
     }
     closeSheet(); lsx.dirty(); refreshHome(); renderSub(true);
-    toast(LIO.summary(fresh.length, rows.length, matched) + (skipped ? ` · ${pl(skipped, 'file')} skipped` : ''), 5200);
+    toast(LIO.summary(fresh.length, rows.length, matched) + (skipped ? ` · ${pl(skipped, 'file')} skipped` : '') + (statsSaveFailed ? ' · the play counts could not be saved, the history itself is saved' : ''), 5200);
   } catch (e) { if (!isCancel(e)) { logLine('W', 'import listening failed:', failMsg(e)); toast('Import failed: ' + failMsg(e), 4200); } }
 }
 
@@ -1986,6 +2006,9 @@ function applyImportedSettings() {
     if (!['Small', 'Medium', 'Large'].includes(set.lyricSize)) set.lyricSize = DEF.lyricSize; set.lyricPx = cleanLyPx(set.lyricPx, set.lyricSize);
     if (useExtras) for (const [k, v] of Object.entries(setPending.extras)) { try { localStorage.setItem(k, v); } catch {} }
     applySettings();   // writes lf.settings; the reload below re-runs the start-up checks on every value
+    let wrote = false; try { wrote = localStorage.getItem('lf.settings') === JSON.stringify(set); } catch {}   // v208: read back: the settings are in the app's own storage, the import file is not needed afterwards
+    if (!wrote) { saveSettingsNow(); try { wrote = localStorage.getItem('lf.settings') === JSON.stringify(set); } catch {} }
+    if (!wrote) { toast('Could not save the settings on this phone. Please try again', 4200); return; }
     setPending = null; closeSheet(); toast('Settings imported');
     setTimeout(() => location.reload(), 500);
   } catch (e) { logLine('W', 'apply settings failed:', failMsg(e)); toast('Could not apply the settings'); }
@@ -2305,7 +2328,7 @@ function palFrom(h, s, neutral, avgL, minS = .78, mult = 1.25) {
   return { a: vivid(h, s, .5, .24), b: vivid(h + 26 * dir, Math.min(1, s), .5, .22), c: vivid(h - 22, Math.min(1, s), .34, .1) };
 }
 function coverTint(a, t) {
-  const sp = t && spUrls.get(t.id), src = sp || alpUrls.get(a.id) || a.cover, ck = sp ? t.id + '|s' : a.id + '|' + (alpUrls.get(a.id) ? 'c' : '');   // v165: the song's own picture first   // v152: the colour comes from the picture you set, when there is one
+  const so = soHas(t), sp = !so && t && spUrls.get(t.id), src = so ? a.cover : (sp || alpUrls.get(a.id) || a.cover), ck = so ? t.id + '|o' : sp ? t.id + '|s' : a.id + '|' + (alpUrls.get(a.id) ? 'c' : '');   // v165: the song's own picture first   // v152: the colour comes from the picture you set, when there is one
   if (covTint.has(ck)) return Promise.resolve(covTint.get(ck));
   const gs = String(a.g0 || a.g), vr = gs.match(/var\((--[\w-]+)\)/), hx = (gs.match(/#[0-9a-f]{6}/gi) || [vr && getComputedStyle(document.documentElement).getPropertyValue(vr[1]).trim().match(/^#[0-9a-f]{6}$/i)?.[0] || '#c8102e'])[0], n = parseInt(hx.slice(1), 16), fh = rgb2hsl(n >> 16, (n >> 8) & 255, n & 255), fb = palFrom(fh[0], fh[1], fh[1] < .12, fh[2]);
   return new Promise(res => {
@@ -2497,7 +2520,7 @@ on('onTrackChanged', () => { if ($('#lyr')?.classList.contains('open') && Native
 /* ---------- v90: album cover viewer + cover gestures. Tap the cover = black screen with only the cover. On Now Playing, press and hold = lyrics (Settings > Cover shortcuts). ---------- */
 let cvvAt = 0;
 function coverHtml(a) { return `<span class="cover blk" style="--g:${a && a.g}"></span>`; }   // v158: the full-screen cover viewer always shows the REAL (original / embedded) cover, never a custom picture/GIF layered on top (gOf() would add that layer; a.g is the plain cover, same rule as the listening stats and yearly recap)
-function coverHtmlC(a) { return `<span class="cover blk" style="--g:${a && a._t ? gOfT(a._t) : gOf(a)}"></span>`; }   // v209: the viewer with the person's OWN picture / GIF (song picture first, then the album picture; no custom picture = the original cover, because gOf / gOfT fall back to it)
+function coverHtmlC(a) { return `<span class="cover blk" style="--g:${a && a._t ? gOfT(a._t) : gOf(a)}"></span>`; }   // v208: the viewer with the person's OWN picture / GIF (song picture first, then the album picture; no custom picture = the original cover, because gOf / gOfT fall back to it)
 const viewHtml = a => (a && a._c ? coverHtmlC(a) : coverHtml(a));   // a._c = show the custom picture: album pages always; Now Playing only when Settings > Tap cover shows original is OFF
 function openCover(a) {
   if (!a) return; cvvAt = performance.now();
@@ -2816,6 +2839,7 @@ document.addEventListener('click', e => {
     case 'alp-pick': alpPick(); break;
     case 'sp-pick': spPick(); break;
     case 'sp-reset': spReset(); break;
+    case 'sp-orig': spOrig(); break;
     case 'alp-reset': alpReset(); break;
     case 'apic-pick': apicPick(); break;
     case 'apic-albums': apicAlbN = 60; apicAlbums(); break;

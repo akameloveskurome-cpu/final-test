@@ -1568,7 +1568,7 @@ public class LiquidNative extends Plugin {
   @PluginMethod
   public void exportPlaylists(PluginCall call) {
     if (call.getString("text") == null) { call.reject("no text"); return; }
-    String name = call.getString("name", "liquid-flac-playlists.json");
+    String name = call.getString("name", "liquid-dark-playlists.json");
     Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
     i.addCategory(Intent.CATEGORY_OPENABLE); i.setType("application/json"); i.putExtra(Intent.EXTRA_TITLE, name);
     startActivityForResult(call, i, "exportResult");
@@ -1619,7 +1619,7 @@ public class LiquidNative extends Plugin {
    *  No whole file is ever held in memory or sent as one Base64 string. */
   private File exportDir() { File d = new File(getContext().getFilesDir(), "exports"); d.mkdirs(); return d; }
   private File importDir() { return new File(getContext().getFilesDir(), "imports"); }
-  private static final long MAX_TRANSFER = 80L * 1024 * 1024;
+  // v208: no size limit on import / export files any more (it was 80 MB). The only limits left are the phone's own: free storage, and memory when a plain .json / .csv has to be read as text (an OutOfMemoryError is caught and shown as "file too large to read").
 
   private File stagedFile(String id) throws Exception {
     if (id == null || !id.matches("[A-Za-z0-9-]{8,64}")) throw new Exception("bad save id");
@@ -1648,7 +1648,6 @@ public class LiquidNative extends Plugin {
     try {
       File f = stagedFile(call.getString("id", ""));
       byte[] part = android.util.Base64.decode(call.getString("base64", ""), android.util.Base64.DEFAULT);
-      if (f.length() + part.length > MAX_TRANSFER) { f.delete(); throw new Exception("too big to save"); }
       try (java.io.FileOutputStream out = new java.io.FileOutputStream(f, true)) { out.write(part); }
       call.resolve();
     } catch (Exception e) { call.reject("save failed: " + e.getMessage()); }
@@ -1665,7 +1664,7 @@ public class LiquidNative extends Plugin {
       if (!stagedFile(call.getString("id", "")).exists()) { call.reject("nothing to save"); return; }
     } catch (Exception e) { call.reject("save failed: " + e.getMessage()); return; }
     Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-    i.addCategory(Intent.CATEGORY_OPENABLE); i.setType(call.getString("mime", "application/octet-stream")); i.putExtra(Intent.EXTRA_TITLE, call.getString("name", "liquid-flac.txt"));
+    i.addCategory(Intent.CATEGORY_OPENABLE); i.setType(call.getString("mime", "application/octet-stream")); i.putExtra(Intent.EXTRA_TITLE, call.getString("name", "liquid-dark.txt"));
     startActivityForResult(call, i, "saveFileResult");
   }
 
@@ -1690,7 +1689,7 @@ public class LiquidNative extends Plugin {
   }
 
   /** { multiple? } -> { files: [{ name, text } | { name, path, zip: true }] }. Text files are decoded here (UTF-8 BOM / UTF-16 / UTF-8 / Windows-1252, like .lrc files).
-   *  A .zip is streamed to a private folder and its path is returned: JS reads it from there (no Base64). Rejects "cancelled" if the dialog is closed. Up to 80 MB per file. */
+   *  A .zip is streamed to a private folder and its path is returned: JS reads it from there (no Base64). Rejects "cancelled" if the dialog is closed. No size limit (only the phone's free storage; a plain text file over ~2 GB is refused with a clear message). */
   @PluginMethod
   public void openFiles(PluginCall call) {
     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -1719,13 +1718,14 @@ public class LiquidNative extends Plugin {
           try (InputStream in = getContext().getContentResolver().openInputStream(u); java.io.FileOutputStream out = new java.io.FileOutputStream(f)) {
             if (in == null) throw new Exception("cannot open " + name);
             byte[] b = new byte[65536]; int n;
-            while ((n = in.read(b)) > 0) { size += n; if (size > MAX_TRANSFER) throw new Exception(name + " is too big"); out.write(b, 0, n); }
+            while ((n = in.read(b)) > 0) { size += n; out.write(b, 0, n); }
           } catch (Exception e) { f.delete(); throw e; }
           JSObject o = new JSObject(); o.put("name", name);
           boolean zip = false;
           try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(f, "r")) { byte[] h = new byte[4]; zip = raf.read(h) == 4 && h[0] == 'P' && h[1] == 'K' && (h[2] == 3 || h[2] == 5); }
           if (zip) { o.put("path", f.getAbsolutePath()); o.put("zip", true); }   // a .zip: JS reads the file from this path (src/zipread.js)
           else {
+            if (size > Integer.MAX_VALUE - 64) throw new Exception(name + " is too large to read as text: split it or put it in a .zip");   // a Java byte[] cannot hold more than about 2 GB
             byte[] all = new byte[(int) size];
             try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(f, "r")) { raf.readFully(all); }
             o.put("text", decodeLrc(all, encOf(all)));   // BUG-101: UTF-8 BOM / UTF-16 / UTF-8 / Windows-1252 detection, like .lrc files

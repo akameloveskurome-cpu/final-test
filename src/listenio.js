@@ -1,7 +1,7 @@
 // Listening data import / export. PURE (no DOM, no Native): covered by tests/listenio.test.mjs.
 // A stored segment (see listenstats.js): { i:songId, t,a,al,aa:title/artist/album/albumArtist snapshot, s:startMs, d:playedMs, f:1 foreground, q:1 qualified, sid:session, pid:play, n:seq, p0,p1:position }.
 // A PLAY = all segments with the same pid. Other apps only know plays (start time + title + artist [+ album, + time played]), so that is what every non-Liquid format holds.
-// Export: Liquid FLAC JSON (lossless), ListenBrainz JSON, Spotify "extended streaming history" JSON, Last.fm CSV, Audioscrobbler .scrobbler.log, Tempo backup zip, CSV.
+// Export: Liquid Dark JSON (lossless), ListenBrainz JSON, Spotify "extended streaming history" JSON, Last.fm CSV, Audioscrobbler .scrobbler.log, Tempo backup zip, CSV.
 // Import: all of those + Tempo backup, Last.fm API JSON, Maloja, YouTube Music takeout, .scrobbler.log, ListenBrainz JSON Lines (see listensrc.js; .zip files are opened by zipread.js) + Spotify's older StreamingHistory JSON, Last.fm / Pano Scrobbler / scrobbler-tool CSV, Apple Music "Play Activity" CSV, and any CSV with recognisable column names.
 import { unesc, norm } from './plexport.js';
 import { csvParse, csvText, headerMap, stamp } from './transfer.js';
@@ -13,7 +13,7 @@ export const KIND = 'listening';
 export const QUALIFY_MS = 10000;
 export const SESSION_GAP = 30 * 60000;
 export const FORMATS = [
-  { id: 'liquid', label: 'Liquid FLAC backup (.json)', note: 'Everything, exactly as recorded. Best for moving to another phone with this app.', ext: 'json', mime: 'application/json' },
+  { id: 'liquid', label: 'Liquid Dark backup (.json)', note: 'Everything, exactly as recorded. Best for moving to another phone with this app.', ext: 'json', mime: 'application/json' },
   { id: 'listenbrainz', label: 'ListenBrainz (.json)', note: 'Open scrobble format. Import it on listenbrainz.org, or into tools that read ListenBrainz files.', ext: 'json', mime: 'application/json' },
   { id: 'spotify', label: 'Spotify streaming history (.json)', note: 'Same fields as Spotify’s own data download, for tools that read that (stats sites, importers).', ext: 'json', mime: 'application/json' },
   { id: 'lastfmcsv', label: 'Last.fm scrobbles (.csv)', note: 'uts, artist, album, track columns: the layout Last.fm importers, Libre.fm and Universal Scrobbler tools read.', ext: 'csv', mime: 'text/csv' },
@@ -40,17 +40,17 @@ const iso = ms => new Date(ms).toISOString();
 export function buildExport(fmt, segs, now = new Date(), userName = '') {
   const f = FORMATS.find(x => x.id === fmt); if (!f) throw new Error('Unknown format');
   if (fmt === 'liquid') {
-    return { name: `liquid-flac-listening-${stamp(now)}.json`, mime: f.mime, count: segs.filter(g => g && g.d > 0).length, text: JSON.stringify({ app: 'liquid-flac', kind: KIND, version: 1, exported: now.toISOString(), segments: segs.filter(g => g && g.d > 0) }) };
+    return { name: `liquid-dark-listening-${stamp(now)}.json`, mime: f.mime, count: segs.filter(g => g && g.d > 0).length, text: JSON.stringify({ app: 'liquid-dark', kind: KIND, version: 1, exported: now.toISOString(), segments: segs.filter(g => g && g.d > 0) }) };
   }
-  if (fmt === 'tempo') { const all = toPlays(segs).filter(named); return { name: `liquid-flac-listening-tempo-${stamp(now)}.zip`, mime: f.mime, count: all.length, files: [{ name: 'data.json', text: JSON.stringify(SRC.tempoBackup(all, userName, now)) }] }; }
+  if (fmt === 'tempo') { const all = toPlays(segs).filter(named); return { name: `liquid-dark-listening-tempo-${stamp(now)}.zip`, mime: f.mime, count: all.length, files: [{ name: 'data.json', text: JSON.stringify(SRC.tempoBackup(all, userName, now)) }] }; }
   const plays = toPlays(segs).filter(p => p.q && named(p));   // the same rule the player uses (10 s, or half a short song)
-  if (fmt === 'lastfmcsv') return { name: `liquid-flac-listening-lastfm-${stamp(now)}.csv`, mime: f.mime, count: plays.length, text: SRC.lastfmCsv(plays) };
-  if (fmt === 'scrobblerlog') return { name: `liquid-flac-listening-${stamp(now)}.scrobbler.log`, mime: f.mime, count: plays.length, text: SRC.scrobblerLog(plays) };
+  if (fmt === 'lastfmcsv') return { name: `liquid-dark-listening-lastfm-${stamp(now)}.csv`, mime: f.mime, count: plays.length, text: SRC.lastfmCsv(plays) };
+  if (fmt === 'scrobblerlog') return { name: `liquid-dark-listening-${stamp(now)}.scrobbler.log`, mime: f.mime, count: plays.length, text: SRC.scrobblerLog(plays) };
   let text;
-  if (fmt === 'listenbrainz') text = JSON.stringify(plays.map(p => ({ listened_at: Math.floor(p.start / 1000), track_metadata: { artist_name: p.artist, track_name: p.title, release_name: p.album || undefined, additional_info: { media_player: 'Liquid FLAC', submission_client: 'Liquid FLAC', duration_ms: p.dur ? Math.round(p.dur) : undefined, liquid_listened_ms: Math.round(p.ms) } } })), null, 1);
+  if (fmt === 'listenbrainz') text = JSON.stringify(plays.map(p => ({ listened_at: Math.floor(p.start / 1000), track_metadata: { artist_name: p.artist, track_name: p.title, release_name: p.album || undefined, additional_info: { media_player: 'Liquid Dark', submission_client: 'Liquid Dark', duration_ms: p.dur ? Math.round(p.dur) : undefined, liquid_listened_ms: Math.round(p.ms) } } })), null, 1);
   else if (fmt === 'spotify') text = JSON.stringify(plays.map(p => ({ ts: iso(p.start + Math.round(p.ms)), platform: 'android', ms_played: Math.round(p.ms), conn_country: 'ZZ', master_metadata_track_name: p.title, master_metadata_album_artist_name: p.artist || p.albumArtist, master_metadata_album_album_name: p.album || null, spotify_track_uri: null, reason_start: 'trackdone', reason_end: 'trackdone', shuffle: false, skipped: false, offline: true, incognito_mode: false })), null, 1);
   else text = csvText([['Timestamp (UTC)', 'Unix time', 'Artist', 'Track', 'Album', 'Album artist', 'Minutes played']].concat(plays.map(p => [iso(p.start), Math.floor(p.start / 1000), p.artist, p.title, p.album, p.albumArtist, (p.ms / 60000).toFixed(4)])));
-  return { name: `liquid-flac-listening-${fmt === 'csv' ? 'scrobbles' : fmt}-${stamp(now)}.${f.ext}`, mime: f.mime, count: plays.length, text };
+  return { name: `liquid-dark-listening-${fmt === 'csv' ? 'scrobbles' : fmt}-${stamp(now)}.${f.ext}`, mime: f.mime, count: plays.length, text };
 }
 
 /* ---------- import ---------- */

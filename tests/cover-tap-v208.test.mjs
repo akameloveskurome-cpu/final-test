@@ -1,4 +1,4 @@
-// v209: tapping a cover. Now Playing shows the ORIGINAL cover by default (Settings > Tap cover shows original = on); album pages always show the person's own picture / GIF.
+// v208: tapping a cover. Now Playing shows the ORIGINAL cover by default (Settings > Tap cover shows original = on); album pages always show the person's own picture / GIF.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

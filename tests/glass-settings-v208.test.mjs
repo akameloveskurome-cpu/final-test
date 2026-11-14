@@ -76,7 +76,7 @@ test('animation, liquid glass and lens settings travel in a settings file and co
 });
 
 test('a file with wrong-kind or out-of-range animation values is cleaned, not trusted', () => {
-  const bad = { app: 'liquid-flac', kind: 'settings', version: 1, settings: { anim: { speed: 'fast', bounce: 9999 }, lyAnim: 'nope', refract: 'yes' } };
+  const bad = { app: 'liquid-dark', kind: 'settings', version: 1, settings: { anim: { speed: 'fast', bounce: 9999 }, lyAnim: 'nope', refract: 'yes' } };
   const parsed = parseImport(JSON.stringify(bad), DEFS_KNOWN);
   // wrong kinds are dropped on import (the default is used): a text lyAnim, a text refract
   assert.equal(parsed.settings.lyAnim, undefined, 'a string lyAnim is dropped');

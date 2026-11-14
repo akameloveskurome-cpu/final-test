@@ -30,7 +30,7 @@ test('missing songs become a CSV: playlist, track, artist, dated name; a list wi
   const imp = parseAny(M3U('Mix', [{ t: 'Alpha', a: 'Ann', p: 'Ann/Alpha.flac' }, { t: 'Nope', a: 'Nobody', p: 'x/Nope.flac' }]), 'Mix.m3u8');
   const plan = planForeign(imp, tracks, aa, []);
   const f = missingCsv(plan.missing, new Date(2026, 10, 8));
-  assert.equal(f.name, 'liquid-flac-missing-songs-20261108.csv'); assert.equal(f.mime, 'text/csv');
+  assert.equal(f.name, 'liquid-dark-missing-songs-20261108.csv'); assert.equal(f.mime, 'text/csv');
   const rows = parseCsvList(f.text, 'x.csv');   // read back with the same CSV reader the importer uses
   assert.deepEqual(rows, [{ name: 'Mix', songs: [{ id: '', path: '', title: 'Nope', artist: 'Nobody', album: '' }] }]);
   assert.equal(missingCsv([], new Date(2026, 10, 8)).text, 'Playlist,Track,Artist\r\n');

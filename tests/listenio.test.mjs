@@ -16,7 +16,7 @@ test('every export format holds only qualified plays (like a scrobbler), with th
   const lb = JSON.parse(buildExport('listenbrainz', SEGS).text); assert.equal(lb.length, 1);
   assert.equal(lb[0].listened_at, Math.floor(T0 / 1000)); assert.equal(lb[0].track_metadata.artist_name, 'The Beatles'); assert.equal(lb[0].track_metadata.release_name, 'Abbey Road'); assert.equal(lb[0].track_metadata.additional_info.liquid_listened_ms, 60000);   // BUG-132: listened time has its own field now
   const sp = JSON.parse(buildExport('spotify', SEGS).text); assert.equal(sp[0].ms_played, 60000); assert.equal(sp[0].master_metadata_track_name, 'Come Together'); assert.equal(sp[0].ts, new Date(T0 + 60000).toISOString());
-  const csv = buildExport('csv', SEGS, new Date(2026, 10, 7)); assert.equal(csv.name, 'liquid-flac-listening-scrobbles-20261107.csv'); assert.equal(csv.count, 1); assert.match(csv.text, /^Timestamp \(UTC\),Unix time,Artist,Track,Album,Album artist,Minutes played\r\n/);
+  const csv = buildExport('csv', SEGS, new Date(2026, 10, 7)); assert.equal(csv.name, 'liquid-dark-listening-scrobbles-20261107.csv'); assert.equal(csv.count, 1); assert.match(csv.text, /^Timestamp \(UTC\),Unix time,Artist,Track,Album,Album artist,Minutes played\r\n/);
   assert.throws(() => buildExport('x', SEGS), /format/); assert.equal(FORMATS.length, 7);
 });
 test('Liquid backup is lossless and re-imports with the same play ids and seq numbers', () => {
@@ -79,7 +79,7 @@ test('summary text', () => {
 
 test('v148: a backup keeps the time zone each listen happened in; old backups fall back to this phone', () => {
   const seg = { i: 'a', t: 'T', a: 'A', al: 'L', aa: 'A', s: 1700000000000, d: 60000, f: 1, q: 1, sid: 's', pid: 'p', n: 0, p0: 0, p1: 0 };
-  const text = JSON.stringify({ app: 'liquid-flac', kind: 'listening', version: 1, segments: [{ ...seg, tz: 330 }, { ...seg, pid: 'p2', tz: 'junk' }, { ...seg, pid: 'p3' }] });
+  const text = JSON.stringify({ app: 'liquid-dark', kind: 'listening', version: 1, segments: [{ ...seg, tz: 330 }, { ...seg, pid: 'p2', tz: 'junk' }, { ...seg, pid: 'p3' }] });
   const { segs } = parseListens(text);
   assert.deepEqual(segs.map(g => g.tz), [330, null, null]);
   const { rows } = planLiquid(segs, [], () => ({}));

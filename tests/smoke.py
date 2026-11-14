@@ -95,7 +95,7 @@ with sync_playwright() as pw:
     n0 = ev("JSON.parse(localStorage.getItem('lf.playlists')||'null')"); n0 = len(n0) if n0 else None
     page.click('[data-act="plexport"]'); page.wait_for_selector('[data-act="xp-go"][data-f="json"]')
     with page.expect_download() as dl: page.click('[data-act="xp-go"][data-f="json"]')
-    f = dl.value; check(f.suggested_filename == 'liquid-flac-playlists.json', f'export downloads {f.suggested_filename}')
+    f = dl.value; check(f.suggested_filename == 'liquid-dark-playlists.json', f'export downloads {f.suggested_filename}')
     data = json.loads(pathlib.Path(f.path()).read_text())
     npl = len(data['playlists']); check(data['kind'] == 'playlists' and npl >= 1 and all(isinstance(p['songs'], list) for p in data['playlists']), f'export file has {npl} playlists with songs')
     page.screenshot(path=str(OUT / 'smoke_settings_playlists.png'), full_page=False)

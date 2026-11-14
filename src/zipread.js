@@ -20,17 +20,32 @@ async function inflate(raw, limit = Infinity) {
 export async function unzipText(bytes, opts = {}) {
   try { return await unzipText0(bytes, opts); } catch (e) { if (e instanceof RangeError) throw new Error('Damaged .zip file'); throw e; }   // BUG-65: a corrupt offset is a controlled error
 }
-async function unzipText0(bytes, { max = 200e6, want = WANT } = {}) {
+/* v208: no size limit any more (it was 200 MB per file inside a .zip). */
+async function unzipText0(bytes, { max = Infinity, want = WANT } = {}) {
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   let e = -1; for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 66000); i--) if (v.getUint32(i, true) === 0x06054b50) { e = i; break; }
   if (e < 0) throw new Error('Not a valid .zip file');
-  const n = v.getUint16(e + 10, true); let p = v.getUint32(e + 16, true); const out = [], dec = new TextDecoder('utf-8');
+  let n = v.getUint16(e + 10, true), p = v.getUint32(e + 16, true); const out = [], dec = new TextDecoder('utf-8');
+  /* v208: zip64 (very big archives, or more than 65,535 files): the real count and directory position are in the zip64 end record. Sizes need 64 bits, but a Number holds them exactly up to 9 PB. */
+  if ((n === 0xFFFF || p === 0xFFFFFFFF) && e >= 20 && v.getUint32(e - 20, true) === 0x07064b50) {
+    const z = Number(v.getBigUint64(e - 12, true));
+    if (!(z >= 0 && z + 56 <= bytes.length) || v.getUint32(z, true) !== 0x06064b50) throw new Error('Damaged .zip file');
+    n = Number(v.getBigUint64(z + 32, true)); p = Number(v.getBigUint64(z + 48, true));
+  }
   for (let k = 0; k < n; k++) {
     if (v.getUint32(p, true) !== 0x02014b50) throw new Error('Damaged .zip file');
-    const method = v.getUint16(p + 10, true), csize = v.getUint32(p + 20, true), usize = v.getUint32(p + 24, true), nl = v.getUint16(p + 28, true), el = v.getUint16(p + 30, true), cl = v.getUint16(p + 32, true), off = v.getUint32(p + 42, true);
-    const name = dec.decode(bytes.subarray(p + 46, p + 46 + nl)); p += 46 + nl + el + cl;
+    const method = v.getUint16(p + 10, true), nl = v.getUint16(p + 28, true), el = v.getUint16(p + 30, true), cl = v.getUint16(p + 32, true);
+    let csize = v.getUint32(p + 20, true), usize = v.getUint32(p + 24, true), off = v.getUint32(p + 42, true);
+    const name = dec.decode(bytes.subarray(p + 46, p + 46 + nl)), xs = p + 46 + nl; p += 46 + nl + el + cl;
     if (name.endsWith('/') || name.startsWith('__MACOSX/') || !want.test(name)) continue;
-    if (csize === 0xFFFFFFFF || usize === 0xFFFFFFFF) throw new Error('This .zip is too big (zip64): unzip it first');
+    if (csize === 0xFFFFFFFF || usize === 0xFFFFFFFF || off === 0xFFFFFFFF) {   // v208: zip64 extra field (id 0x0001): only the values that were 0xFFFFFFFF are in it, in this order
+      for (let q = xs; q + 4 <= xs + el; ) {
+        const id = v.getUint16(q, true), len = v.getUint16(q + 2, true);
+        if (id === 1) { let r = q + 4; const next = () => { const x = Number(v.getBigUint64(r, true)); r += 8; return x; }; if (usize === 0xFFFFFFFF) usize = next(); if (csize === 0xFFFFFFFF) csize = next(); if (off === 0xFFFFFFFF) off = next(); break; }
+        q += 4 + len;
+      }
+      if (csize === 0xFFFFFFFF || usize === 0xFFFFFFFF || off === 0xFFFFFFFF) throw new Error('Damaged .zip file');
+    }
     if (usize > max) throw new Error(name + ' is too big');
     const ln = v.getUint16(off + 26, true), le = v.getUint16(off + 28, true), data = bytes.subarray(off + 30 + ln + le, off + 30 + ln + le + csize);
     out.push({ name, text: dec.decode(method === 0 ? data : method === 8 ? await inflate(data, max) : (() => { throw new Error('Unsupported .zip compression'); })()).replace(/^\uFEFF/, '') });
