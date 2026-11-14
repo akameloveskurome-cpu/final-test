@@ -56,7 +56,7 @@ It plays the music you already own. Lossless **FLAC** is the star (16-bit, 24-bi
 ### Your library
 
 - **Four tabs** in a floating glass bar: **Home**, **Albums**, **Library** and **Search**.
-- **Home** is your start page. It has a greeting for the time of day, quick buttons and rows such as Playlists, Recommended Today, Recently Played, Your Top Artists, Recently Added and Browse by Genre. Every row has **See All**. Settings > Home screen decides what shows, in what order and in which part of the day, and you can pin your own playlists, artists and albums to it.
+- **Home** is your start page. It has no big "Home" title: the greeting is the first thing under the top bar. It has a greeting for the time of day, quick buttons and rows such as Playlists, Recommended Today, Recently Played, Your Top Artists, Recently Added and Browse by Genre. Every row has **See All**. Settings > Home screen decides what shows, in what order and in which part of the day, and you can pin your own playlists, artists and albums to it.
 - **Albums** shows a list with small covers. Each album page has a large cover, Play and Shuffle, and the song list, with disc headers for multi-disc albums.
 - **Library** holds Playlists, Favorites, Recently Played, Most Played, Artists, Albums, Songs, Genres and Folders.
 - **Artists** are split sensibly. Separators such as `feat.`, `ft.`, `;`, ` / ` and ` x ` are recognised, and `,` or `&` only split names that are known artists, so "Tyler, The Creator" stays whole. Various Artists albums are handled, and **Go to Artist** is available from any song menu. Press and hold an artist card on Home or in Library to change its photo.

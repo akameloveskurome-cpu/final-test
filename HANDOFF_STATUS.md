@@ -1,11 +1,17 @@
-> **NEXT SESSION: `BUGS.txt` and `OPEN_BUGS.txt` are NOT in this ZIP (historical names, do not look for them). Read `docs/HANDOFF.md` and the current bug report instead. Work ONE bug at a time. Always deliver changes inside the project zip (same name, liquid-dark-v148.zip).**
+> **NEXT SESSION: `BUGS.txt` and `OPEN_BUGS.txt` are NOT in this ZIP (historical names, do not look for them). Read `docs/HANDOFF.md` and the current bug report instead. Work ONE bug at a time. Always deliver changes inside the project zip (same name, liquid-dark-v208.zip).**
 > **HISTORICAL FILE REFERENCES:** also not in this ZIP: `native-android/PlayCounter.java` (STALE, see the line that mentions it), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html`. Read those mentions as history. `tests/` holds only java-probe.py, -canvas, -earphones, -scan, -update.
 
-# Liquid Dark v148: HANDOFF_STATUS (read this first, then `docs/HANDOFF.md`). Version 0.208.0.
+# Liquid Dark v208: HANDOFF_STATUS (read this first, then `docs/HANDOFF.md`). Version 0.208.0 (build number 208).
 
 > **VERSION RULE (owner's order): do NOT change the version number (it is 0.208.0, set by the owner on 2026-11-12) in `package.json`, `package-lock.json`, docs or anywhere else, and do not add a "bump" to any entry. Only the owner decides when to bump it, by telling you. Every AI that edits this project must keep it as it is.**
 
 
+
+## Home screen: big "Home" title removed (no version change, still 0.208.0)
+- **Changed:** `src/main.js` (the `home:` screen no longer prints `<h1 class="large">Home</h1>`; the greeting line is now the first thing under the header), `tests/home-no-title.test.mjs` (new), `README.md`, `docs/FEATURES.md` (K30b), `docs/HANDOFF.md`, `docs/screenshots/home.png` (re-taken without the title), `UPDATES.md`.
+- **Why:** owner asked to remove the "Home" text above the greeting. Nothing else changed; other screens keep their big titles.
+- **DO NOT REDO:** do not put the Home `<h1>` back.
+- **Version check (owner asked, 2026-11-14):** the version is 0.208.0 (build 208) in `package.json`, `package-lock.json` (both places), and in the app (About and the update check read `package.json`; `APP_BUILD` = 208). Nothing was changed, only stale text: this file's title and zip name (now v208) and an old "Current version is 0.146.0" line in `docs/HANDOFF.md`. Old entries that say 0.148.0 / 0.146.0 are history on purpose.
 
 ## Splash: no blink before the picture, shown at least 2.8 seconds (no version change, still 0.208.0)
 - **Changed:** `index.html` (early inline script reads + decodes the saved picture from IndexedDB `lf-splash` BEFORE `src/main.js` loads; the picture starts at opacity 0 and fades in once decoded), `src/main.js` (`splashReady` reuses `window.__lfSplashP`; `splashShow` waits for `decode()` and hides after `SPLASH_MIN_MS` counted from `window.__lfSplashAt`), `src/splashpic.js` (`SPLASH_MIN_MS = 2000`), `tests/splash-v209.test.mjs` (new), `README.md`, `UPDATES.md`.

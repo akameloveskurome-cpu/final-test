@@ -519,7 +519,7 @@ const screens = {
     homePeriod = periodOf(new Date().getHours());
     const hero = tracks.length ? `${hc.info ? `<p class="homesub">${pl(tracks.length, 'song')} · ${pl(albums.length, 'album')} · ${pl(artists.length, 'artist')}</p>` : ''}
       ${hc.quick && quickHtml ? `<div class="quick">${quickHtml}</div>` : ''}` : '';
-    return `${header()}<h1 class="large">Home</h1>${hc.greet ? `<p class="greetline" aria-live="polite">${escH(greet(!homeKeepGreet))}</p>` : ''}${emptyBox()}${hero}
+    return `${header()}${hc.greet ? `<p class="greetline" aria-live="polite">${escH(greet(!homeKeepGreet))}</p>` : ''}${emptyBox()}${hero}
     ${hc.order.filter(k => !hiddenFor(hc, new Date().getHours()).includes(k)).map(k => parts[k] || '').join('')}`; },
   albums: () => `${header()}<h1 class="large">Albums</h1>${sortBar('albums')}${albumsBody()}`,
   library: () => `${header()}<h1 class="large">Library</h1>

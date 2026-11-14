@@ -162,6 +162,7 @@ Every AI must treat the **You** items as locked. Anything marked Suggested can b
 | K28 | **Home greeting** per hour of the day (210 messages for each hour) with your name, set in Settings > Profile | v119 | You |
 | K29 | **Home screen settings**: show, hide and reorder sections, cards per row, card size, pinned playlists / artists / albums, a different Home per part of the day, your own names, quick buttons | v119 | You |
 | K30 | **Home rows**: See All on every row, calm default layout, Playlists row, Heavy Rotation, Favorites Mix, New Music Mix; Home updates itself | v119 | You |
+| K30b | **No big "Home" title on the Home screen**: the greeting is the first line under the top bar (other screens keep their titles); `tests/home-no-title.test.mjs` | 0.208.0 | You |
 | K31 | **Now Playing cover size** (40 to 100%, live preview, Reset = automatic) | v119 | You |
 | K32 | **Lyrics animation** settings (glide and fade speed, line sizes, brightness, blur, playing line) | v119 | You |
 | K33 | **Artist photo from Home**: press and hold an artist card to pick your photo or an album cover | v119 | You |

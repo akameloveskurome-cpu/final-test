@@ -21,13 +21,16 @@ Full list with WHERE / WHY / DO NOT REDO is at the top of `HANDOFF_STATUS.md`. S
 Current version is 0.208.0 (`package.json`, `package-lock.json`). Bug-check fixes: widget artist rules (`StatsWidgets.artistsOf`), async widget resize, midnight alarm (`StatsWidgets.scheduleMidnight`, request code 31), `tz` kept in Liquid backups (`ListenDb.query`, `listenio.js`), back-off after a failed stats read (`lstats.js`), repeat-one end position (`ListenTracker`). Full list in `HANDOFF_STATUS.md` and `UPDATES.md`. `android.yml` now starts with a guard step that fails the run if signing-key files are committed (see `UPDATES.md`).
 
 ## Session v146 - version 146 (0.146.0)
-Current version is 0.146.0 (`package.json`, `package-lock.json`). New: `background-allow-gif-pic/` (popup, `src/bgallow.js`, `src/bgallowpic.js`) and `stats-banner-gif-pic/` (Home box above Listening Stats, `src/statbanpic.js`, `banCheck` in `src/main.js`); both live, 1000 ms, no rebuild. Newest notes: `HANDOFF_STATUS.md`.
+Version at that time was 0.146.0 (today it is 0.208.0; `package.json`, `package-lock.json`). New: `background-allow-gif-pic/` (popup, `src/bgallow.js`, `src/bgallowpic.js`) and `stats-banner-gif-pic/` (Home box above Listening Stats, `src/statbanpic.js`, `banCheck` in `src/main.js`); both live, 1000 ms, no rebuild. Newest notes: `HANDOFF_STATUS.md`.
 
 ## Lyrics colour sheet: only a circular hex picker (no version change, still 0.208.0)
 `lycolSheet()` in `src/main.js` no longer builds preset dots (cover swatches, Black). It shows one big rainbow-ring circle (`<input type="color" id="lychex">`), a Hex code text box (`#lychextxt`, 3 or 6 digits, `#` optional, invalid input shows a red hint) and a "Back to Auto (cover colour)" button (`lyc-pick`, `data-i=-1`, disabled while Auto). `lycSetHex()` saves `{h, s, hex}` per album key (`lf.lycol`) and re-tints in place (no sheet re-render, so typing keeps focus). `.lycdot` CSS and `lycSame` were removed. Older saved black / swatch colours (no `hex`) still tint the lyrics; the sheet shows the default red in the circle for them until a colour is picked. Guard: `tests/lyrics-colour-hex.test.mjs`.
 
 ## Launcher icon: nothing cut (no version change, still 0.208.0)
 `scripts/apply-app-logo.py`: `adaptive_layers()` fits the picture into `ADAPTIVE_VISIBLE = 72/108` of the adaptive icon (Android only shows that middle part). This replaces BUG-162's full-size fill, on the owner's order, because it cut the outer third of full-bleed pictures. Do not go back to full size. Legacy (Android 7-) icons are unchanged.
+
+## Home screen: no big "Home" title (no version change, still 0.208.0)
+The `home:` screen in `src/main.js` no longer prints `<h1 class="large">Home</h1>`; the greeting line (`.greetline`) is the first thing under `header()`. Albums, Library, Search and the sub-screens keep their `<h1 class="large">`. Test: `tests/home-no-title.test.mjs`. `docs/screenshots/home.png` was re-taken without the title. DO NOT put the Home `<h1>` back.
 
 ## Splash before Home (no version change, still 0.208.0)
 `index.html` holds a black `#lf-splash` cover before `#app`; `splashReady.then(splashShow)` runs near the top of `src/main.js`. Do not move it back to the end of the file. See `HANDOFF_STATUS.md`.
