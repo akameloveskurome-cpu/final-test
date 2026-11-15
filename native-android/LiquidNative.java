@@ -1950,7 +1950,7 @@ public class LiquidNative extends Plugin {
         if (ai.name == null) continue;
         String name = eqNorm(ai.name);
         if (name.contains("advancedpowerusage")) continue;   // v209b: same generic page under any package name
-        int rank = name.contains("powerconsumption") ? 0
+        int rank = (name.contains("powerconsumption") || name.endsWith("powercontrolactivity")) ? 0
                  : (name.contains("appbatterydetail") || name.contains("appbatteryusage") || name.contains("appbatterymanage")) ? 1
                  : (name.contains("batterydetail") || name.contains("powerdetail") || name.contains("powerusagedetail") || (name.contains("fuelgaue") && name.contains("detail"))) ? 2 : -1;
         if (rank < 0) continue;
@@ -1968,6 +1968,7 @@ public class LiquidNative extends Plugin {
     ComponentName cached = oplusPageCache;
     if (cached != null) { if (bgStart(cached, pkg)) return cached.flattenToShortString(); oplusPageCache = null; }
     String[][] known = {
+      { "com.oplus.battery", "com.oplus.powermanager.fuelgaue.PowerControlActivity" },   // owner's OPPO / OnePlus (ColorOS V13.1.0): the page Battery usage opens (dumpsys: com.oplus.battery/...fuelgaue.PowerControlActivity, launched by the system from App info)
       { "com.oplus.battery", "com.oplus.powermanager.fuelgaue.PowerConsumptionActivity" },
       { "com.coloros.oppoguardelf", "com.coloros.powermanager.fuelgaue.PowerConsumptionActivity" } };
     for (String[] k : known) { ComponentName c = new ComponentName(k[0], k[1]); if (bgStart(c, pkg)) { oplusPageCache = c; return c.flattenToShortString(); } }
@@ -1976,6 +1977,9 @@ public class LiquidNative extends Plugin {
     if (found != null && bgStart(found, pkg)) { oplusPageCache = found; return found.flattenToShortString(); }
     return "";
   }
+
+  /** Shown when the phone will not open the Battery usage page directly. */
+  private static final String HOW_TO_TURN_ON = "To turn it on: App info > Battery usage > switch ON Allow background activity.";
 
   @PluginMethod
   public void openBackgroundSettings(final PluginCall call) {
@@ -2012,8 +2016,16 @@ public class LiquidNative extends Plugin {
       Log.i("LiquidNative", "background: settings opened via " + (via.isEmpty() ? "nothing" : via));
       JSObject o = new JSObject(); o.put("ok", !via.isEmpty()); o.put("via", via);
       if ("app-info".equals(via)) {   // the person is on App info: a native toast (visible over Settings) tells them the one tap that is left
-        o.put("hint", "Tap Battery usage, then switch on Allow background activity.");
-        try { getActivity().runOnUiThread(new Runnable() { @Override public void run() { android.widget.Toast.makeText(getContext(), "Tap Battery usage, then switch on Allow background activity.", android.widget.Toast.LENGTH_LONG).show(); } }); } catch (Throwable t) { /* no toast: the person still sees App info */ }
+        o.put("hint", HOW_TO_TURN_ON);
+        // The how-to stays on screen for about 12 s: a Toast lasts ~3.5 s, so it is shown again every 3 s, four times (a Toast shows over Settings; an app dialog cannot).
+        LIB_POOL.execute(new Runnable() { @Override public void run() {
+          for (int i = 0; i < 4; i++) {
+            try {
+              getActivity().runOnUiThread(new Runnable() { @Override public void run() { android.widget.Toast.makeText(getContext(), HOW_TO_TURN_ON, android.widget.Toast.LENGTH_LONG).show(); } });
+              Thread.sleep(3000);
+            } catch (Throwable t) { return; }   // no toast: the person still sees App info
+          }
+        } });
       }
       call.resolve(o);
     } });

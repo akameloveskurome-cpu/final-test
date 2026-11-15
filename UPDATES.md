@@ -6,6 +6,12 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+## Fallback message shows the full path and stays about 12 seconds
+- **Changed:** when the phone will not open the Battery usage page directly, Liquid Dark now shows: "To turn it on: App info > Battery usage > switch ON Allow background activity." It stays on screen for about 12 seconds, over Settings.
+
+## Allow on OPPO and OnePlus uses the phone's real Battery usage page
+- **Fixed:** Allow now tries the page that this phone's Battery usage opens (`PowerControlActivity`) first. The earlier page name did not match this phone.
+
 ## Allow on OnePlus, OPPO and Realme opens Battery usage directly
 - **Changed:** on **OnePlus, OPPO and Realme**, tapping **Allow** now opens **Liquid Dark's App info** first, the same path you take by hand: **App info > Battery usage > Power consumption controls**. A short message says: tap **Battery usage**, then switch on **Allow background activity**. The power page is opened directly only if App info cannot open. Other brands are unchanged.
 

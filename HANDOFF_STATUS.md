@@ -7,6 +7,27 @@
 
 
 
+## CONFIRMED on the OPPO / OnePlus test phone: "Allow background activity" follows `ignoring` (no version change, still 0.208.0)
+- **Owner's adb log (logcat -s LiquidNative):** switch ON = `ignoring=true restricted=false appOpBlocked=false`; switch OFF (after the app was closed and reopened) = `ignoring=false restricted=false appOpBlocked=false`.
+- **So:** `PowerManager.isIgnoringBatteryOptimizations` is the signal that follows the switch. `isBackgroundAllowed` already returns `allowed = ignoring && !restricted && !appOpBlocked`, so `allowed` is false when the switch is off, and `src/bgallow.js` shows the popup on every open while it is off.
+- **DO NOT REDO:** do not replace this check with the app-op signal. Keep the log line `background: allowed check` for future tests.
+- **Not yet checked:** that the popup itself appeared on the phone in this test.
+
+## Fallback how-to on screen for about 12 s (no version change, still 0.208.0)
+- **Changed:** `native-android/LiquidNative.java` (`HOW_TO_TURN_ON` text; the App info fallback shows it as a native Toast 4 times, every 3 s, from `LIB_POOL`), `tests/background-power-page.test.mjs`.
+- **Text:** "To turn it on: App info > Battery usage > switch ON Allow background activity."
+- **Why 4 toasts:** one Toast lasts about 3.5 s; a dialog cannot show over Settings.
+- **Unchanged (already in place):** on/off check (`isBackgroundAllowed`), popup on every open while OFF (`src/bgallow.js`), 10 s after the notification popup.
+- **DO NOT REDO:** do not replace the Toast with an app dialog (it would be hidden behind Settings).
+- **Verified:** `npm test` 711 pass; Java probe OK. **NOT verified** on a phone.
+
+## OnePlus / OPPO: the real Battery usage class is PowerControlActivity (no version change, still 0.208.0)
+- **Found by the owner (adb, OPPO phone, ColorOS V13.1.0):** while Battery usage (App info) was on screen, `mCurrentFocus` = `com.oplus.battery/com.oplus.powermanager.fuelgaue.PowerControlActivity`. The launch intent came from uid 1000 (system), with extras, and `baseDir=/system_ext/app/Battery/Battery.apk`.
+- **Why it failed before:** the known list only had `PowerConsumptionActivity`, which this phone does not use, so the direct launch never matched.
+- **Changed:** `native-android/LiquidNative.java` (`openOplusAppPage`: `PowerControlActivity` FIRST in the known list; scan rank 0 also accepts a class ending `powercontrolactivity`), `tests/background-power-page.test.mjs` (assertions for the new class and its order).
+- **Limit:** the page is opened by the system, so it may still be protected (`OPLUS_COMPONENT_SAFE`). If Allow still lands on App info, the `background:` lines in the app log show why. The intent extras are not known yet; if the page needs them, send the `dumpsys activity activities` block around the `Intent { ... (has extras) }` line for `PowerControlActivity`.
+- **DO NOT REDO:** do not move the real class behind `PowerConsumptionActivity` on OnePlus / OPPO.
+
 ## OnePlus / OPPO / Realme: Allow opens the Battery usage page directly again, App info only as fallback (no version change, still 0.208.0)
 - **Changed:** `native-android/LiquidNative.java` (`openBackgroundSettings`, the `oplusFamily()` branch), `tests/background-power-page.test.mjs` (order assertions back to power page first).
 - **Why:** owner: Allow must land INSIDE Battery usage (the page under this app's App info, the one with POWER CONSUMPTION CONTROLS), directly, as Notifications already does. The previous entry (App info first) is superseded.

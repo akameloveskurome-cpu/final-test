@@ -28,8 +28,10 @@ test('ColorOS family: the Battery usage page first, THIS app\'s App info as fall
 
 test('App info route tells the person the one tap that is left: result hint + a native toast (visible over Settings)', () => {
   assert.match(open, /"app-info"\.equals\(via\)/);
-  assert.match(open, /o\.put\("hint", "Tap Battery usage, then switch on Allow background activity\."\)/);
-  assert.match(open, /android\.widget\.Toast\.makeText\(getContext\(\), "Tap Battery usage, then switch on Allow background activity\."/);
+  assert.match(open, /o\.put\("hint", HOW_TO_TURN_ON\)/);
+  assert.match(open, /android\.widget\.Toast\.makeText\(getContext\(\), HOW_TO_TURN_ON/);
+  assert.match(open, /i < 4; i\+\+/, 'the how-to is shown four times, every 3 s, so it stays about 12 s');
+  assert.match(open, /Thread\.sleep\(3000\)/);
   assert.match(open, /getActivity\(\)\.runOnUiThread/);
 });
 
@@ -41,6 +43,7 @@ test('known ColorOS / OxygenOS power-consumption pages are tried, then a run-tim
   const k = body('private String openOplusAppPage(String pkg)', 'public void openBackgroundSettings');
   assert.match(k, /com\.oplus\.battery", "com\.oplus\.powermanager\.fuelgaue\.PowerConsumptionActivity"/);
   assert.match(k, /com\.coloros\.oppoguardelf", "com\.coloros\.powermanager\.fuelgaue\.PowerConsumptionActivity"/);
+  assert.ok(k.indexOf('PowerControlActivity') < k.indexOf('PowerConsumptionActivity'), 'the real class is tried first');
   assert.ok(k.indexOf('known') < k.indexOf('oplusAppPageScan()'));
   const s = body('private ComponentName oplusAppPageScan()', 'private String openOplusAppPage');
   assert.match(s, /eqSystemApp\(pi\.applicationInfo\)/);
