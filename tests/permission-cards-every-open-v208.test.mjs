@@ -46,9 +46,17 @@ test('the two cards never stack', () => {
   assert.ok(M.includes("document.getElementById('lf-bgallow')) { setTimeout(() => startPopup()"));   // and the notification card waits for the background card
 });
 
-test('background "allowed" needs BOTH signals: not battery-optimized AND not background-restricted (OnePlus / Oppo switch)', () => {
+test('background "allowed" needs the Android signals: not battery-optimized AND not background-restricted (OnePlus / Oppo switch)', () => {
   assert.ok(J.includes('isBackgroundRestricted()'));
-  assert.ok(J.includes('o.put("allowed", ignoring && !restricted)'));
+  assert.ok(J.includes('o.put("allowed", ignoring && !restricted && !appOpBlocked)'));   // v209c: plus the background app-ops
   assert.ok(J.includes('Build.VERSION.SDK_INT >= 28'));
   assert.ok(J.includes('o.put("ignoring", ignoring); o.put("restricted", restricted);'));
+});
+
+test('v209c: the OnePlus / OPPO / Realme switch is also read from the background app-ops (ignored / errored = OFF); no answer = not blocked', () => {
+  const m = J.slice(J.indexOf('public void isBackgroundAllowed(PluginCall call)'), J.indexOf('private String openOemBackgroundPage'));
+  assert.ok(m.includes('\"android:run_in_background\"') && m.includes('\"android:run_any_in_background\"'));
+  assert.ok(m.includes('checkOpNoThrow(op, uid, own)') && m.includes('mode == 1 || mode == 2'));
+  assert.ok(m.includes('boolean appOpBlocked = false;'));
+  assert.ok(m.includes('Log.i(\"LiquidNative\", \"background: allowed check ignoring='));   // the three raw values are in the app log for diagnosis
 });

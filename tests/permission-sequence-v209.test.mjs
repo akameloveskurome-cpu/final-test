@@ -15,9 +15,9 @@ test('background card waits while the notification card is still due, and for th
   assert.ok(M.includes('setBgAllowGate(() => permOff && !permShownOpen);') && M.includes('permOff = !granted;'));
   assert.ok(M.includes('bgAllowHold(notifAllow())'));
 });
-test('background settings: brand pages for Oppo / Realme / OnePlus, Vivo, Samsung, Huawei, Xiaomi are tried before the App info fallback', () => {
+test('background settings: brand pages for Oppo / Realme / OnePlus, Vivo, Samsung, Huawei, Xiaomi are tried before the generic fallbacks', () => {
   for (const k of ['oppo', 'realme', 'oneplus', 'vivo', 'samsung', 'huawei', 'xiaomi']) assert.ok(J.includes('m.contains("' + k + '")'), k);
-  assert.ok(J.indexOf('openOemBackgroundPage(pkg)') < J.indexOf('via = "app-info";'), 'brand pages come before the App info fallback');
+  assert.ok(J.indexOf('openOemBackgroundPage(pkg)') < J.indexOf('ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, u'));
 });
 test('the two cards still use their own picture folders', () => {
   assert.ok(rd('src/popup.js').includes('notification-popup-gif-pic'));
