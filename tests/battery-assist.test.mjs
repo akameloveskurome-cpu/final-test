@@ -48,7 +48,7 @@ test('v211 cards: Accessibility, then Allow restricted settings (App info), then
   assert.match(a, /WAIT_MS = 10000/);
   assert.match(a, /ASSIST_PICS/);
   const pics = rd('src/assistpics.js');
-  for (const k of ['a1', 'a2', 'a3', 'a4', 'a5']) assert.match(pics, new RegExp(k + ": 'data:image/jpeg;base64,"), 'tutorial picture ' + k);
+  for (const k of ['a1', 'a2', 'a3', 'a4', 'a5', 'b1', 'b2']) assert.match(pics, new RegExp(k + ": 'data:image/jpeg;base64,"), 'tutorial picture ' + k);
   assert.match(a, /Restricted setting/);
   assert.match(a, /overflow-y:auto/, 'card scrolls on small phones');
   const j = rd('native-android/LiquidNative.java');

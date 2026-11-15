@@ -33,7 +33,7 @@ const CARDS = [
       + step(1, 'Tap the <b>three dots</b> (top right).', 'a4') + step(2, 'Tap <b>Allow restricted settings</b> and enter your PIN or fingerprint. Then come back to Liquid Dark.', 'a5') },
   { title: 'Step 3: turn the battery helper On', go: 'Open Accessibility',
     body: '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">Restricted settings are allowed now, so the switch works this time.</p>'
-      + step(1, 'Tap <b>Downloaded apps</b>.', 'a1') + step(2, 'Tap <b>Liquid Dark battery helper</b>, then turn it <b>On</b>.', 'a2') },
+      + step(1, 'In Accessibility open <b>Downloaded apps</b>, then tap <b>Liquid Dark battery helper</b>. It is not greyed out any more.', 'b1') + step(2, 'Turn the switch <b>On</b>, then come back to Liquid Dark.', 'b2') },
 ];
 async function refresh() {
   try { off = !(await Native.batteryAssistStatus()).enabled; } catch { off = false; }

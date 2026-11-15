@@ -13,6 +13,7 @@
 - **Changed:** `src/assist.js` (rewritten: 3-stage sequence with its own 1 s poller, gate, 10 s gaps; Not now stops it for this open), `src/main.js` (assist no longer called from `startPopup`; `notifChecked`, `setAssistGate`, `startAssist`, background gate also waits for `assistPending()`), `src/bgallow.js` (waits while the accessibility sequence is pending), `src/native.js` + `native-android/LiquidNative.java` (new `openAccessibilityList` = ACTION_ACCESSIBILITY_SETTINGS; `openAccessibilitySettings` still opens App info), `tests/battery-assist.test.mjs`.
 - **DO NOT REDO:** do not put the accessibility cards before the notification card; do not merge the two Accessibility cards; step 2 must open App info, steps 1 and 3 the Accessibility list.
 - **Tutorial pictures:** `src/assistpics.js` holds 5 cropped screenshots (red tap-here marks) as data URIs: Accessibility > Downloaded apps > Liquid Dark battery helper > "Restricted setting" pop-up (OK), then App info > three dots > Allow restricted settings. Card 1 must make the person TAP the greyed-out helper: Android only unlocks "Allow restricted settings" after that tap.
+- **Card 3 pictures:** `b1` (Downloaded apps, helper no longer greyed out, tap it) and `b2` (helper page, turn the switch On). Card 1 keeps `a1`-`a3` (greyed-out helper). Do not reuse the greyed-out pictures in card 3.
 - **NOT verified** on a phone.
 
 ## Workflow cross-check against the code; repo hygiene files (no version change, still 0.208.0)
