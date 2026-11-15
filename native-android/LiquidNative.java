@@ -1984,7 +1984,7 @@ public class LiquidNative extends Plugin {
       String pkg = getContext().getPackageName();
       Uri u = Uri.parse("package:" + pkg);
       String via = "";
-      if (oplusFamily()) {   // OnePlus / OPPO / Realme: the app's own Power consumption controls page first; if that page is protected, this app's App info (its Battery usage row is the same page)
+      if (oplusFamily()) {   // OnePlus / OPPO / Realme: the page that Battery usage (in this app's App info) opens, straight away. If the phone protects it, this app's App info, where the Battery usage row is one tap away (the toast says so).
         String page = openOplusAppPage(pkg);
         if (!page.isEmpty()) via = "oplus-app:" + page;
         else if (tryStart(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, u))) via = "app-info";

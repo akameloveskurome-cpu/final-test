@@ -7,6 +7,22 @@
 
 
 
+## OnePlus / OPPO / Realme: Allow opens the Battery usage page directly again, App info only as fallback (no version change, still 0.208.0)
+- **Changed:** `native-android/LiquidNative.java` (`openBackgroundSettings`, the `oplusFamily()` branch), `tests/background-power-page.test.mjs` (order assertions back to power page first).
+- **Why:** owner: Allow must land INSIDE Battery usage (the page under this app's App info, the one with POWER CONSUMPTION CONTROLS), directly, as Notifications already does. The previous entry (App info first) is superseded.
+- **How:** `openOplusAppPage()` first (known `PowerConsumptionActivity` classes, then the run-time scan); if the phone refuses it, App info + the native toast "Tap Battery usage...".
+- **Limit:** newer OnePlus / ColorOS protect that page (`oplus.permission.OPLUS_COMPONENT_SAFE`). If the owner's phone still lands on App info, no normal app can open Battery usage directly; read the `background:` lines in the app log to confirm.
+- **DO NOT REDO:** do not put the generic battery page in front of these.
+- **Verified:** `npm test` 711 pass. **NOT verified** on a real phone.
+
+## OnePlus / OPPO / Realme: Allow goes App info > Battery usage first, not straight to the power page (no version change, still 0.208.0)
+- **Changed:** `native-android/LiquidNative.java` (`openBackgroundSettings`, the `oplusFamily()` branch only), `tests/background-power-page.test.mjs` (two assertions reversed, one regex updated).
+- **Why:** owner asked whether Allow really reaches Power consumption controls through App info > Battery usage. It did not: the code tried the power page directly first, so App info was skipped.
+- **How:** on the family, `ACTION_APPLICATION_DETAILS_SETTINGS` (this app's App info) opens first, with the existing native toast "Tap Battery usage, then switch on Allow background activity." The direct power page (`openOplusAppPage`) is only a fallback if App info cannot open. Other brands are unchanged.
+- **Not possible:** an app cannot tap the Battery usage row inside another app's settings, so the one tap stays manual.
+- **DO NOT REDO:** do not try the direct power page before App info on the family; do not put the generic battery page in front of App info.
+- **Verified:** `npm test` 711 pass, 0 fail. **NOT verified** on a real phone.
+
 ## Background card: the OnePlus switch is now also read from the background app-ops (no version change, still 0.208.0)
 - **Changed:** `native-android/LiquidNative.java` (`isBackgroundAllowed` only), `tests/permission-cards-every-open-v208.test.mjs` (the `allowed` assertion now includes `!appOpBlocked`, plus one new test), `tests/java-probe.py` and `tests/java-probe-update.py` (stubs `android.app.AppOpsManager`, `android.os.Process`).
 - **Why:** owner: the card must show on every open whenever "Allow background activity" is OFF. Android has no direct API for the OnePlus switch; the two signals used so far (battery-optimization exemption, `isBackgroundRestricted`) might both say "allowed" while the switch is off. Added a third signal: `AppOpsManager.checkOpNoThrow` for `android:run_in_background` and `android:run_any_in_background` on the app's own uid (mode 1 ignored / 2 errored = OFF). A phone with no such app-op, or that does not answer, counts as not blocked. Result now also carries `appOpBlocked`; `allowed = ignoring && !restricted && !appOpBlocked`.

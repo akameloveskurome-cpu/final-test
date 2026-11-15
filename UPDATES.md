@@ -6,6 +6,9 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+## Allow on OnePlus, OPPO and Realme opens Battery usage directly
+- **Changed:** on **OnePlus, OPPO and Realme**, tapping **Allow** now opens **Liquid Dark's App info** first, the same path you take by hand: **App info > Battery usage > Power consumption controls**. A short message says: tap **Battery usage**, then switch on **Allow background activity**. The power page is opened directly only if App info cannot open. Other brands are unchanged.
+
 ## The background card also notices OnePlus's own "Allow background activity" switch
 - **Changed:** the "Keep the music playing" card now also checks the background settings that OnePlus, OPPO and Realme phones use for their own **Allow background activity** switch, so it comes back every time you open the app while that switch is off.
 

@@ -1,5 +1,5 @@
 // "Allow" on the Keep-the-music-playing card opens the app's own "Power consumption controls" page (Allow foreground / background activity, Allow auto launch, Force stop).
-// OnePlus / OPPO / Realme (one ColorOS family, one page): tried first. Other brands: their own pages first, the same run-time search only as a fallback.
+// OnePlus / OPPO / Realme (one ColorOS family): the Battery usage page first; this app's App info (Battery usage one tap away) only if the phone protects that page.
 // Java is checked on the source text (no Android here); the routing was also run against stub Android classes in the AI sandbox.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -15,7 +15,7 @@ test('oplusFamily() is OnePlus, OPPO and Realme, nothing else', () => {
   assert.match(open, /if \(oplusFamily\(\)\) \{[^\n]*\n\s*String page = openOplusAppPage\(pkg\);/);
 });
 
-test('ColorOS family: direct power page, then THIS app\'s App info (not the generic battery page); other brands keep their own order', () => {
+test('ColorOS family: the Battery usage page first, THIS app\'s App info as fallback (not the generic battery page); other brands keep their own order', () => {
   const fam = open.slice(open.indexOf('if (oplusFamily()) {   // OnePlus'), open.indexOf('if (via.isEmpty()) {'));
   assert.ok(fam.indexOf('openOplusAppPage(pkg)') > -1 && fam.indexOf('openOplusAppPage(pkg)') < fam.indexOf('ACTION_APPLICATION_DETAILS_SETTINGS'), 'family: power page < App info');
   assert.doesNotMatch(fam, /VIEW_ADVANCED_POWER_USAGE_DETAIL/, 'the generic page is not tried before App info on the family');
