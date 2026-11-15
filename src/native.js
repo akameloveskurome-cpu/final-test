@@ -309,6 +309,7 @@ export const Native = {
   installDownloadedUpdate: () => (N ? N.installDownloadedUpdate() : Promise.reject('Android only')),   // v120: hand the downloaded file to Android's installer
   openBackgroundSettings: () => (N ? N.openBackgroundSettings() : Promise.resolve({})),
   batteryAssistStatus: () => (N ? N.batteryAssistStatus() : Promise.resolve({ enabled: true })),   // v210: battery helper (Accessibility) on?
+  openAccessibilityList: () => (N ? N.openAccessibilityList() : Promise.resolve({})),   // v211: Android's Accessibility list (Downloaded apps)
   openAccessibilitySettings: () => (N ? N.openAccessibilitySettings() : Promise.resolve({})),   // v146: Android Battery usage > Allow background activity
   isBackgroundAllowed: () => (N ? N.isBackgroundAllowed() : Promise.resolve({ allowed: true })),
   canInstallUpdates: () => (N ? N.canInstallUpdates() : Promise.resolve({ allowed: true })),   // v120: has the person allowed installs from this app?

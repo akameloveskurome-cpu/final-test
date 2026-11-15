@@ -1996,6 +1996,13 @@ public class LiquidNative extends Plugin {
   }
 
   @PluginMethod
+  public void openAccessibilityList(PluginCall call) {
+    // v211: Android's own Accessibility list (Downloaded apps > Liquid Dark battery helper). Used for steps 1 and 3 of the accessibility cards.
+    boolean ok = tryStart(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
+    JSObject o = new JSObject(); o.put("ok", ok); call.resolve(o);
+  }
+
+  @PluginMethod
   public void openAccessibilitySettings(PluginCall call) {
     // v210b: Android 13+ blocks Accessibility for downloaded apps until "Allow restricted settings" is tapped in THIS app's App info (three-dot menu, top right). So this opens App info.
     boolean ok = tryStart(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getContext().getPackageName())));

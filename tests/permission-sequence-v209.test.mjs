@@ -12,7 +12,7 @@ test('background card counts 10 s from the moment the notification card goes awa
 });
 test('background card waits while the notification card is still due, and for the Android prompt', () => {
   assert.ok(B.includes('notifGate() && Date.now() - launchAt < NOTIF_WAIT_CAP'));
-  assert.ok(M.includes('setBgAllowGate(() => permOff && !permShownOpen);') && M.includes('permOff = !granted;'));
+  assert.ok(M.includes('setBgAllowGate(() => (permOff && !permShownOpen) || assistPending());') && M.includes('permOff = !granted;'));
   assert.ok(M.includes('bgAllowHold(notifAllow())'));
 });
 test('background settings: brand pages for Oppo / Realme / OnePlus, Vivo, Samsung, Huawei, Xiaomi are tried before the generic fallbacks', () => {

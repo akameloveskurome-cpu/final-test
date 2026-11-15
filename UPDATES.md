@@ -7,6 +7,9 @@
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
 
+## Permission cards in a clearer order: notifications, Accessibility, restricted settings, Accessibility again, background
+Notifications come first, then an Accessibility card, then (when you come back) a card that shows how to Allow restricted settings, then the Accessibility card again so the switch works, and last the background card. Each one appears about 10 seconds after the one before.
+
 ## The background colour now matches your Canvas, GIFs and custom pictures
 - **Fixed:** when a Canvas (video or GIF) is on, the colour glowing behind Now Playing and Lyrics now comes from the Canvas itself, not from the album cover. A blue GIF over an orange cover now gives a blue background.
 - **Fixed:** the same for a GIF or picture you set for a song or a whole album: the colour is read from what is shown (a GIF is read over its whole animation, not only its first frame). Order: Canvas, then the song's own picture or GIF, then the album's picture or GIF, then the original cover.

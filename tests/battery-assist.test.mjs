@@ -33,26 +33,37 @@ test('the manifest registers the service with the Accessibility permission (idem
   assert.match(sh, /@xml\/lf_battery_assist/);
 });
 
-test('the card: Allow opens Accessibility settings, Not now closes it, and it is shown once per open', () => {
+test('v211 cards: Accessibility, then Allow restricted settings (App info), then Accessibility again; Not now stops this open', () => {
   const a = rd('src/assist.js');
+  assert.match(a, /openAccessibilityList/);
   assert.match(a, /openAccessibilitySettings/);
   assert.match(a, /Allow restricted settings/);
   assert.match(a, /three dots/);
   assert.match(a, /Downloaded apps/);
   assert.match(a, /Liquid Dark battery helper/);
   assert.match(a, /Not now/);
-  assert.match(a, /shownThisOpen/);
-  assert.ok(existsSync(new URL('../src/assist.js', import.meta.url)));
+  assert.equal((a.match(/go: 'Open Accessibility'/g) || []).length, 2, 'Accessibility card appears twice');
+  assert.ok(a.indexOf("go: 'Open Accessibility'") < a.indexOf("go: 'Open App info'") && a.indexOf("go: 'Open App info'") < a.lastIndexOf("go: 'Open Accessibility'"));
+  assert.match(a, /n === 1 \? Native\.openAccessibilitySettings\(\) : Native\.openAccessibilityList\(\)/);
+  assert.match(a, /WAIT_MS = 10000/);
+  assert.match(a, /ASSIST_PICS/);
+  const pics = rd('src/assistpics.js');
+  for (const k of ['a1', 'a2', 'a3', 'a4', 'a5']) assert.match(pics, new RegExp(k + ": 'data:image/jpeg;base64,"), 'tutorial picture ' + k);
+  assert.match(a, /Restricted setting/);
+  assert.match(a, /overflow-y:auto/, 'card scrolls on small phones');
+  const j = rd('native-android/LiquidNative.java');
+  assert.match(j, /public void openAccessibilityList/);
+  assert.match(j, /ACTION_ACCESSIBILITY_SETTINGS/);
+  assert.match(rd('src/native.js'), /openAccessibilityList/);
 });
 
-test('popup order: All files access -> accessibility card -> notification card -> background card', () => {
+test('v211 popup order: All files access -> notification card -> accessibility cards -> background card', () => {
   const m = rd('src/main.js');
-  const files = m.indexOf('allFilesDone = true');
-  const gate = m.indexOf('if (!allFilesDone');
-  assert.ok(files > -1 && gate > -1, 'all-files gate exists');
-  const acc = m.indexOf('await maybeShowAssist()');
-  const notif = m.indexOf("localStorage.getItem('lf.notifAsked')");
-  assert.ok(acc > -1 && notif > -1 && acc < notif, 'accessibility check runs before the notification check');
-  assert.ok(gate < acc, 'the all-files gate is checked before the accessibility card');
-  assert.match(rd('src/bgallow.js'), /getElementById\('lf-assist'\)/);
+  assert.ok(m.indexOf('allFilesDone = true') > -1 && m.indexOf('if (!allFilesDone') > -1, 'all-files gate exists');
+  assert.doesNotMatch(m, /await maybeShowAssist\(\)/, 'accessibility no longer runs before the notification card');
+  assert.match(m, /setAssistGate\(\(\) => allFilesDone && notifChecked && !\(permOff && !permShownOpen\)/);
+  assert.match(m, /setBgAllowGate\(\(\) => \(permOff && !permShownOpen\) \|\| assistPending\(\)\)/);
+  const b = rd('src/bgallow.js');
+  assert.match(b, /getElementById\('lf-assist'\)/);
+  assert.match(b, /assistPending/);
 });

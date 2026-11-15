@@ -8,6 +8,13 @@
 
 
 
+## Popup order v211: notifications, then Accessibility -> Allow restricted settings -> Accessibility again, then background (no version change, still 0.208.0)
+- **Order (owner's rule), 10 s between each:** All files access -> Notifications card -> Accessibility card (opens Accessibility list, Downloaded apps; switch is greyed out) -> back in app: "Allow restricted settings" card (opens App info, three dots) -> back in app: Accessibility card again (switch now works) -> Background activity card (opens Battery usage directly).
+- **Changed:** `src/assist.js` (rewritten: 3-stage sequence with its own 1 s poller, gate, 10 s gaps; Not now stops it for this open), `src/main.js` (assist no longer called from `startPopup`; `notifChecked`, `setAssistGate`, `startAssist`, background gate also waits for `assistPending()`), `src/bgallow.js` (waits while the accessibility sequence is pending), `src/native.js` + `native-android/LiquidNative.java` (new `openAccessibilityList` = ACTION_ACCESSIBILITY_SETTINGS; `openAccessibilitySettings` still opens App info), `tests/battery-assist.test.mjs`.
+- **DO NOT REDO:** do not put the accessibility cards before the notification card; do not merge the two Accessibility cards; step 2 must open App info, steps 1 and 3 the Accessibility list.
+- **Tutorial pictures:** `src/assistpics.js` holds 5 cropped screenshots (red tap-here marks) as data URIs: Accessibility > Downloaded apps > Liquid Dark battery helper > "Restricted setting" pop-up (OK), then App info > three dots > Allow restricted settings. Card 1 must make the person TAP the greyed-out helper: Android only unlocks "Allow restricted settings" after that tap.
+- **NOT verified** on a phone.
+
 ## Workflow cross-check against the code; repo hygiene files (no version change, still 0.208.0)
 - **What:** `.github/workflows/android.yml` was checked line by line against `src/update.js`, `scripts/app-fingerprint.py`, `scripts/install-native.sh`, `scripts/apply-app-logo.py`, `src/*pic.js`, `src/applogo.js` and the Java updater. Everything agreed, so the workflow logic is UNCHANGED (only a comment was added). Added `.gitattributes` (it was documented but missing from the zip; without it in the zip, the unpack step deletes the repo's copy on every zip upload). `.gitignore` now also lists `*.apk` and `.env` (documented earlier but absent). `docs/HANDOFF.md` no longer says the test job runs on Node 22.
 - **Files:** `.github/workflows/android.yml` (comment only), `.gitattributes` (new), `.gitignore`, `docs/HANDOFF.md`, `HANDOFF_STATUS.md`.

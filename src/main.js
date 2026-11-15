@@ -41,7 +41,7 @@ import { fetchPopupPic, peekManifest, popFit, popupUrl, POPUP_POLL_MS } from './
 import { fetchUpdatePic, UPD_PIC_MIN_MS } from './updpic.js';
 import { fetchCreditPic, CREDIT_POLL_MS, creditPicFailed } from './creditpic.js';
 import { fetchBannerPic, BANNER_POLL_MS, bannerPicFailed } from './statbanpic.js';
-import { maybeShowAssist, setAssistDone } from './assist.js';
+import { startAssist, setAssistGate, setAssistDone, assistPending } from './assist.js';
 import { startBgAllow, bgAllowClose, bgAllowCheck, bgAllowHold, bgAllowDemo, setBgAllowGate } from './bgallow.js';
 import { fetchSplashPic, splashLoad, splashSave, splashClear, SPLASH_POLL_MS, SPLASH_MIN_MS, SPLASH_CACHE_KEY } from './splashpic.js';
 // v134: the splash picture (splash-pic/). v208+: shown inside an 80% x 80% box (80vw x 80vh) on a black screen, object-fit:contain: scaled to the uploaded picture's shape, never cropped, never stretched, centered. Last picture kept on the phone so it shows at once next launch.
@@ -1261,7 +1261,7 @@ async function runScan(quiet, forceArt = false) {   // one scan at a time (Java 
   finally { scanning = false; lastCheck = Date.now(); }
 }
 let allAsked = false;
-// v210d: order of the permission popups: All files access (system screen) -> battery-helper card -> notifications card -> background card.
+// v211: order of the permission popups: All files access -> notifications card -> Accessibility card -> Allow restricted settings card -> Accessibility card again -> background card (10 s apart).
 let allFilesDone = false; const assistLaunchAt = Date.now();
 async function askAllFiles() {   // v106: opens Android's "All files access" screen when it is not allowed yet; after it is allowed, rescan so .lrc files from every folder are matched
   if (allAsked || !Native.isNative) return; allAsked = true;
@@ -1666,7 +1666,8 @@ function popRetry() { if (popTries >= 44) return; const delay = popTries++ < 24 
 /* v208: "Allow notifications" card: while notifications are OFF it is shown every time the app is opened (cold start, or coming back after the app was away 10 s or more) until the person allows them.
    permShownOpen = already shown during this open; permTrip = the person is on the Android prompt / settings page (coming back from there is not a new open). Later / Back only hide it until the next open. */
 let permShownOpen = false, permTrip = false, permHiddenAt = 0, permOff = false;
-setBgAllowGate(() => permOff && !permShownOpen);   // v209: the background-activity card waits for the notification card (shown first), then 10 s more
+let notifChecked = false;
+setBgAllowGate(() => (permOff && !permShownOpen) || assistPending());   // v209: the background-activity card waits for the notification card (shown first), then 10 s more
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { permHiddenAt = Date.now(); return; }
   if (permTrip) { permTrip = false; return; }   // back from the Android prompt / settings: same open
@@ -1684,11 +1685,10 @@ async function startPopup() {
     if (updPending || updBusy) { popWaiting = true; return; }
     if (document.getElementById('lf-bgallow')) { setTimeout(() => startPopup().catch(() => {}), 1500); return; }
     if (!allFilesDone && Date.now() - assistLaunchAt < 60000) { setTimeout(() => startPopup().catch(() => {}), 1500); return; }   // v210d: All files access comes first
-    if (await maybeShowAssist()) return;   // v210: battery-helper card first; the notification card and the background card come after it   // v208: never on top of the background-activity card
     let granted = true, asked = false;
     try { granted = !!(await Native.notificationStatus()).granted; } catch {}
     if (updPending || updBusy) { popWaiting = true; return; }
-    permOff = !granted;   // v209: tells the background card whether the notification card is still due
+    permOff = !granted; notifChecked = true;   // v211: the accessibility cards wait for the notification step   // v209: tells the background card whether the notification card is still due
     try { asked = !!localStorage.getItem('lf.notifAsked'); } catch {}
     // v129: decide from the tiny manifest FIRST; the picture is downloaded only when it is new to this person, and never while another sheet blocks the popup.
     const man = await peekManifest();
@@ -3067,7 +3067,7 @@ if (Native.isNative) {
   Native.getSleepTimer().then(renderNP).catch(() => {});   // T22 timer state lives in the Android side
   loadLib(false);
 }
-updGateRestorePromise = updGateRestore().catch(() => {}); startAppLogoWatcher(); startPopup().catch(() => {}); creditPicCheck().catch(() => {}); splashCheck().catch(() => {}); setInterval(() => { splashCheck().catch(() => {}); }, SPLASH_POLL_MS); setInterval(() => { creditPicCheck().catch(() => {}); }, CREDIT_POLL_MS); setAssistDone(() => setTimeout(() => startPopup().catch(() => {}), 400)); startBgAllow(); banCheck(); setInterval(() => { banCheck().catch(() => {}); }, BANNER_POLL_MS); startUpdateCheck().catch(() => {}); setInterval(() => { if (!document.hidden) startUpdateCheck().catch(() => {}); }, UPDATE_POLL_MS);
+updGateRestorePromise = updGateRestore().catch(() => {}); startAppLogoWatcher(); startPopup().catch(() => {}); creditPicCheck().catch(() => {}); splashCheck().catch(() => {}); setInterval(() => { splashCheck().catch(() => {}); }, SPLASH_POLL_MS); setInterval(() => { creditPicCheck().catch(() => {}); }, CREDIT_POLL_MS); setAssistDone(() => setTimeout(() => startPopup().catch(() => {}), 400)); setAssistGate(() => allFilesDone && notifChecked && !(permOff && !permShownOpen) && !document.querySelector('#sheet .popcard')); startAssist(); startBgAllow(); banCheck(); setInterval(() => { banCheck().catch(() => {}); }, BANNER_POLL_MS); startUpdateCheck().catch(() => {}); setInterval(() => { if (!document.hidden) startUpdateCheck().catch(() => {}); }, UPDATE_POLL_MS);
 // T4c step 2: Android Back button = close sheet > close Now Playing > go back one screen > minimise (never exits)
 // T18: coming back to the app = maybe check for new music (autoCheck itself limits this to once per 10 minutes)
 // v90: coming back to the app also re-reads the sleep timer (it may have fired while the app was away)

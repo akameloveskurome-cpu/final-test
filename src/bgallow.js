@@ -1,10 +1,13 @@
 // v146: "Allow background activity" popup. A picture / GIF from background-allow-gif-pic/ (polled every second, no rebuild) opens a full-screen card whose button
 // takes the person to Android's Battery usage > Allow background activity page. Shown ONCE per upload stamp (a new upload shows it again, even if the person already allowed it).
+// v211: order is notification -> accessibility (3 cards) -> this card.
 // v209: sequence(): notification card first, then the background card 10 s after the notification card is gone (never together).
 // v208: while Android's "Allow background activity" is OFF the card is shown every time the app is opened (cold start, or back after 10 s or more away) until the person allows it,
 // with the picture from background-allow-gif-pic/ (a plain card when none is uploaded). When it is already allowed, only a NEW upload shows it, once (as before).
 import { fetchBgAllowPic, BGALLOW_POLL_MS } from './bgallowpic.js';
 import { Native } from './native.js';
+import { assistPending } from './assist.js';
+const assistWaiting = () => { try { return assistPending(); } catch { return false; } };   // v211: the accessibility cards come before this card and may take the person a while
 const SEEN = 'lf.bgAllowSeen', ASKED = 'lf.bgAllowAsked';
 const memFlags = {};   // BUG-153: session copy, used when localStorage is blocked (no re-showing every second)
 const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch { return memFlags[k] || ''; } };
@@ -57,7 +60,8 @@ function sequence() {
   const b = blocked();
   if (b) wasBlocked = true;
   else if (wasBlocked) { wasBlocked = false; readyAt = Math.max(readyAt, Date.now() + WAIT_MS); }   // the card just went away: 10 s of quiet first
-  if (!b && notifGate() && Date.now() - launchAt < NOTIF_WAIT_CAP) readyAt = Math.max(readyAt, Date.now() + WAIT_MS);   // notification card still coming: keep waiting
+  if (!b && notifGate() && Date.now() - launchAt < NOTIF_WAIT_CAP) readyAt = Math.max(readyAt, Date.now() + WAIT_MS);
+  if (!b && assistWaiting()) readyAt = Math.max(readyAt, Date.now() + WAIT_MS);   // v211: the accessibility cards come first, however long they take   // notification card still coming: keep waiting
 }
 async function maybeShow() {
   sequence();
