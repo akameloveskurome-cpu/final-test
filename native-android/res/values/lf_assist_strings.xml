@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lf_assist_desc">Liquid Dark uses this only to open Battery usage for you after you tap Allow on the background card. It does not read other apps or change the background switch.</string>
+</resources>

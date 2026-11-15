@@ -22,7 +22,8 @@ test('Allow on the background card arms the helper for 30 s, then the existing p
 test('the accessibility config is the minimum: window events and content only, described in plain words', () => {
   const x = rd('native-android/res/xml/lf_battery_assist.xml');
   assert.match(x, /canRetrieveWindowContent="true"/);
-  assert.match(x, /android:description="Liquid Dark uses this only to open Battery usage/);
+  assert.match(x, /android:description="@string\/lf_assist_desc"/);
+  assert.match(rd('native-android/res/values/lf_assist_strings.xml'), /name="lf_assist_desc">Liquid Dark uses this only to open Battery usage/);
 });
 
 test('the manifest registers the service with the Accessibility permission (idempotent install step)', () => {
