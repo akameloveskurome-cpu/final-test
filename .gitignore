@@ -12,6 +12,8 @@ node_modules/
 dist/
 android/
 tests/out/
+*.apk
+.env
 
 # OS and editor junk
 .DS_Store

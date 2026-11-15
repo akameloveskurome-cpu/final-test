@@ -96,7 +96,7 @@ Home is the first thing you see, so I made it yours and tried to keep it out of 
 - **Lyrics animation.** Choose how the lines glide and fade, how big the playing line grows, how bright the others are, and how much the far lines blur. Presets are there if you want a starting point.
 - **Sleep timer** for 15, 30, 45 or 60 minutes, until the end of the current song, or a custom time (type minutes like `90`, or hours and minutes like `1:30`, from 1 minute to 24 hours). It runs inside the playback service, so it works with the screen off. The volume fades out over the last 10 seconds, a countdown appears, and you can cancel it any time. (Goodnight. Sleep well. I know what lying awake feels like, so I made sure this one can end on its own. I'll keep the stars on for you.)
 - **A-B loop** with draggable handles on the scrub bar.
-- **Canvas.** Attach your own GIF, MP4 or image to a song or a whole album, and it loops on Now Playing.
+- **Canvas.** Attach your own GIF, MP4 or image to a song or a whole album, and it loops on Now Playing. The background colour follows it (also for custom GIFs and pictures).
 - **Up Next.** Drag to reorder, remove, clear, or save the queue as a playlist. **Play Next** and **Add to Queue** are available from any song menu.
 - **Autoplay.** When the queue runs low, similar songs (same artist or genre) are added from your library. **Smart shuffle** avoids playing the same artist or album back to back.
 - **Song menu.** Favorite, play next, add to queue, add to playlist, go to album, go to artist, Canvas and Song Info.

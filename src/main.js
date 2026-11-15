@@ -2354,39 +2354,88 @@ function palFrom(h, s, neutral, avgL, minS = .78, mult = 1.25) {
   const dir = h > 40 && h < 110 ? -1 : 1;   // yellow / lime: the second colour goes toward orange, not toward a muddy olive
   return { a: vivid(h, s, .5, .24), b: vivid(h + 26 * dir, Math.min(1, s), .5, .22), c: vivid(h - 22, Math.min(1, s), .34, .1) };
 }
-function coverTint(a, t) {
-  const so = soHas(t), sp = !so && t && spUrls.get(t.id), src = so ? a.cover : (sp || alpUrls.get(a.id) || a.cover), ck = so ? t.id + '|o' : sp ? t.id + '|s' : a.id + '|' + (alpUrls.get(a.id) ? 'c' : '');   // v165: the song's own picture first   // v152: the colour comes from the picture you set, when there is one
-  if (covTint.has(ck)) return Promise.resolve(covTint.get(ck));
-  const gs = String(a.g0 || a.g), vr = gs.match(/var\((--[\w-]+)\)/), hx = (gs.match(/#[0-9a-f]{6}/gi) || [vr && getComputedStyle(document.documentElement).getPropertyValue(vr[1]).trim().match(/^#[0-9a-f]{6}$/i)?.[0] || '#c8102e'])[0], n = parseInt(hx.slice(1), 16), fh = rgb2hsl(n >> 16, (n >> 8) & 255, n & 255), fb = palFrom(fh[0], fh[1], fh[1] < .12, fh[2]);
+/* v208+: the colour field follows what the screen SHOWS. Order: the Canvas (when it is on and playable) > the song's own picture > the album's picture > the original cover.
+   An animated source (a Canvas video, a Canvas or custom GIF / animated WebP) is read over several frames and averaged, never from one frame, so the colour behind the picture matches the moving picture. */
+const covTintPend = new Map();   // a colour read still running (one per key; a second caller waits for the same one). The 3 places that drop a changed picture's colour only touch ready colours: a read that finishes after its source changed is not kept (see done in coverTint)
+function tintSource(a, t) {
+  const so = soHas(t), sp = !so && t && spUrls.get(t.id), ap = !so && !sp && alpUrls.get(a.id), ck = so ? t.id + '|o' : sp ? t.id + '|s' : a.id + '|' + (ap ? 'c' : '');   // ck = the person's lyrics-colour key: stays the same whether or not a Canvas is showing
+  const still = so ? a.cover : (sp || ap || a.cover), custom = !!(sp || ap);   // v165: the song's own picture first   // v152: the colour comes from the picture you set, when there is one
+  let cp = ''; try { cp = t && canvasOn ? cvPath(t) : ''; if (cp && cvBad.has(cp)) cp = ''; } catch {}
+  const url = cp ? Native.fileUrl(cp) : '';
+  if (url) return { ck, key: ck + '~cv:' + cp, src: url, vid: isVideo(cp), media: true, still, stillCustom: custom };
+  return { ck, key: ck, src: still, custom };
+}
+const tintCv = { c: null };
+function tintGrab(el) { const c = tintCv.c || (tintCv.c = document.createElement('canvas')); c.width = c.height = 32; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(el, 0, 0, 32, 32); return x.getImageData(0, 0, 32, 32).data; }
+function tintJoin(list) { const o = new Uint8ClampedArray(list.length * 4096); list.forEach((d, i) => o.set(d, i * 4096)); return o; }
+async function tintDecodeFrames(src) {   // GIF / animated WebP / APNG: up to 8 frames spread over the whole animation (needs the WebView's ImageDecoder; null = not possible, the first frame is used)
+  try {
+    if (typeof ImageDecoder === 'undefined') return null;
+    const buf = await (await fetch(src)).arrayBuffer(), u = new Uint8Array(buf);
+    const type = u[0] === 0x47 && u[1] === 0x49 && u[2] === 0x46 ? 'image/gif' : u[0] === 0x52 && u[1] === 0x49 && u[2] === 0x46 && u[3] === 0x46 && u[8] === 0x57 ? 'image/webp' : u[0] === 0x89 && u[1] === 0x50 ? 'image/png' : '';
+    if (!type || !(await ImageDecoder.isTypeSupported(type))) return null;
+    const dec = new ImageDecoder({ data: buf, type }); await dec.tracks.ready;
+    const n = dec.tracks.selectedTrack.frameCount; if (!(n > 1)) { dec.close(); return null; }
+    const pick = Math.min(n, 8), out = [];
+    for (let i = 0; i < pick; i++) { const { image } = await dec.decode({ frameIndex: Math.floor(i * n / pick) }); out.push(tintGrab(image)); image.close(); }
+    dec.close(); return out;
+  } catch { return null; }
+}
+async function tintImagePx(src, multi) {
+  if (!src) return null;
+  if (multi) { const f = await tintDecodeFrames(src); if (f && f.length) return tintJoin(f); }
+  return new Promise(res => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => { try { res(tintGrab(im)); } catch { res(null); } }; im.onerror = () => res(null); im.src = src; });
+}
+function tintVideoPx(src) {   // a Canvas video: 7 frames spread over its length (a hidden copy, the one on screen is not touched)
   return new Promise(res => {
-    const done = c => { c.ck = ck; if (!c.sw) c.sw = []; covTint.set(ck, c); res(c); };
-    if (!src) return done(fb);
-    const im = new Image(); im.crossOrigin = 'anonymous';
-    im.onload = () => { try {
-      const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, 32, 32);
-      const d = x.getImageData(0, 0, 32, 32).data, BN = 24, bw = new Array(BN).fill(0), bs = new Array(BN).fill(0), bx = new Array(BN).fill(0), by = new Array(BN).fill(0); let tot = 0, aL = 0, cnt = 0, dk = 0, sr = 0, sg = 0, sb = 0; const er = new Array(BN).fill(0), eg = new Array(BN).fill(0), eb = new Array(BN).fill(0), en = new Array(BN).fill(0); const SB = 30, qw = new Array(SB).fill(0), qs = new Array(SB).fill(0), qx = new Array(SB).fill(0), qy = new Array(SB).fill(0);
-      for (let i = 0; i < d.length; i += 4) { const [h, sa, l] = rgb2hsl(d[i], d[i + 1], d[i + 2]); aL += l; cnt++; sr += d[i]; sg += d[i + 1]; sb += d[i + 2]; if (l < .12) dk++;
-        if (sa >= .15 && l >= .1 && l <= .93) { const w2 = (.35 + sa) * (1 - Math.abs(l - .5)), q = Math.floor(h / 12) % SB; qw[q] += w2; qs[q] += w2 * sa; qx[q] += w2 * Math.cos(h * Math.PI / 180); qy[q] += w2 * Math.sin(h * Math.PI / 180); }   // the picker sees quieter colours too (brown skin, a dull green)
-        if (sa < .2 || l < .1 || l > .93) continue;   // grey, near black and near white say nothing about the colour
-        const w = sa * sa * (1 - Math.abs(l - .5)), k = Math.floor(h / 15) % BN; er[k] += d[i]; eg[k] += d[i + 1]; eb[k] += d[i + 2]; en[k]++; bw[k] += w; bs[k] += w * sa; bx[k] += w * Math.cos(h * Math.PI / 180); by[k] += w * Math.sin(h * Math.PI / 180); tot += w; }
-      const hueOf = k => (Math.atan2(by[k], bx[k]) * 180 / Math.PI + 360) % 360;
-      const sm = k => bw[k] + .6 * (bw[(k + 1) % BN] + bw[(k + BN - 1) % BN]);   // a hue and its neighbours count together
-      let k1 = 0; for (let k = 1; k < BN; k++) if (sm(k) > sm(k1)) k1 = k;
-      if (!tot || sm(k1) < 1.2 || tot / cnt < .03) { const [ah, asat] = rgb2hsl(sr / cnt, sg / cnt, sb / cnt); return done(exactPal(rgbHex(sr / cnt, sg / cnt, sb / cnt))); }   // a grey / black cover: keeps the cover's own hue (Kiss Land = deep green, not a cold blue-grey); a truly colourless cover still gets the neutral graphite
-      const h1 = hueOf(k1), s1 = bs[k1] / (bw[k1] || 1);
-      let k2 = -1; for (let k = 0; k < BN; k++) { const dist = Math.min((k - k1 + BN) % BN, (k1 - k + BN) % BN); if (dist >= 3 && bw[k] > .22 * bw[k1] && (k2 < 0 || bw[k] > bw[k2])) k2 = k; }
-      const avgOf = k => { let r = 0, g = 0, b = 0, n = 0; for (const j of [k, (k + 1) % BN, (k + BN - 1) % BN]) { r += er[j]; g += eg[j]; b += eb[j]; n += en[j]; } return n ? rgbHex(r / n, g / n, b / n) : null; };
-      const p = exactPal(avgOf(k1) || palFrom(h1, s1, false, 0).a);
-      if (k2 >= 0) { const x2 = avgOf(k2); if (x2) p.b = x2; }   // the cover's own second colour
-      p.sw = [];   // the colours of this cover the person can pick for the lyrics (strongest first, each a different hue; black when much of the picture is black)
-      const qsm = k => qw[k], qorder = qw.map((_, k) => k).sort((x, y) => qsm(y) - qsm(x)), qtop = qsm(qorder[0]) || 1;
-      for (const k of qorder) { if (p.sw.length >= 6 || qsm(k) < .1 * qtop || !qw[k]) break; if (p.sw.some(w => Math.min(Math.abs(w.k - k), SB - Math.abs(w.k - k)) < 2)) continue; p.sw.push({ k, h: Math.round((Math.atan2(qy[k], qx[k]) * 180 / Math.PI + 360) % 360), s: +(qs[k] / qw[k]).toFixed(2) }); }
-      if (dk / cnt > .1) p.sw.push({ n: 1 });
-      p.sw.forEach(w => { w.hex = w.n ? palFrom(225, 0, true, .2).a : palFrom(w.h, w.s, false, 0, .45, 1.15).a; });
-      done(p);
-    } catch { done(fb); } };
-    im.onerror = () => done(fb); im.src = src;
+    const v = document.createElement('video'), out = []; let fin = false, plan = [], k = 0, to = 0;
+    const end = () => { if (fin) return; fin = true; clearTimeout(to); try { v.pause(); v.removeAttribute('src'); v.load(); } catch {} res(out.length ? tintJoin(out) : null); };
+    const grab = () => { try { out.push(tintGrab(v)); return true; } catch { out.length = 0; end(); return false; } };   // a frame that cannot be read: give up, the picture's own colour is used instead
+    const step = () => { if (k >= plan.length) return end(); try { v.currentTime = plan[k++]; } catch { end(); } };
+    v.muted = true; v.defaultMuted = true; v.playsInline = true; v.preload = 'auto';
+    v.addEventListener('error', end);
+    v.addEventListener('loadeddata', () => { if (fin || plan.length) return; const dur = v.duration; if (!isFinite(dur) || dur < .4) { if (grab()) end(); return; } plan = [.03, .17, .31, .45, .59, .73, .87].map(f => f * dur); step(); });
+    v.addEventListener('seeked', () => { if (!fin && grab()) step(); });
+    to = setTimeout(end, 7000);
+    v.src = src;
   });
+}
+async function tintPixels(S) {
+  if (S.media) { const d = S.vid ? await tintVideoPx(S.src) : await tintImagePx(S.src, true); if (d) return d; return tintImagePx(S.still, S.stillCustom); }   // the Canvas cannot be read: fall back to the picture under it
+  return tintImagePx(S.src, S.custom);
+}
+function tintFromPixels(d) {
+  const BN = 24, bw = new Array(BN).fill(0), bs = new Array(BN).fill(0), bx = new Array(BN).fill(0), by = new Array(BN).fill(0); let tot = 0, aL = 0, cnt = 0, dk = 0, sr = 0, sg = 0, sb = 0; const er = new Array(BN).fill(0), eg = new Array(BN).fill(0), eb = new Array(BN).fill(0), en = new Array(BN).fill(0); const SB = 30, qw = new Array(SB).fill(0), qs = new Array(SB).fill(0), qx = new Array(SB).fill(0), qy = new Array(SB).fill(0);
+  for (let i = 0; i < d.length; i += 4) { const [h, sa, l] = rgb2hsl(d[i], d[i + 1], d[i + 2]); aL += l; cnt++; sr += d[i]; sg += d[i + 1]; sb += d[i + 2]; if (l < .12) dk++;
+    if (sa >= .15 && l >= .1 && l <= .93) { const w2 = (.35 + sa) * (1 - Math.abs(l - .5)), q = Math.floor(h / 12) % SB; qw[q] += w2; qs[q] += w2 * sa; qx[q] += w2 * Math.cos(h * Math.PI / 180); qy[q] += w2 * Math.sin(h * Math.PI / 180); }   // the picker sees quieter colours too (brown skin, a dull green)
+    if (sa < .2 || l < .1 || l > .93) continue;   // grey, near black and near white say nothing about the colour
+    const w = sa * sa * (1 - Math.abs(l - .5)), k = Math.floor(h / 15) % BN; er[k] += d[i]; eg[k] += d[i + 1]; eb[k] += d[i + 2]; en[k]++; bw[k] += w; bs[k] += w * sa; bx[k] += w * Math.cos(h * Math.PI / 180); by[k] += w * Math.sin(h * Math.PI / 180); tot += w; }
+  const hueOf = k => (Math.atan2(by[k], bx[k]) * 180 / Math.PI + 360) % 360;
+  const sm = k => bw[k] + .6 * (bw[(k + 1) % BN] + bw[(k + BN - 1) % BN]);   // a hue and its neighbours count together
+  let k1 = 0; for (let k = 1; k < BN; k++) if (sm(k) > sm(k1)) k1 = k;
+  if (!tot || sm(k1) < 1.2 * (d.length / 4096) || tot / cnt < .03) { return exactPal(rgbHex(sr / cnt, sg / cnt, sb / cnt)); }   // a grey / black cover: keeps the cover's own hue (Kiss Land = deep green, not a cold blue-grey); a truly colourless cover still gets the neutral graphite
+  const h1 = hueOf(k1), s1 = bs[k1] / (bw[k1] || 1);
+  let k2 = -1; for (let k = 0; k < BN; k++) { const dist = Math.min((k - k1 + BN) % BN, (k1 - k + BN) % BN); if (dist >= 3 && bw[k] > .22 * bw[k1] && (k2 < 0 || bw[k] > bw[k2])) k2 = k; }
+  const avgOf = k => { let r = 0, g = 0, b = 0, n = 0; for (const j of [k, (k + 1) % BN, (k + BN - 1) % BN]) { r += er[j]; g += eg[j]; b += eb[j]; n += en[j]; } return n ? rgbHex(r / n, g / n, b / n) : null; };
+  const p = exactPal(avgOf(k1) || palFrom(h1, s1, false, 0).a);
+  if (k2 >= 0) { const x2 = avgOf(k2); if (x2) p.b = x2; }   // the cover's own second colour
+  p.sw = [];   // the colours of this cover the person can pick for the lyrics (strongest first, each a different hue; black when much of the picture is black)
+  const qsm = k => qw[k], qorder = qw.map((_, k) => k).sort((x, y) => qsm(y) - qsm(x)), qtop = qsm(qorder[0]) || 1;
+  for (const k of qorder) { if (p.sw.length >= 6 || qsm(k) < .1 * qtop || !qw[k]) break; if (p.sw.some(w => Math.min(Math.abs(w.k - k), SB - Math.abs(w.k - k)) < 2)) continue; p.sw.push({ k, h: Math.round((Math.atan2(qy[k], qx[k]) * 180 / Math.PI + 360) % 360), s: +(qs[k] / qw[k]).toFixed(2) }); }
+  if (dk / cnt > .1) p.sw.push({ n: 1 });
+  p.sw.forEach(w => { w.hex = w.n ? palFrom(225, 0, true, .2).a : palFrom(w.h, w.s, false, 0, .45, 1.15).a; });
+  return p;
+}
+function coverTint(a, t) {
+  const S = tintSource(a, t), ck = S.ck, key = S.key;
+  if (covTint.has(key)) return Promise.resolve(covTint.get(key));
+  if (covTintPend.has(key)) return covTintPend.get(key);
+  const gs = String(a.g0 || a.g), vr = gs.match(/var\((--[\w-]+)\)/), hx = (gs.match(/#[0-9a-f]{6}/gi) || [vr && getComputedStyle(document.documentElement).getPropertyValue(vr[1]).trim().match(/^#[0-9a-f]{6}$/i)?.[0] || '#c8102e'])[0], n = parseInt(hx.slice(1), 16), fh = rgb2hsl(n >> 16, (n >> 8) & 255, n & 255), fb = palFrom(fh[0], fh[1], fh[1] < .12, fh[2]);
+  const pr = new Promise(res => {
+    const done = c => { c.ck = ck; if (!c.sw) c.sw = []; let same = true; try { const N = tintSource(a, t); same = N.key === key && N.src === S.src; } catch {} if (same) covTint.set(key, c); covTintPend.delete(key); res(c); };   // the picture / Canvas changed while this was being read: it answers its caller but is not kept
+    tintPixels(S).then(d => { let p = null; if (d) { try { p = tintFromPixels(d); } catch {} } done(p || fb); }, () => done(fb));
+  });
+  covTintPend.set(key, pr); return pr;
 }
 /* v148+: the person can pick which colour of the cover the lyrics / Now Playing background uses (Now Playing > ... > Lyrics colour). Kept per picture (same key as the colour cache), on this phone. No choice = Auto (what the app picks). */
 const lycMap = () => { try { return JSON.parse(localStorage.getItem('lf.lycol')) || {}; } catch { return {}; } };
@@ -2417,7 +2466,7 @@ async function lycolSheet() {
     <div class="lycrow"><div class="lycwheel" id="lycwheel" aria-label="Colour wheel: drag the circle to choose a colour"><i class="lycknob" id="lycknob"></i></div><div class="lycprev" id="lycprev" style="background:${cur}"></div></div>
     <div class="lycbright" id="lycbright" aria-label="Brightness"><i class="lycbk" id="lycbk"></i></div>
     <label class="lychexbox"><span>Hex code</span><em>#</em><input type="text" id="lychextxt" value="${cur.slice(1).toUpperCase()}" maxlength="7" placeholder="FFAA95" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Hex colour code, for example FFAA95"></label>
-    <div class="lycauto${custom ? '' : ' on'}" id="lycauto"><i style="background:${p.a}"></i><span><b>Auto</b> takes the colour from this song's album cover (or the picture you set for the song). Shown here: the colour Auto uses now.</span></div>
+    <div class="lycauto${custom ? '' : ' on'}" id="lycauto"><i style="background:${p.a}"></i><span><b>Auto</b> takes the colour from what this song shows: its Canvas when Canvas is on, else the picture or GIF you set for the song or album, else the album cover. Shown here: the colour Auto uses now.</span></div>
     <p class="lychint" id="lychint">${custom ? 'Your colour is used for this album\'s lyrics.' : 'Now: Auto, the colour comes from the album cover. Drag the circle to change it.'}</p>
     <div class="actions"><button data-act="lyc-pick" data-i="-1"${custom ? '' : ' disabled'}>Back to Auto (cover colour)</button><button data-act="sheet-close">Done</button></div>`);
   lycPaint();
@@ -2482,15 +2531,16 @@ function lyStyleSheet() {
   $('#sheet').innerHTML = sheetHtml(`<b>Background style</b><p>Changes the lyrics page. (Now Playing takes the cover colour only with Immersive album cover.)</p>${Object.entries(LYSTYLE).map(([v, t]) => `<button class="row" data-act="lystyleset" data-v="${v}"><span class="lbl" style="font-size:1.0625rem">${t}</span>${v === set.lyricStyle ? '<span class="cnt" style="color:var(--accent)">✓</span>' : ''}</button>`).join('')}<div class="actions"><button data-act="sheet-close">Close</button></div>`);
 }
 /* v95: Now Playing takes the cover colour too (Apple Music style): top = the cover's main colour, fading darker to the bottom */
+let npTintSeq = 0, lyTintSeq = 0;   // only the newest colour read may paint (a Canvas switched on / off while an older read was running)
 async function npApplyTint(t) {
-  const el = $('#np'); if (!el) return;
+  const el = $('#np'); if (!el) return; const my = ++npTintSeq;
   if (!set.npImmersive || !t) { clearTintVars(el, '--np-bg'); return; }   // Now Playing takes the cover colour ONLY in Immersive mode; otherwise it stays black with the red accent
-  const c = await coverPal(t); const cur = Native.current(); if ($('#np') && cur && cur.id === t.id) setTintVars($('#np'), c, '--np-bg');
+  const c = await coverPal(t); const cur = Native.current(); if (my === npTintSeq && $('#np') && cur && cur.id === t.id) setTintVars($('#np'), c, '--np-bg');
 }
 async function lyApplyTint(t) {
-  const el = $('#lyr'); if (!el) return;
+  const el = $('#lyr'); if (!el) return; const my = ++lyTintSeq;
   if (set.lyricStyle !== 'cover') { clearTintVars(el, '--lyr-bg'); return; }
-  const c = await coverPal(t); if ($('#lyr') && Native.current()?.id === t.id) setTintVars($('#lyr'), c, '--lyr-bg');
+  const c = await coverPal(t); if (my === lyTintSeq && $('#lyr') && Native.current()?.id === t.id) setTintVars($('#lyr'), c, '--lyr-bg');
 }
 async function lyricsLoad() {
   const my = ++lyrSeq, t = Native.current(), el = $('#lyr'); if (!t || !el) return;

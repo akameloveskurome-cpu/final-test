@@ -175,3 +175,6 @@ Every AI must treat the **You** items as locked. Anything marked Suggested can b
 
 ## Not in scope
 OGG and other formats beyond FLAC, MP3 and AAC / M4A. Streaming, accounts, cloud sync, Apple Music subscription features, "Automatically Send" diagnostics.
+
+## Background colour follows what is shown
+- Now Playing (Immersive) and Lyrics take their colour from what the screen shows: the Canvas when it is on, else the picture or GIF set for the song, else the one set for the album, else the original cover. Animated sources are read over several frames.

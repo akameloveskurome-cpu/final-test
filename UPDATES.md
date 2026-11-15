@@ -6,6 +6,12 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+
+## The background colour now matches your Canvas, GIFs and custom pictures
+- **Fixed:** when a Canvas (video or GIF) is on, the colour glowing behind Now Playing and Lyrics now comes from the Canvas itself, not from the album cover. A blue GIF over an orange cover now gives a blue background.
+- **Fixed:** the same for a GIF or picture you set for a song or a whole album: the colour is read from what is shown (a GIF is read over its whole animation, not only its first frame). Order: Canvas, then the song's own picture or GIF, then the album's picture or GIF, then the original cover.
+- **Unchanged:** a lyrics colour you picked yourself keeps working with or without Canvas. If a Canvas cannot be read, the picture under it is used.
+
 ## Helper card explains Downloaded apps; popup order
 - **Changed:** the battery-helper card now explains: App info → three dots → Allow restricted settings → Accessibility → Downloaded apps → Liquid Dark battery helper → On.
 - **Order:** All files access → battery-helper card → notifications card → background card (10 seconds after the card before it). Each one shows on every open until it is allowed.

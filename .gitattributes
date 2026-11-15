@@ -1,0 +1,13 @@
+# LF line endings for scripts and the workflow (a CRLF copy breaks bash and YAML parsing on the runner)
+*.sh text eol=lf
+*.yml text eol=lf
+*.py text eol=lf
+# pictures and keys are binary: never line-ending-converted (live pictures in the *-pic folders must stay byte-exact)
+*.png binary
+*.gif binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.bmp binary
+*.keystore binary
+*.jks binary

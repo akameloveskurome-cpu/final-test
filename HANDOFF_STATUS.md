@@ -7,6 +7,20 @@
 
 
 
+
+## Workflow cross-check against the code; repo hygiene files (no version change, still 0.208.0)
+- **What:** `.github/workflows/android.yml` was checked line by line against `src/update.js`, `scripts/app-fingerprint.py`, `scripts/install-native.sh`, `scripts/apply-app-logo.py`, `src/*pic.js`, `src/applogo.js` and the Java updater. Everything agreed, so the workflow logic is UNCHANGED (only a comment was added). Added `.gitattributes` (it was documented but missing from the zip; without it in the zip, the unpack step deletes the repo's copy on every zip upload). `.gitignore` now also lists `*.apk` and `.env` (documented earlier but absent). `docs/HANDOFF.md` no longer says the test job runs on Node 22.
+- **Files:** `.github/workflows/android.yml` (comment only), `.gitattributes` (new), `.gitignore`, `docs/HANDOFF.md`, `HANDOFF_STATUS.md`.
+- **DO NOT REDO:** do not change the workflow's Node versions (test job 24, build job 22) or the Playwright pin; `tests/workflow-test-job.test.mjs` checks them. A zip never replaces `.github/`, so the owner must paste `android.yml` into GitHub by hand. None of these files are in the app fingerprint, so no new APK is triggered.
+
+## Colour field follows the Canvas and custom GIF / picture (no version change, still 0.208.0)
+- **Problem:** the colour behind Now Playing / Lyrics was read from ONE static image (the cover, or the custom still picture). With a Canvas (video / GIF) on, the moving picture and the colour field could be different colours. A custom GIF was read from its first frame only.
+- **Changed:** `src/main.js`. `coverTint` now asks `tintSource(a, t)` what the screen shows: Canvas (on + playable) > song picture / GIF > album picture / GIF > original cover. Canvas video = 7 frames from a hidden `<video>` (`tintVideoPx`); GIF / animated WebP / APNG (Canvas or custom song / album picture) = up to 8 frames via `ImageDecoder` (`tintDecodeFrames`), else the first frame. Frames are joined and read by `tintFromPixels` (the old analysis, moved out unchanged, only the `sm(k1) < 1.2` threshold now scales with the frame count). If the Canvas cannot be read, the picture under it is used. `npApplyTint` / `lyApplyTint` only let the newest read paint (`npTintSeq` / `lyTintSeq`). Lyrics-colour sheet text now says Auto follows what the song shows.
+- **Keys:** `p.ck` (the key of the person's picked lyrics colour) is the SAME with or without Canvas, so a picked colour keeps working. Only the cache key (`key`) gets `~cv:<path>` while a Canvas shows. The 3 places that drop a changed picture's colour still use `covTint.keys()` with `startsWith(id + '|')` (tests extract them with a fake `covTint`): do not move them into a helper.
+- **Tests:** new `tests/tint-follows-canvas-v208.test.mjs`; `tests/lyrics-colour-hex.test.mjs` text checks updated to the new function names / sentence.
+- **DO NOT REDO:** do not go back to reading the colour from one static image while a Canvas shows; do not key the lyrics colour by Canvas path; do not read the on-screen `<video>` for colour (a hidden copy is used so playback is not touched).
+- **Verified:** `npm test` 728 pass, 0 fail, 0 skipped; `node --check` OK. **NOT verified** on a phone: real Canvas files, `ImageDecoder` in the phone's WebView (if missing, a GIF uses its first frame).
+
 ## CONFIRMED on the OPPO / OnePlus test phone: "Allow background activity" follows `ignoring` (no version change, still 0.208.0)
 - **Owner's adb log (logcat -s LiquidNative):** switch ON = `ignoring=true restricted=false appOpBlocked=false`; switch OFF (after the app was closed and reopened) = `ignoring=false restricted=false appOpBlocked=false`.
 - **So:** `PowerManager.isIgnoringBatteryOptimizations` is the signal that follows the switch. `isBackgroundAllowed` already returns `allowed = ignoring && !restricted && !appOpBlocked`, so `allowed` is false when the switch is off, and `src/bgallow.js` shows the popup on every open while it is off.
