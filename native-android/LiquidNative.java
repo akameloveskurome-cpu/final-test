@@ -1981,9 +1981,29 @@ public class LiquidNative extends Plugin {
   /** Shown when the phone will not open the Battery usage page directly. */
   private static final String HOW_TO_TURN_ON = "To turn it on: App info > Battery usage > switch ON Allow background activity.";
 
+  /** v210: set by Allow on the background card; BatteryAssistService taps Battery usage once while this is in the future. */
+  static volatile long batteryAssistArmedUntil = 0;
+
+  @PluginMethod
+  public void batteryAssistStatus(PluginCall call) {
+    boolean on = false;
+    try {
+      String s = android.provider.Settings.Secure.getString(getContext().getContentResolver(), android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+      on = s != null && s.contains(getContext().getPackageName() + "/" + getContext().getPackageName() + ".BatteryAssistService");
+    } catch (Throwable ignored) { }
+    JSObject o = new JSObject(); o.put("enabled", on); call.resolve(o);
+  }
+
+  @PluginMethod
+  public void openAccessibilitySettings(PluginCall call) {
+    boolean ok = tryStart(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
+    JSObject o = new JSObject(); o.put("ok", ok); call.resolve(o);
+  }
+
   @PluginMethod
   public void openBackgroundSettings(final PluginCall call) {
     // The package scan is slow, so everything runs on LIB_POOL (same reason as BUG-399 for the equalizer); startActivity with NEW_TASK works from any thread.
+    batteryAssistArmedUntil = System.currentTimeMillis() + 30000;   // v210: the helper may tap Battery usage (only if the person turned it on)
     LIB_POOL.execute(new Runnable() { @Override public void run() {
       String pkg = getContext().getPackageName();
       Uri u = Uri.parse("package:" + pkg);

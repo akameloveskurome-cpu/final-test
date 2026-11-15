@@ -41,6 +41,7 @@ import { fetchPopupPic, peekManifest, popFit, popupUrl, POPUP_POLL_MS } from './
 import { fetchUpdatePic, UPD_PIC_MIN_MS } from './updpic.js';
 import { fetchCreditPic, CREDIT_POLL_MS, creditPicFailed } from './creditpic.js';
 import { fetchBannerPic, BANNER_POLL_MS, bannerPicFailed } from './statbanpic.js';
+import { maybeShowAssist, setAssistDone } from './assist.js';
 import { startBgAllow, bgAllowClose, bgAllowCheck, bgAllowHold, bgAllowDemo, setBgAllowGate } from './bgallow.js';
 import { fetchSplashPic, splashLoad, splashSave, splashClear, SPLASH_POLL_MS, SPLASH_MIN_MS, SPLASH_CACHE_KEY } from './splashpic.js';
 // v134: the splash picture (splash-pic/). v208+: shown inside an 80% x 80% box (80vw x 80vh) on a black screen, object-fit:contain: scaled to the uploaded picture's shape, never cropped, never stretched, centered. Last picture kept on the phone so it shows at once next launch.
@@ -1679,7 +1680,8 @@ async function startPopup() {
   try {
     await updGateRestorePromise;
     if (updPending || updBusy) { popWaiting = true; return; }
-    if (document.getElementById('lf-bgallow')) { setTimeout(() => startPopup().catch(() => {}), 1500); return; }   // v208: never on top of the background-activity card
+    if (document.getElementById('lf-bgallow')) { setTimeout(() => startPopup().catch(() => {}), 1500); return; }
+    if (await maybeShowAssist()) return;   // v210: battery-helper card first; the notification card and the background card come after it   // v208: never on top of the background-activity card
     let granted = true, asked = false;
     try { granted = !!(await Native.notificationStatus()).granted; } catch {}
     if (updPending || updBusy) { popWaiting = true; return; }
@@ -3012,7 +3014,7 @@ if (Native.isNative) {
   Native.getSleepTimer().then(renderNP).catch(() => {});   // T22 timer state lives in the Android side
   loadLib(false);
 }
-updGateRestorePromise = updGateRestore().catch(() => {}); startAppLogoWatcher(); startPopup().catch(() => {}); creditPicCheck().catch(() => {}); splashCheck().catch(() => {}); setInterval(() => { splashCheck().catch(() => {}); }, SPLASH_POLL_MS); setInterval(() => { creditPicCheck().catch(() => {}); }, CREDIT_POLL_MS); startBgAllow(); banCheck(); setInterval(() => { banCheck().catch(() => {}); }, BANNER_POLL_MS); startUpdateCheck().catch(() => {}); setInterval(() => { if (!document.hidden) startUpdateCheck().catch(() => {}); }, UPDATE_POLL_MS);
+updGateRestorePromise = updGateRestore().catch(() => {}); startAppLogoWatcher(); startPopup().catch(() => {}); creditPicCheck().catch(() => {}); splashCheck().catch(() => {}); setInterval(() => { splashCheck().catch(() => {}); }, SPLASH_POLL_MS); setInterval(() => { creditPicCheck().catch(() => {}); }, CREDIT_POLL_MS); setAssistDone(() => setTimeout(() => startPopup().catch(() => {}), 400)); startBgAllow(); banCheck(); setInterval(() => { banCheck().catch(() => {}); }, BANNER_POLL_MS); startUpdateCheck().catch(() => {}); setInterval(() => { if (!document.hidden) startUpdateCheck().catch(() => {}); }, UPDATE_POLL_MS);
 // T4c step 2: Android Back button = close sheet > close Now Playing > go back one screen > minimise (never exits)
 // T18: coming back to the app = maybe check for new music (autoCheck itself limits this to once per 10 minutes)
 // v90: coming back to the app also re-reads the sleep timer (it may have fired while the app was away)

@@ -24,6 +24,7 @@ test('every R.id / R.layout / R.drawable used by the widget Java files exists', 
 test('every appwidget info file points at an existing layout and description string', () => {
   for (const f of readdirSync(new URL('../' + RES + 'xml', import.meta.url))) {
     const x = rd(RES + 'xml/' + f);
+    if (!x.includes('appwidget-provider')) continue;   // v210: the battery-helper accessibility config lives in res/xml too
     const l = /@layout\/(\w+)/.exec(x)[1], d = /@string\/(\w+)/.exec(x)[1];
     assert.ok(layouts.includes(l), f + ' -> layout ' + l); assert.ok(strings.has(d), f + ' -> string ' + d);
   }

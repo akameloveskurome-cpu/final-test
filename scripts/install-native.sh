@@ -187,3 +187,13 @@ PY
 
 # BUG-280: stop the build when any patch above silently did not apply (set -e makes a failed check stop the script)
 python3 scripts/verify-native-patches.py
+
+# v210: battery-helper accessibility service (Liquid Dark only; it taps Battery usage on its own App info page after Allow, never more)
+python3 - <<'PY'
+m = 'android/app/src/main/AndroidManifest.xml'; s = open(m).read()
+if 'BatteryAssistService' not in s:
+    svc = '<service android:name=".BatteryAssistService" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" android:exported="false" android:label="Liquid Dark battery helper"><intent-filter><action android:name="android.accessibilityservice.AccessibilityService"/></intent-filter><meta-data android:name="android.accessibilityservice" android:resource="@xml/lf_battery_assist"/></service>\n    '
+    assert '</application>' in s
+    s = s.replace('</application>', svc + '</application>', 1); open(m, 'w').write(s)
+print('battery helper service registered')
+PY

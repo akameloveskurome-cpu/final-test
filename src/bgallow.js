@@ -49,7 +49,7 @@ function swapPic(o, src) {   // a new picture while the card is open: replace on
   if (!src) { if (cur) cur.remove(); return; }
   if (cur) cur.src = src; else body.insertAdjacentHTML('afterbegin', `<img class="bgimg" alt="" src="${src}">`);
 }
-const blocked = () => !!document.querySelector('#sheet [data-upd]') || !!document.querySelector('#sheet .popcard') || !!document.querySelector('#lf-splash[style*="display: flex"]');   // v208: also waits while the notification card is open (never two cards at once)
+const blocked = () => !!document.getElementById('lf-assist') || !!document.querySelector('#sheet [data-upd]') || !!document.querySelector('#sheet .popcard') || !!document.querySelector('#lf-splash[style*="display: flex"]');   // v208: also waits while the notification card is open (never two cards at once)
 
 /** v209: the two permission cards never come together. Notification card first; the background card starts its 10 s countdown only AFTER the notification card is gone
  *  (Allow / Later / swiped away / Back), and also waits while the notification card is still due (picture downloading, Android prompt open). */

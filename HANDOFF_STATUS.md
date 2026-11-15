@@ -21,6 +21,13 @@
 - **DO NOT REDO:** do not replace the Toast with an app dialog (it would be hidden behind Settings).
 - **Verified:** `npm test` 711 pass; Java probe OK. **NOT verified** on a phone.
 
+## Battery helper (Accessibility, optional, no lockout) + card order (no version change, still 0.208.0)
+- **Owner asked for:** a card that forces Accessibility on, so the app is unusable until it is on. **NOT built** (lockout). The app works without it; the card returns on every open until it is on, and Not now closes it for that open.
+- **Changed:** `native-android/BatteryAssistService.java` (new AccessibilityService: acts only after Allow arms it for 30 s, only on a Settings page that shows "Liquid Dark" and "Battery usage", taps that row once, never the switch), `native-android/res/xml/lf_battery_assist.xml` (new), `scripts/install-native.sh` (registers the service in the manifest; idempotent), `native-android/LiquidNative.java` (`batteryAssistArmedUntil`, `batteryAssistStatus`, `openAccessibilitySettings`, arming in `openBackgroundSettings`), `src/assist.js` (new card), `src/main.js` (`maybeShowAssist()` runs in `startPopup()` BEFORE the notification check, and the card's close re-runs startPopup), `src/bgallow.js` (`blocked()` waits for `#lf-assist`), `src/native.js` (wrappers), `tests/battery-assist.test.mjs` (new), `tests/widgets-v148.test.mjs` (checks only appwidget files now), `tests/java-probe.py` and `tests/java-probe-update.py` (Settings.Secure / ACTION_ACCESSIBILITY_SETTINGS / ContentResolver stubs).
+- **Order:** accessibility card (per open) → notification card → background card (10 s after the card before it). **All-files access** is still requested by the existing code at startup; it is NOT re-ordered here.
+- **DO NOT REDO:** do not make the app block until accessibility is on.
+- **Verified:** `npm test` 717 pass; both Java probes OK; `node --check` on the changed JS. **NOT verified** on a phone: the accessibility tap depends on the Settings layout.
+
 ## OnePlus / OPPO: the real Battery usage class is PowerControlActivity (no version change, still 0.208.0)
 - **Found by the owner (adb, OPPO phone, ColorOS V13.1.0):** while Battery usage (App info) was on screen, `mCurrentFocus` = `com.oplus.battery/com.oplus.powermanager.fuelgaue.PowerControlActivity`. The launch intent came from uid 1000 (system), with extras, and `baseDir=/system_ext/app/Battery/Battery.apk`.
 - **Why it failed before:** the known list only had `PowerConsumptionActivity`, which this phone does not use, so the direct launch never matched.

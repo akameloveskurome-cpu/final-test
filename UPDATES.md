@@ -6,6 +6,11 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+## Battery helper (optional accessibility) and card order
+- **Added:** an optional **Battery helper** (Android Accessibility). Turn it on once, and after you tap **Allow** on the background card, Liquid Dark opens **Battery usage** for you on its App info page. You still turn the switch on yourself. The helper ignores other apps.
+- **Added:** a card asks you to turn the helper on each time you open the app, with **Allow** and **Not now**. The app works without it.
+- **Order:** helper card → notifications card → background card (10 seconds after the card before it).
+
 ## Fallback message shows the full path and stays about 12 seconds
 - **Changed:** when the phone will not open the Battery usage page directly, Liquid Dark now shows: "To turn it on: App info > Battery usage > switch ON Allow background activity." It stays on screen for about 12 seconds, over Settings.
 
