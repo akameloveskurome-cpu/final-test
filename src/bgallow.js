@@ -6,24 +6,32 @@
 // with the picture from background-allow-gif-pic/ (a plain card when none is uploaded). When it is already allowed, only a NEW upload shows it, once (as before).
 import { fetchBgAllowPic, BGALLOW_POLL_MS } from './bgallowpic.js';
 import { Native } from './native.js';
-import { assistPending } from './assist.js';
-const assistWaiting = () => { try { return assistPending(); } catch { return false; } };   // v211: the accessibility cards come before this card and may take the person a while
+import { assistPending, assistActivityAt } from './assist.js';
+const ASSIST_CAP_MS = 30000;   // v212: fail-safe only (normal gaps are always 10 s): the accessibility cards are waited for only while something is happening; 30 s of nothing (no card, no popup, no trip) and the background card goes ahead
+let lastBusyAt = Date.now();
+const assistWaiting = () => { try { return assistPending() && Date.now() - Math.max(lastBusyAt, launchAt, assistActivityAt()) < ASSIST_CAP_MS; } catch { return false; } };   // launchAt: declared below   // v211: the accessibility cards come before this card and may take the person a while
 const SEEN = 'lf.bgAllowSeen', ASKED = 'lf.bgAllowAsked';
 const memFlags = {};   // BUG-153: session copy, used when localStorage is blocked (no re-showing every second)
 const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch { return memFlags[k] || ''; } };
 const lsSet = (k, v) => { memFlags[k] = v; try { localStorage.setItem(k, v); } catch {} };
+const TRIP_MAX_MS = 10000;   // v212: a trip to Android's battery page counts as "same open" only if the person is back within 10 s (the same 10 s as every other "new open" rule)
 const WAIT_MS = 10000;   // v146b: never open before the app has been on screen for 10 s: Android's "All files access" screen and the picture download come first
 let pic = { src: '', stamp: '' }, busy = false, openStamp = '', readyAt = Date.now() + WAIT_MS, hold = 0;
 let notifGate = () => false, wasBlocked = false, launchAt = Date.now();
 const NOTIF_WAIT_CAP = 45000;   // v209: the notification card is waited for at most this long after launch (if it never shows, the background card still comes)
 export function setBgAllowGate(fn) { notifGate = typeof fn === 'function' ? fn : () => false; }   // main.js: true while the notification card is still due this open
 let shownOpen = false, trip = false, hiddenAt = 0, okUntil = 0;   // shownOpen: shown during this open; trip: the person is on Android's battery page (coming back is not a new open)
-export function bgAllowHold(p) { hold++; Promise.resolve(p).catch(() => {}).finally(() => { hold--; readyAt = Math.max(readyAt, Date.now() + WAIT_MS); }); }   // main.js passes the All-files-access request here: the popup waits for it, then 10 s more
+export function bgAllowHold(p) {   // v212: fail-safe: never longer than 30 s while the app is on screen, even if the Android screen never reports back
+  hold++; let done = false;
+  const release = () => { if (done) return; done = true; hold--; readyAt = Math.max(readyAt, Date.now() + WAIT_MS); };
+  try { setTimeout(release, 30000); } catch {}
+  Promise.resolve(p).catch(() => {}).finally(release);
+}   // main.js passes the All-files-access request here: the popup waits for it, then 10 s more
 try { document.addEventListener('visibilitychange', () => {
   if (document.hidden) { hiddenAt = Date.now(); return; }
   readyAt = Math.max(readyAt, Date.now() + WAIT_MS);
   okUntil = 0;   // look again: the person may have changed it in Android settings
-  if (trip) { trip = false; return; }
+  if (trip) { trip = false; if (!hiddenAt || Date.now() - hiddenAt < TRIP_MAX_MS) return; }   // v212: back from the battery page within 10 s = same open; away longer (left from there, opened the app again later) = a NEW open
   if (hiddenAt && Date.now() - hiddenAt >= 10000) { shownOpen = false; launchAt = Date.now(); }   // a new open: ask again if it is still off (and the notification card gets its turn first again)
 }); } catch {}
 
@@ -58,7 +66,7 @@ const blocked = () => !!document.getElementById('lf-assist') || !!document.query
  *  (Allow / Later / swiped away / Back), and also waits while the notification card is still due (picture downloading, Android prompt open). */
 function sequence() {
   const b = blocked();
-  if (b) wasBlocked = true;
+  if (b) { wasBlocked = true; lastBusyAt = Date.now(); }
   else if (wasBlocked) { wasBlocked = false; readyAt = Math.max(readyAt, Date.now() + WAIT_MS); }   // the card just went away: 10 s of quiet first
   if (!b && notifGate() && Date.now() - launchAt < NOTIF_WAIT_CAP) readyAt = Math.max(readyAt, Date.now() + WAIT_MS);
   if (!b && assistWaiting()) readyAt = Math.max(readyAt, Date.now() + WAIT_MS);   // v211: the accessibility cards come first, however long they take   // notification card still coming: keep waiting
@@ -71,7 +79,7 @@ async function maybeShow() {
   if (shownOpen) return;
   if (Date.now() < okUntil) return;   // checked a moment ago and it was allowed
   let allowed = true; try { allowed = !!(await Native.isBackgroundAllowed()).allowed; } catch {}   // v208: OFF -> shown on every open until allowed
-  if (allowed) okUntil = Date.now() + 15000;
+  if (allowed) okUntil = Date.now() + 5000;   // v212: while it is ON the app looks again every 5 s (was 15 s): switched OFF in Android while the app is open = the card comes within seconds
   if (allowed || root() || blocked()) return;
   lsSet(ASKED, '1'); shownOpen = true; openStamp = pic.stamp || ''; build(pic.src);
 }

@@ -6,18 +6,22 @@
 import { Native } from './native.js';
 import { ASSIST_PICS } from './assistpics.js';
 const WAIT_MS = 10000;
+const TRIP_MAX_MS = 600000;   // v212: step 2 is done by hand, so allow up to 10 minutes away before a return counts as a NEW open
 let stage = 0, trip = false, hiddenAt = 0, readyAt = Date.now() + WAIT_MS, wasBlocked = false, started = false, off = true, checkedOnce = false, busy = false;
 let gate = () => false, onDone = () => {};
 export function setAssistGate(fn) { gate = typeof fn === 'function' ? fn : () => false; }   // main.js: true once All files access and the notification card are finished
 export function setAssistDone(fn) { onDone = typeof fn === 'function' ? fn : () => {}; }
+let activityAt = Date.now();   // v212: last time this sequence did anything (card shown / closed / person came back); the background card uses it so a stuck sequence can never hold it back for good
+export const assistActivityAt = () => activityAt;
 export const assistStage = () => stage;   // 0 = Accessibility, 1 = Allow restricted settings, 2 = Accessibility again, 3 = finished for this open
 /** True while the sequence still has a card to show this open (the background card waits for it). */
 export function assistPending() { return started && Native.isNative && stage < 3 && (off || !checkedOnce); }
 export function assistCardOpen() { return !!document.getElementById('lf-assist'); }
 try { document.addEventListener('visibilitychange', () => {
   if (document.hidden) { hiddenAt = Date.now(); return; }
+  activityAt = Date.now();
   readyAt = Math.max(readyAt, Date.now() + WAIT_MS);   // back from Settings: 10 s of quiet before the next card
-  if (trip) { trip = false; return; }                  // coming back from Android settings is not a new open
+  if (trip) { trip = false; if (!hiddenAt || Date.now() - hiddenAt < TRIP_MAX_MS) return; }   // coming back from Android settings is not a new open (v212: unless the person was away 10+ minutes: then it is a new open and the cards come again)
   if (hiddenAt && Date.now() - hiddenAt >= 10000) { stage = 0; checkedOnce = false; }   // a new open: the whole sequence again if still off
 }); } catch {}
 // Each step = a caption + a screenshot with a red "tap here" mark (src/assistpics.js).
@@ -56,8 +60,9 @@ async function tick() {
 }
 export async function maybeShowAssist() { await tick(); return assistCardOpen(); }   // kept for callers; the poller below does the real work
 export function startAssist() { started = true; tick(); setInterval(tick, 1000); }
-function close() { const o = document.getElementById('lf-assist'); if (o) o.remove(); onDone(); }
+function close() { activityAt = Date.now(); const o = document.getElementById('lf-assist'); if (o) o.remove(); onDone(); }
 function build(n) {
+  activityAt = Date.now();
   const c = CARDS[n];
   const o = document.createElement('div');
   o.id = 'lf-assist'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');

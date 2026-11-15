@@ -1,0 +1,67 @@
+// v212: simulation helper (NOT a test file). Runs the REAL src/assist.js + src/bgallow.js together with a fake clock, a fake page and the same gates main.js uses.
+// Usage: node --import ./tests/register.mjs tests/permchain-sim.mjs <scenario>   -> prints a JSON log: [{t: seconds, e: event}]
+// It is run in its own process per scenario because assist.js and bgallow.js keep module state.
+const scen = process.argv[2];
+let now = 1_000_000; Date.now = () => now;
+const intervals = [], timers = []; globalThis.setInterval = f => { intervals.push(f); return 0; }; globalThis.setTimeout = (f, ms) => { timers.push({ at: now + ms, f }); return 0; };
+globalThis.fetch = async () => { throw new Error('offline'); };   // no picture readable: the plain card (picture swaps in later)
+const els = new Set(), listeners = {}; let popcard = false, hidden = false;
+globalThis.document = {
+  get hidden() { return hidden; },
+  addEventListener: (n, f) => { (listeners[n] ||= []).push(f); },
+  getElementById: id => { for (const e of els) if (e.id === id) return e; return null; },
+  querySelector: sel => (sel === '#sheet .popcard' && popcard ? {} : null),
+  createElement: () => { const e = { style: {}, handlers: {}, setAttribute() {}, addEventListener(n, f) { e.handlers[n] = f; }, remove() { els.delete(e); }, querySelector: () => null }; return e; },
+  body: { appendChild: e => { els.add(e); } },
+};
+const { Native } = await import('../src/native.js');
+const A = await import('../src/assist.js');
+const B = await import('../src/bgallow.js');
+const t0 = now, log = [], T = () => Math.round((now - t0) / 1000);
+const push = e => log.push({ t: T(), e });
+let helperOn = scen === 'helperOn' || scen === 'holdStuck', gateOpen = scen !== 'gateStuck';
+Native.isNative = true;
+Native.batteryAssistStatus = async () => ({ enabled: helperOn });
+Native.openAccessibilityList = async () => ({});
+Native.isBackgroundAllowed = async () => ({ allowed: false });
+Native.openBackgroundSettings = async () => ({});
+A.setAssistGate(() => gateOpen);
+B.setBgAllowGate(() => A.assistPending());   // main.js: (permOff && !permShownOpen) || assistPending(); notifications are ON in these runs
+if (scen === 'holdStuck') B.bgAllowHold(new Promise(() => {}));
+A.startAssist(); B.startBgAllow();
+const hide = () => { hidden = true; (listeners.visibilitychange || []).forEach(f => f()); };
+const show = () => { hidden = false; (listeners.visibilitychange || []).forEach(f => f()); };
+const click = (id, key, val) => { const e = document.getElementById(id); if (!e) return false; e.handlers.click({ target: { closest: () => ({ dataset: { [key]: val } }) } }); return true; };
+const seen = {};
+async function step(personFn) {
+  for (const t of timers.splice(0)) { if (t.at <= now) t.f(); else timers.push(t); }
+  for (const f of intervals) await f();
+  for (const id of ['lf-assist', 'lf-bgallow']) { const e = document.getElementById(id); if (e && !e.__seen) { e.__seen = true; push(id + ' shown'); } }
+  if (personFn) await personFn();
+  now += 1000;
+}
+const cardAt = {};
+const run = async (secs, personFn) => { for (let i = 0; i < secs; i++) await step(personFn); };
+if (scen === 'helperOn' || scen === 'gateStuck' || scen === 'holdStuck') await run(120);
+else if (scen === 'helperOffNotNow') {
+  await run(60, async () => { if (document.getElementById('lf-assist')) { cardAt.a ??= T(); if (T() >= cardAt.a + 2) { click('lf-assist', 'as', 'later'); push('person: Not now'); cardAt.a = undefined; } } });
+} else if (scen === 'helperOffFullFlow') {
+  let n = 0;
+  for (let i = 0; i < 200; i++) {
+    await step(async () => {
+      const e = document.getElementById('lf-assist');
+      if (e && !hidden) { cardAt.a ??= T(); if (T() >= cardAt.a + 3) { click('lf-assist', 'as', 'go'); push('person: go (card ' + (++n) + ')'); cardAt.a = undefined; hide(); cardAt.back = T() + (n === 2 ? 60 : 20); } }
+      if (hidden && T() >= cardAt.back) { show(); push('person: back'); }
+    });
+  }
+} else if (scen === 'resumeAfterLong') {
+  let phase = 0;
+  for (let i = 0; i < 400; i++) {
+    await step(async () => {
+      if (hidden) { if (T() >= cardAt.back) { show(); push('person: reopens app'); } return; }
+      if (document.getElementById('lf-assist')) { cardAt.a ??= T(); if (T() >= cardAt.a + 2) { click('lf-assist', 'as', 'later'); push('person: Not now'); cardAt.a = undefined; } }
+      if (document.getElementById('lf-bgallow')) { click('lf-bgallow', 'bg', 'later'); push('person: Later'); if (++phase === 1) { hide(); cardAt.back = T() + 300; push('person: closes app (Home)'); } }
+    });
+  }
+}
+console.log(JSON.stringify(log));

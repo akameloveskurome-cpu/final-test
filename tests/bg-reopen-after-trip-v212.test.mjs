@@ -1,0 +1,99 @@
+// v212: runs the REAL src/bgallow.js with a fake clock. The person taps Allow on the background card (goes to Android's battery page), does NOT come
+// straight back (presses Home / closes Liquid Dark from there) and opens the app again later. Background activity is still OFF, so the card must come again.
+// Before v212 that later open was taken for "back from the battery page" and the card was skipped for that whole open.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+function setup() {
+  let now = 1_000_000; const realNow = Date.now; Date.now = () => now;
+  const st = { bgCard: null, listeners: {}, click: null };
+  globalThis.document = {
+    hidden: false,
+    addEventListener: (n, f) => { st.listeners[n] = f; },
+    getElementById: id => (id === 'lf-bgallow' ? st.bgCard : null),
+    querySelector: () => null,
+    createElement: () => ({ setAttribute() {}, addEventListener(n, f) { if (n === 'click') st.click = f; }, remove() { st.bgCard = null; }, set innerHTML(v) {}, querySelector: () => null }),
+    body: { appendChild: el => { st.bgCard = el; } },
+  };
+  const away = ms => { document.hidden = true; st.listeners.visibilitychange(); now += ms; document.hidden = false; st.listeners.visibilitychange(); };
+  return { st, tick: ms => { now += ms; }, away, restore: () => { Date.now = realNow; delete globalThis.document; } };
+}
+const run = async (B, w, secs) => { let shown = false; for (let s = 0; s <= secs && !shown; s++) { await B.bgAllowCheck(); if (w.st.bgCard) shown = true; w.tick(1000); } return shown; };
+
+test('Allow tapped, person leaves from the battery page and opens the app much later: the card comes again', async () => {
+  const w = setup();
+  try {
+    const { Native } = await import('../src/native.js');
+    Native.isNative = true; Native.isBackgroundAllowed = async () => ({ allowed: false }); Native.openBackgroundSettings = async () => ({});
+    const B = await import('../src/bgallow.js?sim=trip1');
+    B.setBgAllowGate(() => false);
+    assert.ok(await run(B, w, 25), 'first open: shown');
+    w.st.click({ target: { closest: () => ({ dataset: { bg: 'go' } }) } });   // person taps Allow -> Android battery page
+    assert.equal(w.st.bgCard, null);
+    w.away(30 * 60 * 1000);                                                    // leaves, opens Liquid Dark again 30 min later
+    assert.ok(await run(B, w, 30), 'new open 30 min later, still OFF: shown again');
+  } finally { w.restore(); }
+});
+
+test('Allow tapped and the person comes straight back (under 10 s): same open, not shown again', async () => {
+  const w = setup();
+  try {
+    const { Native } = await import('../src/native.js');
+    Native.isNative = true; Native.isBackgroundAllowed = async () => ({ allowed: false }); Native.openBackgroundSettings = async () => ({});
+    const B = await import('../src/bgallow.js?sim=trip2');
+    B.setBgAllowGate(() => false);
+    assert.ok(await run(B, w, 25), 'first open: shown');
+    w.st.click({ target: { closest: () => ({ dataset: { bg: 'go' } }) } });
+    w.away(6 * 1000);
+    assert.equal(await run(B, w, 30), false, 'back from the battery page within 10 s: no second card in the same open');
+  } finally { w.restore(); }
+});
+
+test('the same "left from the settings page, opened the app much later" rule is in the notification and accessibility cards too', async () => {
+  const { readFileSync } = await import('node:fs');
+  const rd = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+  assert.match(rd('src/bgallow.js'), /TRIP_MAX_MS = 10000/);
+  assert.match(rd('src/assist.js'), /TRIP_MAX_MS = 600000/);
+  assert.match(rd('src/assist.js'), /if \(trip\) \{ trip = false; if \(!hiddenAt \|\| Date\.now\(\) - hiddenAt < TRIP_MAX_MS\) return; \}/);
+  assert.match(rd('src/main.js'), /if \(permTrip\) \{ permTrip = false; if \(!permHiddenAt \|\| Date\.now\(\) - permHiddenAt < 10000\) return; \}/);
+});
+
+// ---- whole chain: the REAL assist.js + bgallow.js together (tests/permchain-sim.mjs, one process per scenario) ----
+import { execFileSync } from 'node:child_process';
+const sim = name => JSON.parse(execFileSync(process.execPath, ['--import', './tests/register.mjs', 'tests/permchain-sim.mjs', name], { cwd: new URL('..', import.meta.url).pathname, encoding: 'utf8' }).trim().split('\n').pop());
+const at = (log, e, n = 0) => log.filter(x => x.e === e)[n]?.t;
+
+test('chain: background OFF, accessibility helper ON: the background card comes (no accessibility cards)', () => {
+  const l = sim('helperOn'); const t = at(l, 'lf-bgallow shown'); assert.ok(t >= 10 && t <= 40, 'at +' + t); assert.equal(at(l, 'lf-assist shown'), undefined);
+});
+test('chain: helper OFF, person taps Not now: background card comes 10 s (+ at most 8 s for an unreadable picture) after', () => {
+  const l = sim('helperOffNotNow'); const n = at(l, 'person: Not now'), b = at(l, 'lf-bgallow shown'); assert.ok(b - n >= 10 && b - n <= 20, 'gap ' + (b - n));
+});
+test('chain: helper OFF, all three accessibility cards done by hand: background card still comes at the end, 10 s gaps', () => {
+  const l = sim('helperOffFullFlow'); assert.ok(at(l, 'lf-bgallow shown') > at(l, 'person: back', 2));
+  for (const i of [0, 1, 2]) { const gap = at(l, 'lf-assist shown', i) - (i === 0 ? 0 : at(l, 'person: back', i - 1)); assert.ok(gap >= 10 && gap <= 12, 'card ' + (i + 1) + ' gap ' + gap); }
+});
+test('chain: closed from Home and reopened 5 min later, still OFF: accessibility card, then the background card, again', () => {
+  const l = sim('resumeAfterLong'); assert.equal(l.filter(x => x.e === 'lf-bgallow shown').length, 2); assert.equal(l.filter(x => x.e === 'lf-assist shown').length, 2);
+});
+test('chain fail-safe: even if the accessibility step never gets its turn, the background card comes (30 s idle, never held back for good)', () => {
+  const t = at(sim('gateStuck'), 'lf-bgallow shown'); assert.ok(t > 0 && t <= 70, 'at +' + t);
+});
+test('chain fail-safe: even if the All-files request never reports back, the background card comes', () => {
+  const t = at(sim('holdStuck'), 'lf-bgallow shown'); assert.ok(t > 0 && t <= 70, 'at +' + t);
+});
+
+test('background activity switched OFF while the app is open: noticed and shown within a few seconds (checked every 1 s poll, ON state re-read every 5 s)', async () => {
+  const w = setup();
+  try {
+    const { Native } = await import('../src/native.js');
+    let allowed = true; Native.isNative = true; Native.isBackgroundAllowed = async () => ({ allowed });
+    const B = await import('../src/bgallow.js?sim=live');
+    B.setBgAllowGate(() => false);
+    for (let s = 0; s < 40; s++) { await B.bgAllowCheck(); w.tick(1000); }
+    assert.equal(w.st.bgCard, null, 'allowed: no card');
+    allowed = false; let after = -1;
+    for (let s = 0; s <= 15 && after < 0; s++) { await B.bgAllowCheck(); if (w.st.bgCard) after = s; w.tick(1000); }
+    assert.ok(after >= 0 && after <= 8, 'card ' + after + ' s after it was switched off');
+  } finally { w.restore(); }
+});

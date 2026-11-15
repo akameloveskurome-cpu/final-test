@@ -1670,7 +1670,7 @@ let notifChecked = false;
 setBgAllowGate(() => (permOff && !permShownOpen) || assistPending());   // v209: the background-activity card waits for the notification card (shown first), then 10 s more
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { permHiddenAt = Date.now(); return; }
-  if (permTrip) { permTrip = false; return; }   // back from the Android prompt / settings: same open
+  if (permTrip) { permTrip = false; if (!permHiddenAt || Date.now() - permHiddenAt < 10000) return; }   // back from the Android prompt / settings within 10 s: same open (v212: away longer = a NEW open, the card comes again)
   if (permHiddenAt && Date.now() - permHiddenAt >= 10000) permShownOpen = false;   // a new open: ask again if still off
 });
 let popWaiting = false, popUnseen = null, popTries = 0, popRun = false, popQueued = false, popTriedStamp = '';   // v129: popTriedStamp = the upload whose picture was already tried: the 1-second check does not retry it (the 5 s / 30 s retry timers do)

@@ -8,6 +8,14 @@
 
 
 
+## Background / notification / accessibility cards skipped after leaving from the Android page (no version change, still 0.208.0)
+- **BUG (reproduced by `tests/bg-reopen-after-trip-v212.test.mjs`):** `trip` (bgallow.js), `trip` (assist.js) and `permTrip` (main.js) were set when the person tapped Allow / Open and cleared by the NEXT `visibilitychange` whatever happened. A person who left from the Android page (Home) and opened the app much later had that open swallowed as "back from settings": `shownOpen` / `stage` / `permShownOpen` were not reset, so the card did not come.
+- **FIX:** the trip only counts as "same open" when the person was away less than `TRIP_MAX_MS` (bgallow 10 s, notification 10 s, assist 10 min because step 2 is manual). Longer = a new open (flags reset, cards come again while the permission is still off). Files: `src/bgallow.js`, `src/assist.js`, `src/main.js`, new test.
+- **FAIL-SAFES (same entry):** `bgallow.js` waits for the accessibility cards only while something is happening (`ASSIST_CAP_MS` = 30 s idle, uses `assistActivityAt()` from assist.js and `lastBusyAt`), and `bgAllowHold` (All files access request) releases after 30 s. Normal gaps between popups stay 10 s (`WAIT_MS`); the extra 8 s in `bgAllowCheck` only applies when the picture cannot be read (GitHub unreachable).
+- **Live check:** `okUntil` re-check while allowed is 5 s (was 15 s); the poll itself is 1 s (`BGALLOW_POLL_MS`).
+- **TESTS:** `tests/permchain-sim.mjs` (helper, not a test) runs the real assist.js + bgallow.js together per scenario; `tests/bg-reopen-after-trip-v212.test.mjs` asserts them.
+- **DO NOT REDO:** do not remove the time limit; do not make the trip flag permanent again; do not let the background card wait for the accessibility cards without the idle cap. Coming straight back from the Android page (under the limit) must still NOT show a second card in the same open (test 2).
+
 ## Credits row: heart and star after the name (no version change, still 0.208.0)
 - **WHAT:** `src/main.js` About card: `row('Credits', 'Ai Hoshino ♥︎ ★')` (was `'Ai Hoshino'`). Text only. **DO NOT REDO:** keep the name first, then the two symbols; no character images.
 

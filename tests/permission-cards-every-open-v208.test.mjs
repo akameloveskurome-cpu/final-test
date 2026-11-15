@@ -12,7 +12,7 @@ test('notification card: asked on every open while notifications are off, not on
   assert.ok(M.includes('if (needPerm) permShownOpen = true;'));                         // shown once per open, not every second
   assert.ok(/permShownOpen = false;\s*\/\/ a new open/.test(M) && M.includes('>= 10000'));   // a new open = away 10 s or more
   assert.ok(M.includes("if (!pic && !firstTime && !wantsPerm) return;"));                 // the plain card is allowed when permission is wanted
-  assert.ok(M.includes('if (permTrip) { permTrip = false; return; }'));                   // coming back from the Android prompt / settings is not a new open
+  assert.ok(M.includes('if (permTrip) { permTrip = false; if (!permHiddenAt || Date.now() - permHiddenAt < 10000) return; }'));                   // coming back from the Android prompt / settings is not a new open
 });
 
 test('notification card uses the notification-popup picture, never the background one', () => {
@@ -32,7 +32,7 @@ test('background card: shown on every open while Android has background activity
   assert.ok(B.includes('if (shownOpen) return;') && B.includes('Native.isBackgroundAllowed()') && B.includes('shownOpen = true; openStamp = pic.stamp'));
   assert.ok(/if \(allowed \|\| root\(\) \|\| blocked\(\)\) return;/.test(B));            // allowed = no card (only a NEW upload shows it then)
   assert.ok(B.includes("if (pic.stamp && pic.stamp !== seen)"));                           // a new upload still shows once, even when already allowed
-  assert.ok(B.includes('shownOpen = false;') && B.includes('>= 10000') && B.includes('if (trip) { trip = false; return; }'));
+  assert.ok(B.includes('shownOpen = false;') && B.includes('>= 10000') && B.includes('if (trip) { trip = false; if (!hiddenAt || Date.now() - hiddenAt < TRIP_MAX_MS) return; }'));
   assert.ok(B.includes("trip = true; try { Native.openBackgroundSettings()"));
 });
 
