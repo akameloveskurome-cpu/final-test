@@ -1261,6 +1261,8 @@ async function runScan(quiet, forceArt = false) {   // one scan at a time (Java 
   finally { scanning = false; lastCheck = Date.now(); }
 }
 let allAsked = false;
+// v210d: order of the permission popups: All files access (system screen) -> battery-helper card -> notifications card -> background card.
+let allFilesDone = false; const assistLaunchAt = Date.now();
 async function askAllFiles() {   // v106: opens Android's "All files access" screen when it is not allowed yet; after it is allowed, rescan so .lrc files from every folder are matched
   if (allAsked || !Native.isNative) return; allAsked = true;
   try { const s = await Native.allFilesStatus(); if (s && s.granted) return; const r = await Native.requestAllFiles(); if (r && r.granted) loadLib(true); } catch {}
@@ -1292,7 +1294,7 @@ async function loadLib(rescan, forceArt = false) {
     renderMain(); renderSub(); pushWidgetCovers(); warmCovers();
   } catch (e) { libLoading = false; renderMain(); if (!isBusy(e)) toast('Library: ' + (e.message || e)); }
   if (!sessionTried) { sessionTried = true; await Promise.resolve(restoreSession()).catch(() => {}); sleepResume(); picsSynced.then(() => Native.updateArtwork()).catch(() => {}); }   // T8-rest: put the last queue back (paused) once the songs are known
-  clearTimeout(libTimerA); libTimerA = setTimeout(() => bgAllowHold(askAllFiles()), 1500);                                   // v106: ask once per launch for "All files access" so .lrc files are found anywhere
+  clearTimeout(libTimerA); libTimerA = setTimeout(() => bgAllowHold(askAllFiles().finally(() => { allFilesDone = true; setTimeout(() => startPopup().catch(() => {}), 400); })), 1500);                                   // v106: ask once per launch for "All files access" so .lrc files are found anywhere
   clearTimeout(libTimerB); libTimerB = setTimeout(autoCheck, 3000);                                     // T18: cheap check for new / removed files a moment after start
 }
 async function autoCheck() {
@@ -1681,6 +1683,7 @@ async function startPopup() {
     await updGateRestorePromise;
     if (updPending || updBusy) { popWaiting = true; return; }
     if (document.getElementById('lf-bgallow')) { setTimeout(() => startPopup().catch(() => {}), 1500); return; }
+    if (!allFilesDone && Date.now() - assistLaunchAt < 60000) { setTimeout(() => startPopup().catch(() => {}), 1500); return; }   // v210d: All files access comes first
     if (await maybeShowAssist()) return;   // v210: battery-helper card first; the notification card and the background card come after it   // v208: never on top of the background-activity card
     let granted = true, asked = false;
     try { granted = !!(await Native.notificationStatus()).granted; } catch {}

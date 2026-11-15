@@ -46,9 +46,9 @@ test('the two cards never stack', () => {
   assert.ok(M.includes("document.getElementById('lf-bgallow')) { setTimeout(() => startPopup()"));   // and the notification card waits for the background card
 });
 
-test('background "allowed" needs the Android signals: not battery-optimized AND not background-restricted (OnePlus / Oppo switch)', () => {
+test('background "allowed" = not battery-optimized (the switch, confirmed by adb); restricted and app-ops are logged only (v210c)', () => {
   assert.ok(J.includes('isBackgroundRestricted()'));
-  assert.ok(J.includes('o.put("allowed", ignoring && !restricted && !appOpBlocked)'));   // v209c: plus the background app-ops
+  assert.ok(J.includes('o.put("allowed", ignoring);'));   // v210c: the switch follows ignoring; the other signals never decide
   assert.ok(J.includes('Build.VERSION.SDK_INT >= 28'));
   assert.ok(J.includes('o.put("ignoring", ignoring); o.put("restricted", restricted);'));
 });

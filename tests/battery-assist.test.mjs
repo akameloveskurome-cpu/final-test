@@ -36,15 +36,23 @@ test('the manifest registers the service with the Accessibility permission (idem
 test('the card: Allow opens Accessibility settings, Not now closes it, and it is shown once per open', () => {
   const a = rd('src/assist.js');
   assert.match(a, /openAccessibilitySettings/);
+  assert.match(a, /Allow restricted settings/);
+  assert.match(a, /three dots/);
+  assert.match(a, /Downloaded apps/);
+  assert.match(a, /Liquid Dark battery helper/);
   assert.match(a, /Not now/);
   assert.match(a, /shownThisOpen/);
   assert.ok(existsSync(new URL('../src/assist.js', import.meta.url)));
 });
 
-test('popup order: the accessibility card comes before the notification card, and the background card waits for it', () => {
+test('popup order: All files access -> accessibility card -> notification card -> background card', () => {
   const m = rd('src/main.js');
+  const files = m.indexOf('allFilesDone = true');
+  const gate = m.indexOf('if (!allFilesDone');
+  assert.ok(files > -1 && gate > -1, 'all-files gate exists');
   const acc = m.indexOf('await maybeShowAssist()');
   const notif = m.indexOf("localStorage.getItem('lf.notifAsked')");
   assert.ok(acc > -1 && notif > -1 && acc < notif, 'accessibility check runs before the notification check');
+  assert.ok(gate < acc, 'the all-files gate is checked before the accessibility card');
   assert.match(rd('src/bgallow.js'), /getElementById\('lf-assist'\)/);
 });

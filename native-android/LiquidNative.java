@@ -1865,7 +1865,7 @@ public class LiquidNative extends Plugin {
       }
     } catch (Throwable ignored) { }
     Log.i("LiquidNative", "background: allowed check ignoring=" + ignoring + " restricted=" + restricted + " appOpBlocked=" + appOpBlocked);
-    JSObject o = new JSObject(); o.put("allowed", ignoring && !restricted && !appOpBlocked); o.put("ignoring", ignoring); o.put("restricted", restricted); o.put("appOpBlocked", appOpBlocked); call.resolve(o);
+    JSObject o = new JSObject(); o.put("allowed", ignoring);   // v210c: the switch follows the battery-optimization whitelist (confirmed on OnePlus + OPPO by adb: whitelist entry ON, gone OFF). restricted / appOpBlocked stayed the same in both states, so they are logged only, never decide. o.put("ignoring", ignoring); o.put("restricted", restricted); o.put("appOpBlocked", appOpBlocked); call.resolve(o);
   }
 
   /** v209: phone-brand pages (Oppo / Realme / OnePlus ColorOS, Vivo / iQOO, Samsung, Huawei / Honor, Xiaomi, Asus...) that hold the app's "Allow background activity" / auto-start / battery switch.
@@ -1980,6 +1980,7 @@ public class LiquidNative extends Plugin {
 
   /** Shown when the phone will not open the Battery usage page directly. */
   private static final String HOW_TO_TURN_ON = "To turn it on: App info > Battery usage > switch ON Allow background activity.";
+  /** v210e: the generic Battery usage page (Unrestricted / Optimized / Restricted, no switch) opened on phones that are not OnePlus / OPPO / Realme. */
 
   /** v210: set by Allow on the background card; BatteryAssistService taps Battery usage once while this is in the future. */
   static volatile long batteryAssistArmedUntil = 0;
@@ -1996,7 +1997,8 @@ public class LiquidNative extends Plugin {
 
   @PluginMethod
   public void openAccessibilitySettings(PluginCall call) {
-    boolean ok = tryStart(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
+    // v210b: Android 13+ blocks Accessibility for downloaded apps until "Allow restricted settings" is tapped in THIS app's App info (three-dot menu, top right). So this opens App info.
+    boolean ok = tryStart(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getContext().getPackageName())));
     JSObject o = new JSObject(); o.put("ok", ok); call.resolve(o);
   }
 

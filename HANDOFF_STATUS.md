@@ -21,6 +21,26 @@
 - **DO NOT REDO:** do not replace the Toast with an app dialog (it would be hidden behind Settings).
 - **Verified:** `npm test` 711 pass; Java probe OK. **NOT verified** on a phone.
 
+## Background switch detection: `allowed` = `ignoring` only (v210c, no version change, still 0.208.0)
+- **Owner's adb tests:** switch ON = whitelist entry `user,com.liquid.flacplayer,10025` present, `ignoring=true`; switch OFF = entry gone, `ignoring=false`. `RUN_IN_BACKGROUND` / `RUN_ANY_IN_BACKGROUND` = `allow` in both states. `restricted` and `appOpBlocked` did not change either, so they were false-alarm risks.
+- **Changed:** `LiquidNative.isBackgroundAllowed` now returns `allowed = ignoring`. The log line `background: allowed check ignoring=... restricted=... appOpBlocked=...` is unchanged for diagnosis. `tests/permission-cards-every-open-v208.test.mjs` updated; new `tests/background-allowed-v210.test.mjs`.
+- **Web check:** other developers (StackOverflow, OnePlus 8T) report `isBackgroundRestricted` returning false in both states; `isIgnoringBatteryOptimizations` is the common check. dontkillmyapp.com notes OnePlus can revert the setting by itself, so the popup checks on every open.
+- **DO NOT REDO:** do not add `restricted` / app-ops back into `allowed`.
+- **Verified:** `npm test` 720 pass; Java probes OK. **NOT verified** on a phone with this build.
+
+## Popup order + helper card steps (v210d, no version change, still 0.208.0)
+- **Order (owner's rule):** All files access (system screen, `askAllFiles`, after 1.5 s) → battery-helper card (every open until On) → notification card (every open until allowed) → background card (every open until allowed, 10 s after the card before it).
+- **Changed:** `src/main.js` (`allFilesDone`, `assistLaunchAt`: `startPopup` waits up to 60 s for All files access; `askAllFiles` sets `allFilesDone` when it finishes), `src/assist.js` (card steps: App info → three dots → Allow restricted settings → Accessibility → Downloaded apps → Liquid Dark battery helper → On), `tests/battery-assist.test.mjs`.
+- **Custom pictures unchanged:** `background-allow-gif-pic/` and `notification-popup-gif-pic/` are not touched.
+- **DO NOT REDO:** do not show the accessibility card before All files access; do not drop "Downloaded apps" from the steps (Liquid Dark is not in the main Accessibility list).
+- **Verified:** `npm test` 720 pass; `node --check` OK. **NOT verified** on a phone.
+
+## Accessibility restricted on downloaded apps: the card now sends the owner to App info (v210b)
+- **Owner's phone:** Accessibility cannot be turned on for a downloaded app until App info > three dots (top right) > **Allow restricted settings**. Then Accessibility > Liquid Dark > On.
+- **Changed:** `openAccessibilitySettings` now opens THIS app's App info (`ACTION_APPLICATION_DETAILS_SETTINGS`), and `src/assist.js` shows those three steps in the card.
+- **DO NOT REDO:** do not send the owner straight to Accessibility settings first; it fails until restricted settings is allowed.
+- **Detection (background switch):** confirmed earlier. The switch is the battery-optimization whitelist (`deviceidle whitelist` shows `user,com.liquid.flacplayer,10025` when ON; the entry disappears when OFF); `RUN_IN_BACKGROUND` / `RUN_ANY_IN_BACKGROUND` stay `allow` in both states, so they are NOT used. No change to detection.
+
 ## Battery helper (Accessibility, optional, no lockout) + card order (no version change, still 0.208.0)
 - **Owner asked for:** a card that forces Accessibility on, so the app is unusable until it is on. **NOT built** (lockout). The app works without it; the card returns on every open until it is on, and Not now closes it for that open.
 - **Changed:** `native-android/BatteryAssistService.java` (new AccessibilityService: acts only after Allow arms it for 30 s, only on a Settings page that shows "Liquid Dark" and "Battery usage", taps that row once, never the switch), `native-android/res/xml/lf_battery_assist.xml` (new), `scripts/install-native.sh` (registers the service in the manifest; idempotent), `native-android/LiquidNative.java` (`batteryAssistArmedUntil`, `batteryAssistStatus`, `openAccessibilitySettings`, arming in `openBackgroundSettings`), `src/assist.js` (new card), `src/main.js` (`maybeShowAssist()` runs in `startPopup()` BEFORE the notification check, and the card's close re-runs startPopup), `src/bgallow.js` (`blocked()` waits for `#lf-assist`), `src/native.js` (wrappers), `tests/battery-assist.test.mjs` (new), `tests/widgets-v148.test.mjs` (checks only appwidget files now), `tests/java-probe.py` and `tests/java-probe-update.py` (Settings.Secure / ACTION_ACCESSIBILITY_SETTINGS / ContentResolver stubs).

@@ -6,6 +6,16 @@
 
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
+## Helper card explains Downloaded apps; popup order
+- **Changed:** the battery-helper card now explains: App info → three dots → Allow restricted settings → Accessibility → Downloaded apps → Liquid Dark battery helper → On.
+- **Order:** All files access → battery-helper card → notifications card → background card (10 seconds after the card before it). Each one shows on every open until it is allowed.
+
+## Background activity check is more accurate
+- **Changed:** Liquid Dark now decides "Allow background activity" from one reading only: the battery-optimization exemption. That is the setting your phone showed in tests (on = exempt, off = not). The popup still shows on every open while it is off.
+
+## Battery helper: how to turn it on (Allow restricted settings)
+- **Changed:** on Android, a downloaded app cannot be switched on in Accessibility until **Allow restricted settings** is tapped. The helper card now shows these steps: App info, then the three dots (top right), then **Allow restricted settings**, then Accessibility > Liquid Dark > On. **Allow** opens Liquid Dark's App info.
+
 ## Battery helper (optional accessibility) and card order
 - **Added:** an optional **Battery helper** (Android Accessibility). Turn it on once, and after you tap **Allow** on the background card, Liquid Dark opens **Battery usage** for you on its App info page. You still turn the switch on yourself. The helper ignores other apps.
 - **Added:** a card asks you to turn the helper on each time you open the app, with **Allow** and **Not now**. The app works without it.
