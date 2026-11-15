@@ -36,19 +36,21 @@ test('the manifest registers the service with the Accessibility permission (idem
 test('v211 cards: Accessibility, then Allow restricted settings (App info), then Accessibility again; Not now stops this open', () => {
   const a = rd('src/assist.js');
   assert.match(a, /openAccessibilityList/);
-  assert.match(a, /openAccessibilitySettings/);
   assert.match(a, /Allow restricted settings/);
   assert.match(a, /three dots/);
   assert.match(a, /Downloaded apps/);
   assert.match(a, /Liquid Dark battery helper/);
   assert.match(a, /Not now/);
   assert.equal((a.match(/go: 'Open Accessibility'/g) || []).length, 2, 'Accessibility card appears twice');
-  assert.ok(a.indexOf("go: 'Open Accessibility'") < a.indexOf("go: 'Open App info'") && a.indexOf("go: 'Open App info'") < a.lastIndexOf("go: 'Open Accessibility'"));
-  assert.match(a, /n === 1 \? Native\.openAccessibilitySettings\(\) : Native\.openAccessibilityList\(\)/);
+  assert.ok(a.indexOf("go: 'Open Accessibility'") < a.indexOf("go: 'Got it, I will do this'") && a.indexOf("go: 'Got it, I will do this'") < a.lastIndexOf("go: 'Open Accessibility'"));
+  assert.match(a, /if \(n !== 1\) Promise\.resolve\(Native\.openAccessibilityList\(\)\)/);
+  assert.doesNotMatch(a, /Native\.openAccessibilitySettings\(\)/, 'step 2 never opens App info itself: Android hides Allow restricted settings then');
+  assert.match(a, /long press/);
+  assert.match(a, /<b>App info<\/b>/);
   assert.match(a, /WAIT_MS = 10000/);
   assert.match(a, /ASSIST_PICS/);
   const pics = rd('src/assistpics.js');
-  for (const k of ['a1', 'a2', 'a3', 'a4', 'a5', 'b1', 'b2']) assert.match(pics, new RegExp(k + ": 'data:image/jpeg;base64,"), 'tutorial picture ' + k);
+  for (const k of ['a1', 'a2', 'a3', 'a4', 'a5', 'c1', 'c2', 'b1', 'b2']) assert.match(pics, new RegExp(k + ": 'data:image/jpeg;base64,"), 'tutorial picture ' + k);
   assert.match(a, /Restricted setting/);
   assert.match(a, /overflow-y:auto/, 'card scrolls on small phones');
   const j = rd('native-android/LiquidNative.java');
@@ -66,4 +68,8 @@ test('v211 popup order: All files access -> notification card -> accessibility c
   const b = rd('src/bgallow.js');
   assert.match(b, /getElementById\('lf-assist'\)/);
   assert.match(b, /assistPending/);
+});
+
+test('Settings > About > Credits shows Ai Hoshino followed by a heart and a star', () => {
+  assert.match(rd('src/main.js'), /row\('Credits', 'Ai Hoshino ♥︎ ★'\)/);
 });

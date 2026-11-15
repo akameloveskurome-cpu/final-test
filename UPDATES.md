@@ -7,6 +7,12 @@
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
 
+## Credits row now reads Ai Hoshino ♥︎ ★
+Settings > About > Credits shows the name with a heart and a star after it. Nothing else changed.
+
+## Step 2 card now shows how to open App info yourself (long press the icon)
+When the app opened App info for you, Android hid "Allow restricted settings". Step 2 now shows 4 pictures with red arrows: long press the Liquid Dark icon, tap App info, tap the three dots, tap Allow restricted settings. The button no longer opens App info; it just closes the card, and step 3 comes back after you return.
+
 ## Permission cards in a clearer order: notifications, Accessibility, restricted settings, Accessibility again, background
 Notifications come first, then an Accessibility card, then (when you come back) a card that shows how to Allow restricted settings, then the Accessibility card again so the switch works, and last the background card. Each one appears about 10 seconds after the one before.
 

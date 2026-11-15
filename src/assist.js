@@ -1,6 +1,6 @@
 // v211: battery-helper (Accessibility) cards. Order of ALL permission popups (main.js + bgallow.js), each one 10 s after the one before it:
 //   1. All files access (Android system screen)  2. Notifications card  3. Accessibility card (this file, step 1: opens Accessibility settings)
-//   4. "Allow restricted settings" card (this file, step 2: opens this app's App info, three dots)  5. Accessibility card AGAIN (step 3: opens Accessibility settings, now it can be turned On)
+//   4. "Allow restricted settings" card (this file, step 2: the person opens App info by long pressing the icon, then three dots; the app does NOT open it)  5. Accessibility card AGAIN (step 3: opens Accessibility settings, now it can be turned On)
 //   6. Background activity card (bgallow.js, opens Battery usage directly).
 // While Liquid Dark's accessibility service is OFF this sequence runs on every open. Not now stops it for this open only; it comes back on the next open.
 import { Native } from './native.js';
@@ -28,9 +28,10 @@ const CARDS = [
       + '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">First Android has to be asked once, so it shows the next card. Do these taps:</p>'
       + step(1, 'Tap <b>Downloaded apps</b>.', 'a1') + step(2, 'Tap <b>Liquid Dark battery helper</b> (it is greyed out, tap it anyway).', 'a2')
       + step(3, 'Android shows <b>Restricted setting</b>. Tap <b>OK</b>, then come back to Liquid Dark.', 'a3') },
-  { title: 'Step 2: Allow restricted settings', go: 'Open App info',
-    body: '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">Now the option is unlocked. Tap <b>Open App info</b>, then:</p>'
-      + step(1, 'Tap the <b>three dots</b> (top right).', 'a4') + step(2, 'Tap <b>Allow restricted settings</b> and enter your PIN or fingerprint. Then come back to Liquid Dark.', 'a5') },
+  { title: 'Step 2: Allow restricted settings', go: 'Got it, I will do this',
+    body: '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">Now the option is unlocked, but Android hides it if the app opens App info for you. Open App info yourself like this (leave Liquid Dark first: press Home):</p>'
+      + step(1, 'On your home screen (or in the app drawer) <b>long press</b> the <b>Liquid Dark</b> icon.', 'c1') + step(2, 'Tap <b>App info</b>.', 'c2')
+      + step(3, 'Tap the <b>three dots</b> (top right).', 'a4') + step(4, 'Tap <b>Allow restricted settings</b> and enter your PIN or fingerprint. Then come back to Liquid Dark.', 'a5') },
   { title: 'Step 3: turn the battery helper On', go: 'Open Accessibility',
     body: '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">Restricted settings are allowed now, so the switch works this time.</p>'
       + step(1, 'In Accessibility open <b>Downloaded apps</b>, then tap <b>Liquid Dark battery helper</b>. It is not greyed out any more.', 'b1') + step(2, 'Turn the switch <b>On</b>, then come back to Liquid Dark.', 'b2') },
@@ -70,8 +71,7 @@ function build(n) {
     if (b.dataset.as === 'go') {
       trip = true; stage = n + 1; readyAt = Date.now() + WAIT_MS;
       try {
-        const p = n === 1 ? Native.openAccessibilitySettings() : Native.openAccessibilityList();   // step 2 = this app's App info; steps 1 and 3 = Android's Accessibility list
-        Promise.resolve(p).catch(() => { trip = false; });
+        if (n !== 1) Promise.resolve(Native.openAccessibilityList()).catch(() => { trip = false; });   // steps 1 and 3 = Android's Accessibility list. Step 2 opens nothing: the person long presses the icon -> App info -> three dots (opened by the app, Android hides "Allow restricted settings")
       } catch { trip = false; }
     } else stage = 3;   // Not now: the sequence stops for this open
     close();

@@ -8,6 +8,13 @@
 
 
 
+## Credits row: heart and star after the name (no version change, still 0.208.0)
+- **WHAT:** `src/main.js` About card: `row('Credits', 'Ai Hoshino ♥︎ ★')` (was `'Ai Hoshino'`). Text only. **DO NOT REDO:** keep the name first, then the two symbols; no character images.
+
+## Accessibility step 2 card: owner opens App info manually (no version change, still 0.208.0)
+- **WHAT:** step 2 card (`src/assist.js`) no longer calls `Native.openAccessibilitySettings()` (App info opened by the app hides "Allow restricted settings"). It shows 4 pictures: `c1` (long press the icon on the home screen / app drawer), `c2` (tap App info in the long-press menu), `a4` (three dots), `a5` (Allow restricted settings). Button is "Got it, I will do this": it only sets `stage = 2`, `trip = true`, 10 s gap, and closes. New pictures `c1`, `c2` added to `src/assistpics.js` (from the owner's screenshots, red marks). `tests/battery-assist.test.mjs` updated.
+- **DO NOT REDO:** do not make step 2 open App info from the app again; do not drop `trip = true` for step 2 (the person leaves the app by hand, and a 10 s absence would otherwise restart the sequence). `openAccessibilitySettings` still exists in native.js / LiquidNative.java but is unused by assist.js.
+
 ## Popup order v211: notifications, then Accessibility -> Allow restricted settings -> Accessibility again, then background (no version change, still 0.208.0)
 - **Order (owner's rule), 10 s between each:** All files access -> Notifications card -> Accessibility card (opens Accessibility list, Downloaded apps; switch is greyed out) -> back in app: "Allow restricted settings" card (opens App info, three dots) -> back in app: Accessibility card again (switch now works) -> Background activity card (opens Battery usage directly).
 - **Changed:** `src/assist.js` (rewritten: 3-stage sequence with its own 1 s poller, gate, 10 s gaps; Not now stops it for this open), `src/main.js` (assist no longer called from `startPopup`; `notifChecked`, `setAssistGate`, `startAssist`, background gate also waits for `assistPending()`), `src/bgallow.js` (waits while the accessibility sequence is pending), `src/native.js` + `native-android/LiquidNative.java` (new `openAccessibilityList` = ACTION_ACCESSIBILITY_SETTINGS; `openAccessibilitySettings` still opens App info), `tests/battery-assist.test.mjs`.
