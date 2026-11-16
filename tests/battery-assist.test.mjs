@@ -67,7 +67,7 @@ test('v211 popup order: All files access -> notification card -> accessibility c
   assert.match(m, /setBgAllowGate\(\(\) => permOff && !permShownOpen\);/);   // v213: only the notification card holds the background card back (as in v210d)
   const b = rd('src/bgallow.js');
   assert.match(b, /getElementById\('lf-assist'\)/);
-  assert.doesNotMatch(b, /assistPending|assistWaiting|assistDue/, 'v213: the background card never waits for the accessibility cards');
+  assert.doesNotMatch(b, /from '\.\/assist\.js'/, 'bgallow.js does not import assist.js: main.js hands it the hold (setBgAllowAfter(assistHoldsBg))');
 });
 
 test('Settings > About > Credits shows Ai Hoshino followed by a heart and a star', () => {

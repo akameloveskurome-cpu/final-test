@@ -5,6 +5,9 @@
 # Liquid Dark: HANDOFF [v148]  (lives at `docs/HANDOFF.md` since v45; read this first; old long notes: docs/archive/HISTORY_v25.md, incl. the full v27 / v28 / v29 / v30 notes at the end)
 
 
+## Session: accessibility cards first, then the background card - version stays 0.208.0
+See the top entry of `HANDOFF_STATUS.md`. `assistHoldsBg()` (assist.js) + `setBgAllowAfter` (bgallow.js, wired in main.js), 45 s fail-safe, "Back to the first card (step 1)" on the step 2 / 3 cards, one short toast on the App-info route. Detection code unchanged.
+
 ## Session: Allow on the background card opens the power page - version stays 0.208.0
 `LiquidNative.openBackgroundSettings` now tries `openOplusAppPage()` FIRST on OnePlus / OPPO / Realme (known `PowerConsumptionActivity` classes, then a run-time scan of exported pages of pre-installed battery apps); those pages are protected on newer OnePlus / ColorOS (`oplus.permission.OPLUS_COMPONENT_SAFE`), so the family then opens this app's App info with a native toast "Tap Battery usage..."; other brands keep the old order (generic battery page, brand list) and get the same run-time scan only as a fallback after those. Runs on `LIB_POOL`. Test: `tests/background-power-page.test.mjs`. Details and DO NOT REDO: HANDOFF_STATUS.md. Not verified on a real phone.
 

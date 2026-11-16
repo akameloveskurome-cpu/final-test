@@ -6,7 +6,8 @@ let now = 1_000_000; Date.now = () => now;
 const intervals = [], timers = []; globalThis.setInterval = f => { intervals.push(f); return 0; }; globalThis.setTimeout = (f, ms) => { timers.push({ at: now + ms, f }); return 0; };
 globalThis.fetch = async () => { throw new Error('offline'); };   // no picture readable: the plain card (picture swaps in later)
 const store = {}; globalThis.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; } };
-if (scen === 'coldAfterStep2' || scen === 'redoBack') store['lf.assist'] = JSON.stringify({ stage: 2, at: now - 120000 });   // the app was closed by step 2 two minutes ago
+if (scen === 'back1Step2') store['lf.assist'] = JSON.stringify({ stage: 1, at: now - 120000 });   // the sequence was at step 2 when the app was closed
+if (scen === 'coldAfterStep2' || scen === 'redoBack' || scen === 'back1Step3') store['lf.assist'] = JSON.stringify({ stage: 2, at: now - 120000 });   // the app was closed by step 2 two minutes ago
 if (scen === 'coldLongAgo') store['lf.assist'] = JSON.stringify({ stage: 2, at: now - 2 * 3600000 });   // two hours ago: the full sequence again
 const els = new Set(), listeners = {}; let popcard = false, hidden = false;
 globalThis.document = {
@@ -33,6 +34,7 @@ Native.isBackgroundAllowed = async () => ({ allowed: false });
 Native.openBackgroundSettings = async () => ({});
 A.setAssistGate(() => gateOpen);
 B.setBgAllowGate(() => false);   // main.js (v213): permOff && !permShownOpen; notifications are ON in these runs
+B.setBgAllowAfter(A.assistHoldsBg);   // owner's order: the accessibility cards first, the background card 10 s after them (same wiring as main.js)
 if (scen === 'holdStuck') B.bgAllowHold(new Promise(() => {}));
 A.startAssist(); B.startBgAllow();
 const hide = () => { hidden = true; (listeners.visibilitychange || []).forEach(f => f()); };
@@ -65,6 +67,8 @@ else if (scen === 'helperOffNotNow') {
   await run(40, async () => { const e = document.getElementById('lf-assist'); if (e && !hidden) { const title = /<h2[^>]*>([^<]*)</.exec(e.innerHTML)[1]; if (/Step 2/.test(title)) { click('lf-assist', 'as', 'go'); push('person: go on step 2'); } else { click('lf-assist', 'as', 'later'); push('person: Not now on ' + title.slice(0, 6)); } } });
 } else if (scen === 'redoBack') {
   await run(70, async () => { const e = document.getElementById('lf-assist'); if (e && !hidden) { const title = /<h2[^>]*>([^<]*)</.exec(e.innerHTML)[1]; if (/Step 3/.test(title) && !cardAt.r) { cardAt.r = T(); click('lf-assist', 'as', 'redo'); push('person: taps "greyed out? Back to step 2"'); } else if (/Step 2/.test(title) && !cardAt.s) { cardAt.s = T(); click('lf-assist', 'as', 'later'); push('person: Not now on step 2'); } } });
+} else if (scen === 'back1Step2' || scen === 'back1Step3') {   // the person taps "Back to the first card (step 1)" on the first card that comes
+  await run(40, async () => { const e = document.getElementById('lf-assist'); if (e && !hidden) { const title = /<h2[^>]*>([^<]*)</.exec(e.innerHTML)[1]; if (/Step 1/.test(title)) { if (!cardAt.s1) { cardAt.s1 = T(); push('person: sees step 1'); } } else if (!cardAt.b) { cardAt.b = T(); push('person: taps back to step 1 on ' + title.slice(0, 6)); click('lf-assist', 'as', 'back1'); } } });
 } else if (scen === 'rsRestricted' || scen === 'rsBecomesAllowed') {
   let goes = 0;
   for (let i = 0; i < 160; i++) {

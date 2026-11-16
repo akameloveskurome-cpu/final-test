@@ -3,6 +3,7 @@
 //   4. "Allow restricted settings" card (this file, step 2: the person opens App info by long pressing the icon, then three dots; the app does NOT open it)  5. Accessibility card AGAIN (step 3: opens Accessibility settings, now it can be turned On)
 //   6. Background activity card (bgallow.js, opens Battery usage directly).
 // While Liquid Dark's accessibility service is OFF this sequence runs on every open. Not now stops it for this open only; it comes back on the next open.
+// Owner's order (still 0.208.0): when BOTH are due, the accessibility cards come FIRST and the background card only 10 s after they are finished / dismissed (assistHoldsBg() below, wired in main.js with setBgAllowAfter). Never two cards at once.
 import { Native } from './native.js';
 import { ASSIST_PICS } from './assistpics.js';
 const WAIT_MS = 10000;
@@ -12,6 +13,8 @@ function savedStage() { try { const j = JSON.parse(localStorage.getItem(PKEY) ||
 function saveStage(s) { try { localStorage.setItem(PKEY, JSON.stringify({ stage: s, at: Date.now() })); } catch {} }
 function clearStage() { try { localStorage.removeItem(PKEY); } catch {} }
 let rs = 'unknown';   // v213: "Allow restricted settings" state from Android (allowed / restricted / unknown)
+let rsIgnore = false;   // the person pressed a Back button: Android's "restricted settings" answer is not used to skip cards for the rest of this open
+let prevGate = false;
 let stage = savedStage(), trip = false, hiddenAt = 0, readyAt = Date.now() + WAIT_MS, wasBlocked = false, started = false, off = true, checkedOnce = false, busy = false;
 let gate = () => false, onDone = () => {};
 export function setAssistGate(fn) { gate = typeof fn === 'function' ? fn : () => false; }   // main.js: true once All files access and the notification card are finished
@@ -22,12 +25,27 @@ export const assistStage = () => stage;   // 0 = Accessibility, 1 = Allow restri
 /** True while the sequence still has a card to show this open (the background card waits for it). */
 export function assistPending() { return started && Native.isNative && stage < 3 && (off || !checkedOnce); }
 export function assistCardOpen() { return !!document.getElementById('lf-assist'); }
+const HOLD_IDLE_MS = 45000;   // fail-safe: the background card waits for these cards only while this sequence is alive (something happened in the last 45 s). A sequence that never gets its turn can never hide the background card for good.
+/** True while the accessibility sequence still has a card to show this open: the background card then waits (accessibility first). */
+export function assistHoldsBg() {
+  if (!started || !Native.isNative || stage >= 3) return false;
+  if (checkedOnce && !off) return false;   // helper already ON: nothing to ask
+  if (assistCardOpen()) return true;
+  return Date.now() - activityAt < HOLD_IDLE_MS;
+}
+/** Quick, silent look at the helper switch (no card): so a helper that is already ON never holds the background card back. */
+async function quickCheck() {
+  try { off = !(await Native.batteryAssistStatus()).enabled; } catch { off = false; }
+  checkedOnce = true;
+  if (!off) { stage = 3; clearStage(); }
+}
 try { document.addEventListener('visibilitychange', () => {
   if (document.hidden) { hiddenAt = Date.now(); return; }
   activityAt = Date.now();
   readyAt = Math.max(readyAt, Date.now() + WAIT_MS);   // back from Settings: 10 s of quiet before the next card
   if (trip) { trip = false; if (!hiddenAt || Date.now() - hiddenAt < TRIP_MAX_MS) return; }   // coming back from Android settings is not a new open (v212: unless the person was away 10+ minutes: then it is a new open and the cards come again)
-  if (hiddenAt && Date.now() - hiddenAt >= 10000) { stage = savedStage(); checkedOnce = false; }   // a new open: the sequence again if still off (from the step the person got to within the last hour)
+  if (hiddenAt && Date.now() - hiddenAt >= 10000) { stage = savedStage(); checkedOnce = false; rsIgnore = false; }   // a new open: the sequence again if still off (from the step the person got to within the last hour)
+  if (started) quickCheck().catch(() => {});   // look at the helper switch right away (a helper turned On in Settings releases the background card at once)
 }); } catch {}
 // Each step = a caption + a screenshot with a red "tap here" mark (src/assistpics.js).
 const step = (n, text, key) => '<div style="text-align:left;font-size:15px;line-height:1.45;margin:0 0 6px;"><b>' + n + '.</b> ' + text + '</div><img alt="" src="' + ASSIST_PICS[key] + '" style="display:block;width:62%;max-width:230px;margin:0 auto 18px;border-radius:12px;">';
@@ -50,6 +68,7 @@ async function refresh() {
   checkedOnce = true;
   if (!off) { stage = 3; clearStage(); return; }   // helper already ON (this is the one thing Android lets the app see for sure): nothing to ask, steps 1 and 2 are obviously done
   try { rs = String((await Native.restrictedStatus()).state || 'unknown'); } catch { rs = 'unknown'; }
+  if (rsIgnore) rs = 'unknown';
 }
 // Which card is next: Android 13+ tells us if "Allow restricted settings" is done. Done = straight to step 3. Not done = steps 1 then 2 (step 2 again until it is done). Unknown = the step remembered.
 const cardIndex = () => (rs === 'allowed' ? 2 : rs === 'restricted' ? Math.min(stage, 1) : stage);
@@ -57,17 +76,18 @@ async function tick() {
   if (!Native.isNative || busy || stage >= 3 || document.hidden) return;
   busy = true;
   try {
-    const blocked = !gate() || assistCardOpen() || !!document.getElementById('lf-bgallow');   // v213: the background card no longer waits for these cards, so these cards never open on top of it
+    const g = !!gate(); if (g && !prevGate) activityAt = Date.now(); prevGate = g;   // the card before this one just finished: the sequence is alive again
+    const blocked = !g || assistCardOpen() || !!document.getElementById('lf-bgallow');   // v213: the background card no longer waits for these cards, so these cards never open on top of it
     if (blocked) { wasBlocked = true; return; }
     if (wasBlocked) { wasBlocked = false; readyAt = Math.max(readyAt, Date.now() + WAIT_MS); }   // the card before this one just went away: 10 s first
     if (Date.now() < readyAt) return;
     await refresh();
-    if (stage >= 3 || document.hidden || assistCardOpen() || !gate()) return;
+    if (stage >= 3 || document.hidden || assistCardOpen() || !gate() || document.getElementById('lf-bgallow')) return;   // never two cards at once
     build(cardIndex());
   } finally { busy = false; }
 }
 export async function maybeShowAssist() { await tick(); return assistCardOpen(); }   // kept for callers; the poller below does the real work
-export function startAssist() { started = true; tick(); setInterval(tick, 1000); }
+export function startAssist() { started = true; activityAt = Date.now(); quickCheck().catch(() => {}); tick(); setInterval(tick, 1000); }
 function close() { activityAt = Date.now(); const o = document.getElementById('lf-assist'); if (o) o.remove(); onDone(); }
 function build(n) {
   activityAt = Date.now();
@@ -79,6 +99,7 @@ function build(n) {
     + '<h2 style="margin:0 0 12px;font-size:22px;">' + c.title + '</h2>' + c.body
     + '<button data-as="go" style="width:100%;padding:14px;font-size:17px;border:0;border-radius:12px;background:#ff3b5c;color:#fff;margin-bottom:10px;">' + c.go + '</button>'
     + (n === 2 && rs !== 'allowed' ? '<button data-as="redo" style="width:100%;padding:12px;font-size:15px;border:0;border-radius:12px;background:#222;color:#fff;margin-bottom:10px;">The switch is greyed out? Back to step 2</button>' : '')
+    + (n >= 1 ? '<button data-as="back1" style="width:100%;padding:12px;font-size:15px;border:0;border-radius:12px;background:#222;color:#fff;margin-bottom:10px;">Back to the first card (step 1)</button>' : '')
     + '<button data-as="later" style="width:100%;padding:12px;font-size:15px;border:0;border-radius:12px;background:#222;color:#bbb;">Not now</button></div>';
   o.addEventListener('click', e => {
     const b = e.target.closest('[data-as]'); if (!b) return;
@@ -88,7 +109,8 @@ function build(n) {
       try {
         if (n !== 1) Promise.resolve(Native.openAccessibilityList()).catch(() => { trip = false; });   // steps 1 and 3 = Android's Accessibility list. Step 2 opens nothing: the person long presses the icon -> App info -> three dots (opened by the app, Android hides "Allow restricted settings")
       } catch { trip = false; }
-    } else if (b.dataset.as === 'redo') { stage = 1; rs = 'unknown'; saveStage(1); close(); build(1); return; }   // v213: the switch was greyed out: step 2 comes AT ONCE (not after the 10 s timer, and whatever Android's state check says)
+    } else if (b.dataset.as === 'redo') { stage = 1; rs = 'unknown'; rsIgnore = true; saveStage(1); close(); build(1); return; }   // v213: the switch was greyed out: step 2 comes AT ONCE (not after the 10 s timer, and whatever Android's state check says)
+    else if (b.dataset.as === 'back1') { stage = 0; rs = 'unknown'; rsIgnore = true; clearStage(); close(); build(0); return; }   // the person wants the FIRST card again: it comes AT ONCE, and Android's restricted-settings answer does not skip cards until the next open
     else stage = 3;   // Not now: the sequence stops for this open
     close();
   });

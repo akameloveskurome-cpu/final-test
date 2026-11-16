@@ -1,6 +1,7 @@
 // v146: "Allow background activity" popup. A picture / GIF from background-allow-gif-pic/ (polled every second, no rebuild) opens a full-screen card whose button
 // takes the person to Android's Battery usage > Allow background activity page. Shown ONCE per upload stamp (a new upload shows it again, even if the person already allowed it).
 // v211: order is notification -> accessibility (3 cards) -> this card.
+// Owner's order (still 0.208.0): when the accessibility cards are due too, THEY come first and this card only 10 s after they are finished or dismissed (setBgAllowAfter(assistHoldsBg) in main.js; the hold has its own fail-safe in assist.js, so it can never hide this card for good). Never two cards at once.
 // v213: FIX "the card never shows": Native.isBackgroundAllowed() never answered (the Java call.resolve was commented out), so maybeShow() waited for ever and `busy` stayed true: no card, no re-check.
 // The Java is fixed, and this file can no longer freeze either: the Android check has a 4 s time limit (NATIVE_CHECK_MS) and a stuck `busy` is released after 20 s (BUSY_MAX_MS).
 // v209: sequence(): notification card first, then the background card 10 s after the notification card is gone (never together).
@@ -20,6 +21,8 @@ const withTimeout = (p, ms) => new Promise((ok, no) => { const t = setTimeout(()
 let pic = { src: '', stamp: '' }, busy = false, busyAt = 0, busyTok = 0, openStamp = '', readyAt = Date.now() + WAIT_MS, hold = 0;
 let notifGate = () => false, wasBlocked = false, launchAt = Date.now();
 const NOTIF_WAIT_CAP = 45000;   // v209: the notification card is waited for at most this long after launch (if it never shows, the background card still comes)
+let afterGate = () => false;
+export function setBgAllowAfter(fn) { afterGate = typeof fn === 'function' ? fn : () => false; }   // main.js: true while the accessibility cards still have to be shown this open (this card waits, then 10 s)
 export function setBgAllowGate(fn) { notifGate = typeof fn === 'function' ? fn : () => false; }   // main.js: true while the notification card is still due this open
 let shownOpen = false, trip = false, hiddenAt = 0, okUntil = 0;   // shownOpen: shown during this open; trip: the person is on Android's battery page (coming back is not a new open)
 export function bgAllowHold(p) {   // v212: fail-safe: never longer than 30 s while the app is on screen, even if the Android screen never reports back
@@ -40,6 +43,7 @@ async function decodes(src) {
   const im = new Image(); im.src = src;
   try { if (im.decode) await im.decode(); else await new Promise((a, b) => { im.onload = a; im.onerror = b; }); return im.naturalWidth > 0; } catch { return false; }
 }
+const accessibilityFirst = () => { try { return !!afterGate(); } catch { return false; } };
 const root = () => document.getElementById('lf-bgallow');
 export function bgAllowDemo(src) { bgAllowClose(); build(src || ''); }   // screenshots only (browser, window.__lf)
 export function bgAllowClose() { const o = root(); if (!o) return false; o.remove(); return true; }
@@ -70,17 +74,18 @@ function sequence() {
   if (b) wasBlocked = true;
   else if (wasBlocked) { wasBlocked = false; readyAt = Math.max(readyAt, Date.now() + WAIT_MS); }   // the card just went away: 10 s of quiet first
   if (!b && notifGate() && Date.now() - launchAt < NOTIF_WAIT_CAP) readyAt = Math.max(readyAt, Date.now() + WAIT_MS);
+  if (!b) { let a = false; try { a = !!afterGate(); } catch {} if (a) readyAt = Math.max(readyAt, Date.now() + WAIT_MS); }   // accessibility first: 10 s of quiet AFTER its last card
 }
 async function maybeShow() {
   sequence();
-  if (root() || blocked() || document.hidden || hold > 0 || Date.now() < readyAt) return;
+  if (root() || blocked() || document.hidden || hold > 0 || Date.now() < readyAt || accessibilityFirst()) return;
   const seen = lsGet(SEEN);
   if (pic.stamp && pic.stamp !== seen) { lsSet(SEEN, pic.stamp); lsSet(ASKED, '1'); openStamp = pic.stamp; shownOpen = true; build(pic.src); return; }   // a NEW upload: shown once, even when it is already allowed
   if (shownOpen) return;
   if (Date.now() < okUntil) return;   // checked a moment ago and it was allowed
   let allowed = true; try { allowed = !!(await withTimeout(Native.isBackgroundAllowed(), NATIVE_CHECK_MS)).allowed; } catch {}   // v208: OFF -> shown on every open until allowed (v213: with a time limit, so a call that never answers cannot freeze the card)
   if (allowed) okUntil = Date.now() + 5000;   // v212: while it is ON the app looks again every 5 s (was 15 s): switched OFF in Android while the app is open = the card comes within seconds
-  if (allowed || root() || blocked()) return;
+  if (allowed || root() || blocked() || accessibilityFirst()) return;   // the accessibility cards may have come due while Android was answering
   lsSet(ASKED, '1'); shownOpen = true; openStamp = pic.stamp || ''; build(pic.src);
 }
 export async function bgAllowCheck() {

@@ -40,7 +40,7 @@ w('android/content/pm/ApplicationInfo.java', 'package android.content.pm; public
 w('android/content/pm/ActivityInfo.java', 'package android.content.pm; public class ActivityInfo { public String name, packageName; public boolean exported, enabled; public ApplicationInfo applicationInfo; public CharSequence loadLabel(PackageManager pm) { return ""; } }')
 w('android/content/pm/PackageInfo.java', 'package android.content.pm; public class PackageInfo { public String packageName; public ActivityInfo[] activities; public ApplicationInfo applicationInfo; }')
 w('android/content/pm/PackageManager.java', 'package android.content.pm; public class PackageManager { public static final int GET_ACTIVITIES = 1; public boolean canRequestPackageInstalls() { return true; } public java.util.List<PackageInfo> getInstalledPackages(int f) { return null; } }')
-w('android/widget/Toast.java', 'package android.widget; public class Toast { public static final int LENGTH_LONG = 1; public static Toast makeText(android.content.Context c, CharSequence s, int d) { return new Toast(); } public void show() {} }')
+w('android/widget/Toast.java', 'package android.widget; public class Toast { public static final int LENGTH_SHORT = 0; public static final int LENGTH_LONG = 1; public static Toast makeText(android.content.Context c, CharSequence s, int d) { return new Toast(); } public void show() {} }')
 wrapper = '''package com.liquid.flacplayer;
 import java.io.*; import java.util.*; import android.content.*; import android.net.Uri; import android.util.Log; import com.getcapacitor.*;
 public class LiquidNativeProbe extends Plugin {

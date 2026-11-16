@@ -1985,7 +1985,7 @@ public class LiquidNative extends Plugin {
   }
 
   /** Shown when the phone will not open the Battery usage page directly. */
-  private static final String HOW_TO_TURN_ON = "To turn it on: App info > Battery usage > switch ON Allow background activity.";
+  private static final String HOW_TO_TURN_ON = "Tap Battery usage, then turn on Allow background activity.";   // shorter, so it can be read in the ~2 s the toast stays
   /** v210e: the generic Battery usage page (Unrestricted / Optimized / Restricted, no switch) opened on phones that are not OnePlus / OPPO / Realme. */
 
   /** v210: set by Allow on the background card; BatteryAssistService taps Battery usage once while this is in the future. */
@@ -2079,15 +2079,10 @@ public class LiquidNative extends Plugin {
       JSObject o = new JSObject(); o.put("ok", !via.isEmpty()); o.put("via", via);
       if ("app-info".equals(via)) {   // the person is on App info: a native toast (visible over Settings) tells them the one tap that is left
         o.put("hint", HOW_TO_TURN_ON);
-        // The how-to stays on screen for about 12 s: a Toast lasts ~3.5 s, so it is shown again every 3 s, four times (a Toast shows over Settings; an app dialog cannot).
-        LIB_POOL.execute(new Runnable() { @Override public void run() {
-          for (int i = 0; i < 4; i++) {
-            try {
-              getActivity().runOnUiThread(new Runnable() { @Override public void run() { android.widget.Toast.makeText(getContext(), HOW_TO_TURN_ON, android.widget.Toast.LENGTH_LONG).show(); } });
-              Thread.sleep(3000);
-            } catch (Throwable t) { return; }   // no toast: the person still sees App info
-          }
-        } });
+        // ONE short toast (about 2 s) instead of four long ones in a row (it used to stay on screen for about 12 s). A Toast shows over Settings; an app dialog cannot.
+        try {
+          getActivity().runOnUiThread(new Runnable() { @Override public void run() { android.widget.Toast.makeText(getContext(), HOW_TO_TURN_ON, android.widget.Toast.LENGTH_SHORT).show(); } });
+        } catch (Throwable t) { /* no toast: the person still sees App info */ }
       }
       call.resolve(o);
     } });

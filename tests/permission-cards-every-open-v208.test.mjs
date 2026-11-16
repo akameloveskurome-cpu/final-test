@@ -30,7 +30,7 @@ test('Allow: system prompt first; when it cannot appear, Android notification se
 
 test('background card: shown on every open while Android has background activity OFF', () => {
   assert.ok(B.includes('if (shownOpen) return;') && B.includes('Native.isBackgroundAllowed()') && B.includes('shownOpen = true; openStamp = pic.stamp'));
-  assert.ok(/if \(allowed \|\| root\(\) \|\| blocked\(\)\) return;/.test(B));            // allowed = no card (only a NEW upload shows it then)
+  assert.ok(/if \(allowed \|\| root\(\) \|\| blocked\(\)( \|\| accessibilityFirst\(\))?\) return;/.test(B));            // allowed = no card (only a NEW upload shows it then)
   assert.ok(B.includes("if (pic.stamp && pic.stamp !== seen)"));                           // a new upload still shows once, even when already allowed
   assert.ok(B.includes('shownOpen = false;') && B.includes('>= 10000') && B.includes('if (trip) { trip = false; if (!hiddenAt || Date.now() - hiddenAt < TRIP_MAX_MS) return; }'));
   assert.ok(B.includes("trip = true; try { Native.openBackgroundSettings()"));
@@ -43,7 +43,7 @@ test('background card: plain card when the picture cannot be read for a while; t
 
 test('the two cards never stack', () => {
   assert.ok(B.includes("document.querySelector('#sheet .popcard')"));                      // the background card waits for the notification card
-  assert.ok(M.includes("document.getElementById('lf-bgallow')) { setTimeout(() => startPopup()"));   // and the notification card waits for the background card
+  assert.ok(M.includes("document.getElementById('lf-bgallow') || document.getElementById('lf-assist')) { setTimeout(() => startPopup()"));   // and the notification card waits for the background card
 });
 
 test('background "allowed" = not battery-optimized (the switch, confirmed by adb); restricted and app-ops are logged only (v210c)', () => {

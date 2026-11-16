@@ -7,6 +7,9 @@
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
 
+## Accessibility cards first, then the background card (no version change)
+When both are due, the Accessibility cards now come first and the "Allow background activity" card comes 10 s after they are finished or dismissed; the two never show together. The Step 2 and Step 3 Accessibility cards have a "Back to the first card (step 1)" button. The hint at the bottom of the screen that tells you to tap Battery usage now shows once for about 2 seconds (it used to repeat for about 12 seconds). If the Accessibility cards never get their turn, the background card still comes after about 45 seconds. The background-activity detection itself is unchanged.
+
 ## The "Allow background activity" popup shows again, on every open while it is off
 The popup ("Keep the music playing") never appeared. The app asked Android whether background activity is allowed, but a slip in the Android code meant it never got an answer, so the popup waited for ever and never opened, not at the start and not on later opens. That is fixed: while Allow background activity is off, the popup comes every time the app is opened (and again after you were away 10 seconds or more) until you allow it. If Android ever does not answer, the app now gives up after 4 seconds and asks again a few seconds later instead of getting stuck.
 

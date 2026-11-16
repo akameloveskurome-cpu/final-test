@@ -76,8 +76,23 @@ test('chain: helper OFF, all three accessibility cards done by hand: background 
 test('chain: closed from Home and reopened 5 min later, still OFF: accessibility card, then the background card, again', () => {
   const l = sim('resumeAfterLong'); assert.equal(l.filter(x => x.e === 'lf-bgallow shown').length, 2); assert.equal(l.filter(x => x.e === 'lf-assist shown').length, 2);
 });
-test('v213: the background card comes REGARDLESS of the accessibility cards: even if they never get their turn it comes ~10 s in (+8 s only when its picture cannot be read)', () => {
-  const t = at(sim('gateStuck'), 'lf-bgallow shown'); assert.ok(t >= 10 && t <= 25, 'at +' + t);
+test('accessibility first: when the accessibility cards never get their turn the background card still comes, after the 45 s fail-safe (never hidden for good)', () => {
+  const t = at(sim('gateStuck'), 'lf-bgallow shown'); assert.ok(t >= 45 && t <= 75, 'at +' + t);
+});
+test('accessibility first: both due -> the accessibility card is shown first and the background card only AFTER it was dismissed (10 s+)', () => {
+  const l = sim('helperOffNotNow'); const a = at(l, 'lf-assist shown'), n = at(l, 'person: Not now'), b = at(l, 'lf-bgallow shown');
+  assert.ok(a !== undefined && b !== undefined && a < n && n < b, 'order ' + [a, n, b]); assert.ok(b - n >= 10, 'gap ' + (b - n));
+});
+test('accessibility first: the background card waits through the whole 3-step accessibility flow and comes after the last step', () => {
+  const l = sim('helperOffFullFlow'); const firstBg = at(l, 'lf-bgallow shown'), lastAssist = l.filter(x => x.e === 'lf-assist shown').pop().t;
+  assert.ok(firstBg > lastAssist + 10, 'bg ' + firstBg + ' last accessibility card ' + lastAssist);
+  assert.equal(l.filter(x => x.e === 'lf-bgallow shown').length, 1);
+});
+test('back to the first card: the button on step 2 and on step 3 brings step 1 back AT ONCE (even when Android says restricted settings are allowed)', () => {
+  for (const sc of ['back1Step2', 'back1Step3']) {
+    const l = sim(sc); const tap = l.find(x => x.e.startsWith('person: taps back to step 1')), c1 = l.filter(x => x.e === 'card: Step 1: open Accessibility')[0];
+    assert.ok(tap && c1 && c1.t - tap.t <= 1, sc + ': step 1 came ' + (c1 && tap && c1.t - tap.t) + ' s after the tap');
+  }
 });
 test('chain fail-safe: even if the All-files request never reports back, the background card comes', () => {
   const t = at(sim('holdStuck'), 'lf-bgallow shown'); assert.ok(t > 0 && t <= 70, 'at +' + t);
@@ -128,17 +143,25 @@ test('v213: sources: native methods exist, step 2 exits, helper ON clears the me
 });
 
 test('v213: the two cards are never open at the same time in any scenario', () => {
-  for (const sc of ['helperOn', 'helperOffNotNow', 'helperOffFullFlow', 'resumeAfterLong', 'gateStuck', 'holdStuck', 'rsBecomesAllowed', 'rsRestricted'])
+  for (const sc of ['helperOn', 'helperOffNotNow', 'helperOffFullFlow', 'resumeAfterLong', 'gateStuck', 'holdStuck', 'rsBecomesAllowed', 'rsRestricted', 'back1Step2', 'back1Step3'])
     assert.equal(sim(sc).filter(x => x.e.startsWith('OVERLAP')).length, 0, sc);
 });
-test('v213: the background card never waits for the accessibility cards (only the notification card holds it back)', async () => {
+test('accessibility first: sources: main.js wires the hold, bgallow.js waits and re-checks before it builds, assist.js has the hold + fail-safe + back button', async () => {
   const { readFileSync } = await import('node:fs');
   const rd = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
-  assert.doesNotMatch(rd('src/bgallow.js'), /assistPending|assistWaiting|assistDue|from '\.\/assist\.js'/);
+  assert.match(rd('src/main.js'), /setBgAllowAfter\(assistHoldsBg\);/);
   assert.match(rd('src/main.js'), /setBgAllowGate\(\(\) => permOff && !permShownOpen\);/);
+  const b = rd('src/bgallow.js'); assert.match(b, /export function setBgAllowAfter/); assert.match(b, /accessibilityFirst\(\)\) return;/);
+  const a = rd('src/assist.js'); assert.match(a, /export function assistHoldsBg/); assert.match(a, /HOLD_IDLE_MS = 45000/); assert.match(a, /data-as="back1"/); assert.match(a, /getElementById\('lf-bgallow'\)\) return;/);
 });
 
 test('v213: step 3 "The switch is greyed out? Back to step 2" shows step 2 at once (same second), not after a silent gap', () => {
   const l = sim('redoBack'); const tap = at(l, 'person: taps "greyed out? Back to step 2"'), c2 = l.filter(x => x.e === 'card: Step 2: Allow restricted settings')[0];
   assert.ok(c2 && c2.t - tap <= 1, 'step 2 came ' + (c2 && c2.t - tap) + ' s after the tap');
+});
+
+test('no clash: the notification / picture popup never opens on top of an accessibility card or the background card', async () => {
+  const { readFileSync } = await import('node:fs');
+  const m = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(m, /getElementById\('lf-bgallow'\) \|\| document\.getElementById\('lf-assist'\)\) \{ setTimeout\(\(\) => startPopup/);
 });

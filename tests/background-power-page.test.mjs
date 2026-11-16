@@ -30,8 +30,9 @@ test('App info route tells the person the one tap that is left: result hint + a 
   assert.match(open, /"app-info"\.equals\(via\)/);
   assert.match(open, /o\.put\("hint", HOW_TO_TURN_ON\)/);
   assert.match(open, /android\.widget\.Toast\.makeText\(getContext\(\), HOW_TO_TURN_ON/);
-  assert.match(open, /i < 4; i\+\+/, 'the how-to is shown four times, every 3 s, so it stays about 12 s');
-  assert.match(open, /Thread\.sleep\(3000\)/);
+  assert.match(open, /Toast\.LENGTH_SHORT/, 'the how-to is ONE short toast (about 2 s), not four long ones');
+  assert.doesNotMatch(open, /i < 4; i\+\+|Thread\.sleep\(3000\)|Toast\.LENGTH_LONG/, 'no repeating toast loop any more');
+  assert.equal((open.match(/Toast\.makeText/g) || []).length, 1, 'one toast call only');
   assert.match(open, /getActivity\(\)\.runOnUiThread/);
 });
 
