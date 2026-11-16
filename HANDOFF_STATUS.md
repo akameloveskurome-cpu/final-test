@@ -8,6 +8,12 @@
 
 
 
+## Accessibility cards: exit after step 2, restricted-settings state, remembered progress (no version change, still 0.208.0)
+- **WHAT:** native `exitApp()` (finishAndRemoveTask, falls back to moveTaskToBack) and `restrictedStatus()` (AppOps `android:access_restricted_settings`, Android 13+: allowed / restricted / unknown; below 13 = allowed) in `LiquidNative.java` + wrappers in `src/native.js`. `src/assist.js`: step 2 button saves progress (`lf.assist` in localStorage, valid 1 h) and calls `Native.exitApp()` 350 ms later; `refresh()` clears the memory when the helper is ON and reads `rs`; `cardIndex()`: allowed -> step 3, restricted -> step 1 then step 2 until done, unknown -> remembered stage; step 3 has a "greyed out? back to step 2" button (`data-as="redo"`).
+- **WHAT THE APP CAN KNOW:** step 3 (helper ON) exactly; step 2 only through the Android 13+ op above (unverified on a real phone, falls back to remembered progress on "unknown"); step 1 not at all.
+- **TESTS:** new scenarios in `tests/permchain-sim.mjs` + tests in `tests/bg-reopen-after-trip-v212.test.mjs`; probe stubs `AppOpsManager.unsafeCheckOpNoThrow`, `Context.APP_OPS_SERVICE`, `FakeAct.finishAndRemoveTask/moveTaskToBack` added to `tests/java-probe.py` and `java-probe-update.py`.
+- **DO NOT REDO:** do not remove the exit after step 2 (the person must reach the icon); do not trust `restricted`/`allowed` more than the fallback allows (unknown stays the remembered stage).
+
 ## Background / notification / accessibility cards skipped after leaving from the Android page (no version change, still 0.208.0)
 - **BUG (reproduced by `tests/bg-reopen-after-trip-v212.test.mjs`):** `trip` (bgallow.js), `trip` (assist.js) and `permTrip` (main.js) were set when the person tapped Allow / Open and cleared by the NEXT `visibilitychange` whatever happened. A person who left from the Android page (Home) and opened the app much later had that open swallowed as "back from settings": `shownOpen` / `stage` / `permShownOpen` were not reset, so the card did not come.
 - **FIX:** the trip only counts as "same open" when the person was away less than `TRIP_MAX_MS` (bgallow 10 s, notification 10 s, assist 10 min because step 2 is manual). Longer = a new open (flags reset, cards come again while the permission is still off). Files: `src/bgallow.js`, `src/assist.js`, `src/main.js`, new test.

@@ -97,3 +97,32 @@ test('background activity switched OFF while the app is open: noticed and shown 
     assert.ok(after >= 0 && after <= 8, 'card ' + after + ' s after it was switched off');
   } finally { w.restore(); }
 });
+
+// ---- v213: step 2 closes the app; the app knows where the person got to ----
+const cards = l => l.filter(x => x.e.startsWith('card: ')).map(x => x.e.slice(6));
+test('v213 step 2: tapping the button closes the app (exitApp) about a second later; Android 13+ "restricted" state keeps step 2 coming until it is done', () => {
+  const l = sim('rsRestricted'); assert.deepEqual(cards(l).slice(0, 3), ['Step 1: open Accessibility', 'Step 2: Allow restricted settings', 'Step 2: Allow restricted settings']);
+  const go = at(l, 'person: go on Step 2'), ex = at(l, 'exitApp called'); assert.ok(ex - go <= 1 && ex >= go, 'exit ' + (ex - go) + ' s after the tap');
+});
+test('v213: once Android says restricted settings are allowed, the next card is step 3, then the background card', () => {
+  const l = sim('rsBecomesAllowed'); assert.deepEqual(cards(l), ['Step 1: open Accessibility', 'Step 2: Allow restricted settings', 'Step 3: turn the battery helper On']); assert.ok(at(l, 'lf-bgallow shown') > at(l, 'person: back', 2));
+});
+test('v213: restricted settings already allowed (e.g. done earlier): only step 3 is shown', () => {
+  assert.deepEqual(cards(sim('rsAllowed')), ['Step 3: turn the battery helper On']);
+});
+test('v213: the app was closed by step 2 less than an hour ago and the helper is still off: it opens on step 3, not step 1', () => {
+  assert.deepEqual(cards(sim('coldAfterStep2')), ['Step 3: turn the battery helper On']);
+});
+test('v213: more than an hour later and the helper is still off: the full sequence from step 1 again', () => {
+  assert.deepEqual(cards(sim('coldLongAgo')), ['Step 1: open Accessibility']);
+});
+test('v213: sources: native methods exist, step 2 exits, helper ON clears the memory, greyed-switch button on step 3', async () => {
+  const { readFileSync } = await import('node:fs');
+  const rd = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+  const j = rd('native-android/LiquidNative.java'), a = rd('src/assist.js'), n = rd('src/native.js');
+  assert.match(j, /public void restrictedStatus\(PluginCall call\)/); assert.match(j, /android:access_restricted_settings/); assert.match(j, /public void exitApp\(PluginCall call\)/); assert.match(j, /finishAndRemoveTask/);
+  assert.match(n, /restrictedStatus: /); assert.match(n, /exitApp: /);
+  assert.match(a, /if \(n === 1\) setTimeout\(\(\) => \{ try \{ Promise\.resolve\(Native\.exitApp\(\)\)/);
+  assert.match(a, /if \(!off\) \{ stage = 3; clearStage\(\); return; \}/);
+  assert.match(a, /data-as="redo"/); assert.match(a, /Liquid Dark closes by itself/);
+});

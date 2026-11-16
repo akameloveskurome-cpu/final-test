@@ -5,6 +5,9 @@ const scen = process.argv[2];
 let now = 1_000_000; Date.now = () => now;
 const intervals = [], timers = []; globalThis.setInterval = f => { intervals.push(f); return 0; }; globalThis.setTimeout = (f, ms) => { timers.push({ at: now + ms, f }); return 0; };
 globalThis.fetch = async () => { throw new Error('offline'); };   // no picture readable: the plain card (picture swaps in later)
+const store = {}; globalThis.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; } };
+if (scen === 'coldAfterStep2') store['lf.assist'] = JSON.stringify({ stage: 2, at: now - 120000 });   // the app was closed by step 2 two minutes ago
+if (scen === 'coldLongAgo') store['lf.assist'] = JSON.stringify({ stage: 2, at: now - 2 * 3600000 });   // two hours ago: the full sequence again
 const els = new Set(), listeners = {}; let popcard = false, hidden = false;
 globalThis.document = {
   get hidden() { return hidden; },
@@ -23,6 +26,9 @@ let helperOn = scen === 'helperOn' || scen === 'holdStuck', gateOpen = scen !== 
 Native.isNative = true;
 Native.batteryAssistStatus = async () => ({ enabled: helperOn });
 Native.openAccessibilityList = async () => ({});
+Native.restrictedStatus = async () => ({ state: scen === 'rsAllowed' ? 'allowed' : (scen === 'rsRestricted' || scen === 'rsBecomesAllowed') ? (rsNow ? 'allowed' : 'restricted') : 'unknown' });
+let rsNow = false;
+Native.exitApp = async () => { push('exitApp called'); return { ok: true }; };
 Native.isBackgroundAllowed = async () => ({ allowed: false });
 Native.openBackgroundSettings = async () => ({});
 A.setAssistGate(() => gateOpen);
@@ -36,7 +42,7 @@ const seen = {};
 async function step(personFn) {
   for (const t of timers.splice(0)) { if (t.at <= now) t.f(); else timers.push(t); }
   for (const f of intervals) await f();
-  for (const id of ['lf-assist', 'lf-bgallow']) { const e = document.getElementById(id); if (e && !e.__seen) { e.__seen = true; push(id + ' shown'); } }
+  for (const id of ['lf-assist', 'lf-bgallow']) { const e = document.getElementById(id); if (e && !e.__seen) { e.__seen = true; push(id + ' shown'); if (id === 'lf-assist') push('card: ' + (/<h2[^>]*>([^<]*)</.exec(e.innerHTML) || [])[1]); } }
   if (personFn) await personFn();
   now += 1000;
 }
@@ -52,6 +58,17 @@ else if (scen === 'helperOffNotNow') {
       const e = document.getElementById('lf-assist');
       if (e && !hidden) { cardAt.a ??= T(); if (T() >= cardAt.a + 3) { click('lf-assist', 'as', 'go'); push('person: go (card ' + (++n) + ')'); cardAt.a = undefined; hide(); cardAt.back = T() + (n === 2 ? 60 : 20); } }
       if (hidden && T() >= cardAt.back) { show(); push('person: back'); }
+    });
+  }
+} else if (scen === 'step2Exit' || scen === 'coldAfterStep2' || scen === 'coldLongAgo' || scen === 'rsAllowed') {
+  await run(40, async () => { const e = document.getElementById('lf-assist'); if (e && !hidden) { const title = /<h2[^>]*>([^<]*)</.exec(e.innerHTML)[1]; if (/Step 2/.test(title)) { click('lf-assist', 'as', 'go'); push('person: go on step 2'); } else { click('lf-assist', 'as', 'later'); push('person: Not now on ' + title.slice(0, 6)); } } });
+} else if (scen === 'rsRestricted' || scen === 'rsBecomesAllowed') {
+  let goes = 0;
+  for (let i = 0; i < 160; i++) {
+    await step(async () => {
+      if (hidden) { if (T() >= cardAt.back) { if (scen === 'rsBecomesAllowed' && goes >= 2) rsNow = true; show(); push('person: back'); } return; }
+      const e = document.getElementById('lf-assist');
+      if (e) { const title = /<h2[^>]*>([^<]*)</.exec(e.innerHTML)[1]; click('lf-assist', 'as', 'go'); goes++; push('person: go on ' + title.slice(0, 6)); hide(); cardAt.back = T() + 30; }
     });
   }
 } else if (scen === 'resumeAfterLong') {

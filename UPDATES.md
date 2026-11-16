@@ -7,6 +7,12 @@
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
 
+## Accessibility cards know where you are: step 2 closes the app, step 3 is detected, steps are remembered
+- Step 2: tapping "Got it, I will do this" now closes Liquid Dark by itself (music keeps playing), so you can long press its icon on the home screen right away.
+- The app can see if the battery helper is ON (that is step 3). If it is on, no accessibility card is shown any more. If it is off, the cards come on every open.
+- On Android 13+ the app also reads whether "Allow restricted settings" is done. Done = it jumps straight to step 3. Not done = step 2 is shown again until it is. If the phone does not say, the app uses the step you got to in the last hour (so after step 2 closed the app, the next open starts at step 3).
+- Step 3 has a new small button "The switch is greyed out? Back to step 2".
+
 ## Permission cards come back every open, even after leaving from Android's settings page
 If you tapped Allow (background, notifications or accessibility), went to Android's settings and left from there (Home, or switched app) instead of coming back to Liquid Dark, the next time you opened the app it was taken for "back from settings" and the card was skipped for that whole open. Now: back within 10 seconds = same open; away longer = a new open, and the cards show again while the permission is still off (the accessibility steps allow 10 minutes, because step 2 is done by hand). Also new: the background card can no longer be held back for good if the accessibility step or the All files access request gets stuck (30 s fail-safe). The gap between popups is still 10 s. The app also re-reads "Allow background activity" every 5 s while it is ON (was 15 s), so switching it OFF in Android while the app is open shows the card within seconds.
 

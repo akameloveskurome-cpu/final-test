@@ -7,7 +7,12 @@ import { Native } from './native.js';
 import { ASSIST_PICS } from './assistpics.js';
 const WAIT_MS = 10000;
 const TRIP_MAX_MS = 600000;   // v212: step 2 is done by hand, so allow up to 10 minutes away before a return counts as a NEW open
-let stage = 0, trip = false, hiddenAt = 0, readyAt = Date.now() + WAIT_MS, wasBlocked = false, started = false, off = true, checkedOnce = false, busy = false;
+const PKEY = 'lf.assist', PKEEP_MS = 3600000;   // v213: progress is remembered for an hour, because step 2 closes the app and the next open is a fresh start
+function savedStage() { try { const j = JSON.parse(localStorage.getItem(PKEY) || 'null'); if (j && Date.now() - j.at < PKEEP_MS && j.stage > 0 && j.stage < 3) return j.stage | 0; } catch {} return 0; }
+function saveStage(s) { try { localStorage.setItem(PKEY, JSON.stringify({ stage: s, at: Date.now() })); } catch {} }
+function clearStage() { try { localStorage.removeItem(PKEY); } catch {} }
+let rs = 'unknown';   // v213: "Allow restricted settings" state from Android (allowed / restricted / unknown)
+let stage = savedStage(), trip = false, hiddenAt = 0, readyAt = Date.now() + WAIT_MS, wasBlocked = false, started = false, off = true, checkedOnce = false, busy = false;
 let gate = () => false, onDone = () => {};
 export function setAssistGate(fn) { gate = typeof fn === 'function' ? fn : () => false; }   // main.js: true once All files access and the notification card are finished
 export function setAssistDone(fn) { onDone = typeof fn === 'function' ? fn : () => {}; }
@@ -22,7 +27,7 @@ try { document.addEventListener('visibilitychange', () => {
   activityAt = Date.now();
   readyAt = Math.max(readyAt, Date.now() + WAIT_MS);   // back from Settings: 10 s of quiet before the next card
   if (trip) { trip = false; if (!hiddenAt || Date.now() - hiddenAt < TRIP_MAX_MS) return; }   // coming back from Android settings is not a new open (v212: unless the person was away 10+ minutes: then it is a new open and the cards come again)
-  if (hiddenAt && Date.now() - hiddenAt >= 10000) { stage = 0; checkedOnce = false; }   // a new open: the whole sequence again if still off
+  if (hiddenAt && Date.now() - hiddenAt >= 10000) { stage = savedStage(); checkedOnce = false; }   // a new open: the sequence again if still off (from the step the person got to within the last hour)
 }); } catch {}
 // Each step = a caption + a screenshot with a red "tap here" mark (src/assistpics.js).
 const step = (n, text, key) => '<div style="text-align:left;font-size:15px;line-height:1.45;margin:0 0 6px;"><b>' + n + '.</b> ' + text + '</div><img alt="" src="' + ASSIST_PICS[key] + '" style="display:block;width:62%;max-width:230px;margin:0 auto 18px;border-radius:12px;">';
@@ -33,9 +38,9 @@ const CARDS = [
       + step(1, 'Tap <b>Downloaded apps</b>.', 'a1') + step(2, 'Tap <b>Liquid Dark battery helper</b> (it is greyed out, tap it anyway).', 'a2')
       + step(3, 'Android shows <b>Restricted setting</b>. Tap <b>OK</b>, then come back to Liquid Dark.', 'a3') },
   { title: 'Step 2: Allow restricted settings', go: 'Got it, I will do this',
-    body: '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">Now the option is unlocked, but Android hides it if the app opens App info for you. Open App info yourself like this (leave Liquid Dark first: press Home):</p>'
+    body: '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">Now the option is unlocked, but Android hides it if the app opens App info for you. When you tap the button below, <b>Liquid Dark closes by itself</b>. Then open App info yourself like this:</p>'
       + step(1, 'On your home screen (or in the app drawer) <b>long press</b> the <b>Liquid Dark</b> icon.', 'c1') + step(2, 'Tap <b>App info</b>.', 'c2')
-      + step(3, 'Tap the <b>three dots</b> (top right).', 'a4') + step(4, 'Tap <b>Allow restricted settings</b> and enter your PIN or fingerprint. Then come back to Liquid Dark.', 'a5') },
+      + step(3, 'Tap the <b>three dots</b> (top right).', 'a4') + step(4, 'Tap <b>Allow restricted settings</b> and enter your PIN or fingerprint. Then open Liquid Dark again.', 'a5') },
   { title: 'Step 3: turn the battery helper On', go: 'Open Accessibility',
     body: '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">Restricted settings are allowed now, so the switch works this time.</p>'
       + step(1, 'In Accessibility open <b>Downloaded apps</b>, then tap <b>Liquid Dark battery helper</b>. It is not greyed out any more.', 'b1') + step(2, 'Turn the switch <b>On</b>, then come back to Liquid Dark.', 'b2') },
@@ -43,8 +48,11 @@ const CARDS = [
 async function refresh() {
   try { off = !(await Native.batteryAssistStatus()).enabled; } catch { off = false; }
   checkedOnce = true;
-  if (!off) stage = 3;   // already on: nothing to ask
+  if (!off) { stage = 3; clearStage(); return; }   // helper already ON (this is the one thing Android lets the app see for sure): nothing to ask, steps 1 and 2 are obviously done
+  try { rs = String((await Native.restrictedStatus()).state || 'unknown'); } catch { rs = 'unknown'; }
 }
+// Which card is next: Android 13+ tells us if "Allow restricted settings" is done. Done = straight to step 3. Not done = steps 1 then 2 (step 2 again until it is done). Unknown = the step remembered.
+const cardIndex = () => (rs === 'allowed' ? 2 : rs === 'restricted' ? Math.min(stage, 1) : stage);
 async function tick() {
   if (!Native.isNative || busy || stage >= 3 || document.hidden) return;
   busy = true;
@@ -55,7 +63,7 @@ async function tick() {
     if (Date.now() < readyAt) return;
     await refresh();
     if (stage >= 3 || document.hidden || assistCardOpen() || !gate()) return;
-    build(stage);
+    build(cardIndex());
   } finally { busy = false; }
 }
 export async function maybeShowAssist() { await tick(); return assistCardOpen(); }   // kept for callers; the poller below does the real work
@@ -70,15 +78,18 @@ function build(n) {
   o.innerHTML = '<div style="max-width:420px;max-height:100%;overflow-y:auto;color:#fff;font-family:system-ui,sans-serif;text-align:center;">'
     + '<h2 style="margin:0 0 12px;font-size:22px;">' + c.title + '</h2>' + c.body
     + '<button data-as="go" style="width:100%;padding:14px;font-size:17px;border:0;border-radius:12px;background:#ff3b5c;color:#fff;margin-bottom:10px;">' + c.go + '</button>'
+    + (n === 2 && rs !== 'allowed' ? '<button data-as="redo" style="width:100%;padding:12px;font-size:15px;border:0;border-radius:12px;background:#222;color:#fff;margin-bottom:10px;">The switch is greyed out? Back to step 2</button>' : '')
     + '<button data-as="later" style="width:100%;padding:12px;font-size:15px;border:0;border-radius:12px;background:#222;color:#bbb;">Not now</button></div>';
   o.addEventListener('click', e => {
     const b = e.target.closest('[data-as]'); if (!b) return;
     if (b.dataset.as === 'go') {
-      trip = true; stage = n + 1; readyAt = Date.now() + WAIT_MS;
+      trip = true; stage = n + 1; readyAt = Date.now() + WAIT_MS; saveStage(Math.min(stage, 2));
+      if (n === 1) setTimeout(() => { try { Promise.resolve(Native.exitApp()).catch(() => {}); } catch {} }, 350);   // v213: step 2 closes the app so the person can long press its icon
       try {
         if (n !== 1) Promise.resolve(Native.openAccessibilityList()).catch(() => { trip = false; });   // steps 1 and 3 = Android's Accessibility list. Step 2 opens nothing: the person long presses the icon -> App info -> three dots (opened by the app, Android hides "Allow restricted settings")
       } catch { trip = false; }
-    } else stage = 3;   // Not now: the sequence stops for this open
+    } else if (b.dataset.as === 'redo') { stage = 1; rs = 'unknown'; saveStage(1); readyAt = Date.now() + WAIT_MS; }   // v213: the switch was greyed out: step 2 again
+    else stage = 3;   // Not now: the sequence stops for this open
     close();
   });
   document.body.appendChild(o);

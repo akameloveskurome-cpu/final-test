@@ -1996,6 +1996,33 @@ public class LiquidNative extends Plugin {
   }
 
   @PluginMethod
+  public void restrictedStatus(PluginCall call) {
+    // v213: is "Allow restricted settings" (Android 13+) already done for this app? "allowed" / "restricted" / "unknown" (the JS then falls back to the steps it remembers).
+    // Before Android 13 there is no such lock. A phone that does not know the op answers "unknown", never a wrong "allowed".
+    String state = "unknown";
+    try {
+      if (android.os.Build.VERSION.SDK_INT < 33) state = "allowed";
+      else {
+        android.app.AppOpsManager am = (android.app.AppOpsManager) getContext().getSystemService(android.content.Context.APP_OPS_SERVICE);
+        int mode = am.unsafeCheckOpNoThrow("android:access_restricted_settings", android.os.Process.myUid(), getContext().getPackageName());
+        state = mode == android.app.AppOpsManager.MODE_ALLOWED ? "allowed" : mode == android.app.AppOpsManager.MODE_ERRORED ? "restricted" : "unknown";
+      }
+    } catch (Throwable ignored) { }
+    JSObject o = new JSObject(); o.put("state", state); call.resolve(o);
+  }
+
+  @PluginMethod
+  public void exitApp(PluginCall call) {
+    // v213: step 2 of the accessibility cards: Liquid Dark closes itself so the person can long press its icon on the home screen. (Music keeps playing: only the screen closes.)
+    JSObject o = new JSObject(); o.put("ok", true); call.resolve(o);
+    try {
+      getActivity().runOnUiThread(new Runnable() { @Override public void run() {
+        try { getActivity().finishAndRemoveTask(); } catch (Throwable t) { try { getActivity().moveTaskToBack(true); } catch (Throwable ignored) { } }
+      } });
+    } catch (Throwable ignored) { }
+  }
+
+  @PluginMethod
   public void openAccessibilityList(PluginCall call) {
     // v211: Android's own Accessibility list (Downloaded apps > Liquid Dark battery helper). Used for steps 1 and 3 of the accessibility cards.
     boolean ok = tryStart(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
