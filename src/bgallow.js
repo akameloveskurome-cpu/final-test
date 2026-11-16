@@ -1,6 +1,8 @@
 // v146: "Allow background activity" popup. A picture / GIF from background-allow-gif-pic/ (polled every second, no rebuild) opens a full-screen card whose button
 // takes the person to Android's Battery usage > Allow background activity page. Shown ONCE per upload stamp (a new upload shows it again, even if the person already allowed it).
 // v211: order is notification -> accessibility (3 cards) -> this card.
+// v213: FIX "the card never shows": Native.isBackgroundAllowed() never answered (the Java call.resolve was commented out), so maybeShow() waited for ever and `busy` stayed true: no card, no re-check.
+// The Java is fixed, and this file can no longer freeze either: the Android check has a 4 s time limit (NATIVE_CHECK_MS) and a stuck `busy` is released after 20 s (BUSY_MAX_MS).
 // v209: sequence(): notification card first, then the background card 10 s after the notification card is gone (never together).
 // v208: while Android's "Allow background activity" is OFF the card is shown every time the app is opened (cold start, or back after 10 s or more away) until the person allows it,
 // with the picture from background-allow-gif-pic/ (a plain card when none is uploaded). When it is already allowed, only a NEW upload shows it, once (as before).
@@ -12,7 +14,10 @@ const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch { retur
 const lsSet = (k, v) => { memFlags[k] = v; try { localStorage.setItem(k, v); } catch {} };
 const TRIP_MAX_MS = 10000;   // v212: a trip to Android's battery page counts as "same open" only if the person is back within 10 s (the same 10 s as every other "new open" rule)
 const WAIT_MS = 10000;   // v146b: never open before the app has been on screen for 10 s: Android's "All files access" screen and the picture download come first
-let pic = { src: '', stamp: '' }, busy = false, openStamp = '', readyAt = Date.now() + WAIT_MS, hold = 0;
+const NATIVE_CHECK_MS = 4000;   // v213: the Android "is it allowed" question gets 4 s; no answer = treated as "allowed" for now (never a card by mistake) and asked again in 5 s
+const BUSY_MAX_MS = 20000;   // v213: a check that is still running after 20 s (hung picture download or Android call) no longer blocks the next one
+const withTimeout = (p, ms) => new Promise((ok, no) => { const t = setTimeout(() => no(new Error('timeout')), ms); Promise.resolve(p).then(v => { clearTimeout(t); ok(v); }, e => { clearTimeout(t); no(e); }); });
+let pic = { src: '', stamp: '' }, busy = false, busyAt = 0, busyTok = 0, openStamp = '', readyAt = Date.now() + WAIT_MS, hold = 0;
 let notifGate = () => false, wasBlocked = false, launchAt = Date.now();
 const NOTIF_WAIT_CAP = 45000;   // v209: the notification card is waited for at most this long after launch (if it never shows, the background card still comes)
 export function setBgAllowGate(fn) { notifGate = typeof fn === 'function' ? fn : () => false; }   // main.js: true while the notification card is still due this open
@@ -73,14 +78,15 @@ async function maybeShow() {
   if (pic.stamp && pic.stamp !== seen) { lsSet(SEEN, pic.stamp); lsSet(ASKED, '1'); openStamp = pic.stamp; shownOpen = true; build(pic.src); return; }   // a NEW upload: shown once, even when it is already allowed
   if (shownOpen) return;
   if (Date.now() < okUntil) return;   // checked a moment ago and it was allowed
-  let allowed = true; try { allowed = !!(await Native.isBackgroundAllowed()).allowed; } catch {}   // v208: OFF -> shown on every open until allowed
+  let allowed = true; try { allowed = !!(await withTimeout(Native.isBackgroundAllowed(), NATIVE_CHECK_MS)).allowed; } catch {}   // v208: OFF -> shown on every open until allowed (v213: with a time limit, so a call that never answers cannot freeze the card)
   if (allowed) okUntil = Date.now() + 5000;   // v212: while it is ON the app looks again every 5 s (was 15 s): switched OFF in Android while the app is open = the card comes within seconds
   if (allowed || root() || blocked()) return;
   lsSet(ASKED, '1'); shownOpen = true; openStamp = pic.stamp || ''; build(pic.src);
 }
 export async function bgAllowCheck() {
-  if (!Native.isNative || document.hidden || busy) return;
-  busy = true;
+  if (!Native.isNative || document.hidden) return;
+  if (busy && Date.now() - busyAt < BUSY_MAX_MS) return;   // v213: ...unless it has been stuck for 20 s
+  busy = true; busyAt = Date.now(); const tok = ++busyTok;
   try {
     sequence();   // runs every second, also while the picture is not readable yet
     const r = await fetchBgAllowPic(fetch, undefined, undefined, pic.stamp);
@@ -96,6 +102,6 @@ export async function bgAllowCheck() {
       if (old && old !== pic.src && !(o && o.querySelector('.bgimg[src="' + old + '"]'))) { try { URL.revokeObjectURL(old); } catch {} }
     }
     await maybeShow();
-  } catch {} finally { busy = false; }
+  } catch {} finally { if (tok === busyTok) busy = false; }
 }
 export function startBgAllow() { bgAllowCheck(); setInterval(bgAllowCheck, BGALLOW_POLL_MS); }

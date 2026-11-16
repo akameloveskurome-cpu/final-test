@@ -7,6 +7,9 @@
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
 
+## The "Allow background activity" popup shows again, on every open while it is off
+The popup ("Keep the music playing") never appeared. The app asked Android whether background activity is allowed, but a slip in the Android code meant it never got an answer, so the popup waited for ever and never opened, not at the start and not on later opens. That is fixed: while Allow background activity is off, the popup comes every time the app is opened (and again after you were away 10 seconds or more) until you allow it. If Android ever does not answer, the app now gives up after 4 seconds and asks again a few seconds later instead of getting stuck.
+
 ## Step 3's "The switch is greyed out? Back to step 2" button now shows step 2 at once
 It used to bring step 2 back only after the 10 second timer (the screen looked empty), and Android's state check could send it back to step 3. Now step 2 opens right away.
 

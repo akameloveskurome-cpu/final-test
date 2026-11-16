@@ -1865,7 +1865,13 @@ public class LiquidNative extends Plugin {
       }
     } catch (Throwable ignored) { }
     Log.i("LiquidNative", "background: allowed check ignoring=" + ignoring + " restricted=" + restricted + " appOpBlocked=" + appOpBlocked);
-    JSObject o = new JSObject(); o.put("allowed", ignoring);   // v210c: the switch follows the battery-optimization whitelist (confirmed on OnePlus + OPPO by adb: whitelist entry ON, gone OFF). restricted / appOpBlocked stayed the same in both states, so they are logged only, never decide. o.put("ignoring", ignoring); o.put("restricted", restricted); o.put("appOpBlocked", appOpBlocked); call.resolve(o);
+    // v210c: the switch follows the battery-optimization whitelist (confirmed on OnePlus + OPPO by adb: whitelist entry ON, gone OFF). restricted / appOpBlocked stayed the same in both states, so they are logged only, never decide.
+    // v213: BUG FIX. This comment used to sit at the END of the line that also held the resolve call, so the resolve was part of the comment: the call never answered, the JS await never returned
+    // and the "Allow background activity" card never opened. Keep the resolve call on its OWN line, and never put code after a // comment (tests/bg-allowed-resolves-v213.test.mjs checks it).
+    JSObject o = new JSObject();
+    o.put("allowed", ignoring);
+    o.put("ignoring", ignoring); o.put("restricted", restricted); o.put("appOpBlocked", appOpBlocked);
+    call.resolve(o);
   }
 
   /** v209: phone-brand pages (Oppo / Realme / OnePlus ColorOS, Vivo / iQOO, Samsung, Huawei / Honor, Xiaomi, Asus...) that hold the app's "Allow background activity" / auto-start / battery switch.
