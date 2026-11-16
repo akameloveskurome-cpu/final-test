@@ -6,13 +6,19 @@
 > **VERSION RULE (owner's order): do NOT change the version number (it is 0.208.0, set by the owner on 2026-11-12) in `package.json`, `package-lock.json`, docs or anywhere else, and do not add a "bump" to any entry. Only the owner decides when to bump it, by telling you. Every AI that edits this project must keep it as it is.**
 
 
+## Step 2 of the accessibility cards now lands on the HOME screen (no version change, still 0.208.0)
+- **WHAT:** `exitApp()` in `native-android/LiquidNative.java` now starts a HOME intent (ACTION_MAIN + CATEGORY_HOME) first, then calls `finishAndRemoveTask()` (fallback `moveTaskToBack`) as before.
+- **WHY:** closing the task alone makes Android reveal the previous task in the stack (e.g. YouTube) instead of home. With no other app open, the stack had only home, so it looked fine.
+- **FILES:** `native-android/LiquidNative.java`, `tests/a11y-cards-v214.test.mjs` (1 new test), `UPDATES.md`, this file.
+- **DO NOT REDO:** no change to the checks, the popup timing or the card logic in `src/assist.js`; do not replace the home intent with only `moveTaskToBack` (it also reveals the previous app).
+
 
 
 ## Accessibility entry is now named "Liquid Dark" (no version change, still 0.208.0)
 - **WHAT:** the Android Accessibility entry (Settings > Accessibility > Downloaded apps) was called "Liquid Dark battery helper". It is now just **Liquid Dark** (the app name). Card texts now say "tap Liquid Dark", and the step 3 card title is "Step 3: turn Liquid Dark On".
 - **FILES:** `scripts/install-native.sh` (service `android:label` in the manifest patch), `src/assist.js` (card texts and step 3 title), `src/assistpics.js` (screenshot descriptions), `native-android/LiquidNative.java` (comment), `tests/battery-assist.test.mjs` (updated + new label test), `tests/bg-reopen-after-trip-v212.test.mjs` (step 3 title).
 - **WHY:** owner's order: the entry must carry the app name.
-- **OWNER STILL TO DO:** the embedded screenshots `a2`, `b1`, `b2` in `src/assistpics.js` still show the OLD name until the owner sends new ones from the new build. Replace only those three data URIs when they arrive.
+- **PICTURES DONE:** `a2`, `b1`, `b2` in `src/assistpics.js` were replaced with the owner's new screenshots (name "Liquid Dark"), cropped to 300 px wide like the others, with the red box, arrow and TAP HERE / TURN ON label redrawn. `a1`, `a3`, `a4`, `a5`, `c1`, `c2`, `s1` were not touched (they never showed the old name).
 - **DO NOT REDO:** do not rename it back to "battery helper"; do not change the version number.
 
 ## Accessibility of the permission cards: Back closes them, focus and TalkBack fixed, screenshots described (no version change, still 0.208.0)

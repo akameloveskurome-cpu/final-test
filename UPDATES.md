@@ -7,8 +7,11 @@
 > **HISTORICAL FILE REFERENCES:** these files are named in the entries but are NOT in this ZIP (removed or never shipped): `native-android/PlayCounter.java` (STALE, plays are counted by `ListenTracker.java`), `tests/java-probe-plays.py`, `tests/java-probe-gain.py`, `BUGS.txt`, `OPEN_BUGS.txt`, `LIQUID_DARK_BUG_REPORT_updated.txt`, `Liquid_Dark_gifs_pics.html`, `Liquid_Dark_full_setup.html` (also written `Liquid_Dark_full_setup_guide.html` in the v134 entry: same guide) and `.github/workflows/android.yml` (copied by hand). Read those mentions as history; do not look for the files.
 
 
+## Step 2 now takes you to the home screen
+When you tap the Step 2 button, Liquid Dark closes and you land on the home screen, even if other apps (like YouTube) are open, so you can long press the icon right away.
+
 ## The Accessibility entry is now called Liquid Dark
-- **Changed:** in Android's Accessibility list (Downloaded apps) the entry is now named **Liquid Dark**, the same as the app, instead of "Liquid Dark battery helper". The cards say "tap Liquid Dark" and step 3 reads "turn Liquid Dark On". The picture inside some steps still shows the old name until it is replaced.
+- **Changed:** in Android's Accessibility list (Downloaded apps) the entry is now named **Liquid Dark**, the same as the app, instead of "Liquid Dark battery helper". The cards say "tap Liquid Dark" and step 3 reads "turn Liquid Dark On". The pictures in steps 1 and 3 show the new name too.
 
 ## Accessibility cards: Back closes them, focus moves onto them, TalkBack ignores the app behind, screenshots described (no version change)
 Back (Android) and Escape now close the Accessibility card (same as \"Not now\") and the \"Allow background activity\" card (same as \"Later\"). While one of these cards is open, the app behind it cannot be reached by TalkBack or a keyboard, the button on the card gets focus, and focus returns to where it was when the card closes. The red "Scroll down" hint now appears only on the popup cards (the notification and update popups, and the accessibility instruction cards). It no longer appears on pages, lists, sheets or grids. The permission cards no longer draw the red focus ring around their buttons; the card still takes focus for screen readers. Every tutorial screenshot now has a short description for screen readers. Step 2 has one extra sentence for people who cannot long press.

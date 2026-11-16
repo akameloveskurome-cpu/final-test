@@ -2023,6 +2023,14 @@ public class LiquidNative extends Plugin {
     JSObject o = new JSObject(); o.put("ok", true); call.resolve(o);
     try {
       getActivity().runOnUiThread(new Runnable() { @Override public void run() {
+        // v216: bring the HOME SCREEN to the front FIRST. Closing the app alone makes Android show the previous app in the stack (e.g. YouTube) instead of home.
+        try {
+          Intent home = new Intent(Intent.ACTION_MAIN);
+          home.addCategory(Intent.CATEGORY_HOME);
+          home.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+          getActivity().startActivity(home);
+        } catch (Throwable ignored) { }
+        // Home is already on top, so closing our screen now cannot reveal another app.
         try { getActivity().finishAndRemoveTask(); } catch (Throwable t) { try { getActivity().moveTaskToBack(true); } catch (Throwable ignored) { } }
       } });
     } catch (Throwable ignored) { }

@@ -60,3 +60,11 @@ test('step 2 has a text-only route that does not rely on the long press', () => 
   assert.match(a, /Cannot long press\? Open Android <b>Settings<\/b>, find <b>Liquid Dark<\/b> in the apps list/);
   assert.match(a, /Allow restricted settings/, 'the existing step 2 text is still there');
 });
+
+test('step 2 exitApp opens the HOME screen first, then closes the app (no jump to the previous app)', () => {
+  const j = rd('native-android/LiquidNative.java');
+  const body = j.slice(j.indexOf('public void exitApp(PluginCall call)'), j.indexOf('public void openAccessibilityList'));
+  assert.match(body, /Intent\.CATEGORY_HOME/);
+  assert.match(body, /Intent\.ACTION_MAIN/);
+  assert.ok(body.indexOf('CATEGORY_HOME') < body.indexOf('finishAndRemoveTask'), 'home first, then close');
+});
