@@ -41,7 +41,7 @@ import { fetchPopupPic, peekManifest, popFit, popupUrl, POPUP_POLL_MS } from './
 import { fetchUpdatePic, UPD_PIC_MIN_MS } from './updpic.js';
 import { fetchCreditPic, CREDIT_POLL_MS, creditPicFailed } from './creditpic.js';
 import { fetchBannerPic, BANNER_POLL_MS, bannerPicFailed } from './statbanpic.js';
-import { startAssist, setAssistGate, setAssistDone, assistPending } from './assist.js';
+import { startAssist, setAssistGate, setAssistDone } from './assist.js';
 import { startBgAllow, bgAllowClose, bgAllowCheck, bgAllowHold, bgAllowDemo, setBgAllowGate } from './bgallow.js';
 import { fetchSplashPic, splashLoad, splashSave, splashClear, SPLASH_POLL_MS, SPLASH_MIN_MS, SPLASH_CACHE_KEY } from './splashpic.js';
 // v134: the splash picture (splash-pic/). v208+: shown inside an 80% x 80% box (80vw x 80vh) on a black screen, object-fit:contain: scaled to the uploaded picture's shape, never cropped, never stretched, centered. Last picture kept on the phone so it shows at once next launch.
@@ -1667,7 +1667,7 @@ function popRetry() { if (popTries >= 44) return; const delay = popTries++ < 24 
    permShownOpen = already shown during this open; permTrip = the person is on the Android prompt / settings page (coming back from there is not a new open). Later / Back only hide it until the next open. */
 let permShownOpen = false, permTrip = false, permHiddenAt = 0, permOff = false;
 let notifChecked = false;
-setBgAllowGate(() => (permOff && !permShownOpen) || assistPending());   // v209: the background-activity card waits for the notification card (shown first), then 10 s more
+setBgAllowGate(() => permOff && !permShownOpen);   // v213: back to the old rule: ONLY the notification card holds the background card back (then 10 s). It never waits for the accessibility cards. v209: the background-activity card waits for the notification card (shown first), then 10 s more
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { permHiddenAt = Date.now(); return; }
   if (permTrip) { permTrip = false; if (!permHiddenAt || Date.now() - permHiddenAt < 10000) return; }   // back from the Android prompt / settings within 10 s: same open (v212: away longer = a NEW open, the card comes again)

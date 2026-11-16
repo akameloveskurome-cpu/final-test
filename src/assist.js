@@ -57,7 +57,7 @@ async function tick() {
   if (!Native.isNative || busy || stage >= 3 || document.hidden) return;
   busy = true;
   try {
-    const blocked = !gate() || assistCardOpen();
+    const blocked = !gate() || assistCardOpen() || !!document.getElementById('lf-bgallow');   // v213: the background card no longer waits for these cards, so these cards never open on top of it
     if (blocked) { wasBlocked = true; return; }
     if (wasBlocked) { wasBlocked = false; readyAt = Math.max(readyAt, Date.now() + WAIT_MS); }   // the card before this one just went away: 10 s first
     if (Date.now() < readyAt) return;
@@ -88,7 +88,7 @@ function build(n) {
       try {
         if (n !== 1) Promise.resolve(Native.openAccessibilityList()).catch(() => { trip = false; });   // steps 1 and 3 = Android's Accessibility list. Step 2 opens nothing: the person long presses the icon -> App info -> three dots (opened by the app, Android hides "Allow restricted settings")
       } catch { trip = false; }
-    } else if (b.dataset.as === 'redo') { stage = 1; rs = 'unknown'; saveStage(1); readyAt = Date.now() + WAIT_MS; }   // v213: the switch was greyed out: step 2 again
+    } else if (b.dataset.as === 'redo') { stage = 1; rs = 'unknown'; saveStage(1); close(); build(1); return; }   // v213: the switch was greyed out: step 2 comes AT ONCE (not after the 10 s timer, and whatever Android's state check says)
     else stage = 3;   // Not now: the sequence stops for this open
     close();
   });

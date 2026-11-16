@@ -64,10 +64,10 @@ test('v211 popup order: All files access -> notification card -> accessibility c
   assert.ok(m.indexOf('allFilesDone = true') > -1 && m.indexOf('if (!allFilesDone') > -1, 'all-files gate exists');
   assert.doesNotMatch(m, /await maybeShowAssist\(\)/, 'accessibility no longer runs before the notification card');
   assert.match(m, /setAssistGate\(\(\) => allFilesDone && notifChecked && !\(permOff && !permShownOpen\)/);
-  assert.match(m, /setBgAllowGate\(\(\) => \(permOff && !permShownOpen\) \|\| assistPending\(\)\)/);
+  assert.match(m, /setBgAllowGate\(\(\) => permOff && !permShownOpen\);/);   // v213: only the notification card holds the background card back (as in v210d)
   const b = rd('src/bgallow.js');
   assert.match(b, /getElementById\('lf-assist'\)/);
-  assert.match(b, /assistPending/);
+  assert.doesNotMatch(b, /assistPending|assistWaiting|assistDue/, 'v213: the background card never waits for the accessibility cards');
 });
 
 test('Settings > About > Credits shows Ai Hoshino followed by a heart and a star', () => {

@@ -76,8 +76,8 @@ test('chain: helper OFF, all three accessibility cards done by hand: background 
 test('chain: closed from Home and reopened 5 min later, still OFF: accessibility card, then the background card, again', () => {
   const l = sim('resumeAfterLong'); assert.equal(l.filter(x => x.e === 'lf-bgallow shown').length, 2); assert.equal(l.filter(x => x.e === 'lf-assist shown').length, 2);
 });
-test('chain fail-safe: even if the accessibility step never gets its turn, the background card comes (30 s idle, never held back for good)', () => {
-  const t = at(sim('gateStuck'), 'lf-bgallow shown'); assert.ok(t > 0 && t <= 70, 'at +' + t);
+test('v213: the background card comes REGARDLESS of the accessibility cards: even if they never get their turn it comes ~10 s in (+8 s only when its picture cannot be read)', () => {
+  const t = at(sim('gateStuck'), 'lf-bgallow shown'); assert.ok(t >= 10 && t <= 25, 'at +' + t);
 });
 test('chain fail-safe: even if the All-files request never reports back, the background card comes', () => {
   const t = at(sim('holdStuck'), 'lf-bgallow shown'); assert.ok(t > 0 && t <= 70, 'at +' + t);
@@ -125,4 +125,20 @@ test('v213: sources: native methods exist, step 2 exits, helper ON clears the me
   assert.match(a, /if \(n === 1\) setTimeout\(\(\) => \{ try \{ Promise\.resolve\(Native\.exitApp\(\)\)/);
   assert.match(a, /if \(!off\) \{ stage = 3; clearStage\(\); return; \}/);
   assert.match(a, /data-as="redo"/); assert.match(a, /Liquid Dark closes by itself/);
+});
+
+test('v213: the two cards are never open at the same time in any scenario', () => {
+  for (const sc of ['helperOn', 'helperOffNotNow', 'helperOffFullFlow', 'resumeAfterLong', 'gateStuck', 'holdStuck', 'rsBecomesAllowed', 'rsRestricted'])
+    assert.equal(sim(sc).filter(x => x.e.startsWith('OVERLAP')).length, 0, sc);
+});
+test('v213: the background card never waits for the accessibility cards (only the notification card holds it back)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const rd = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+  assert.doesNotMatch(rd('src/bgallow.js'), /assistPending|assistWaiting|assistDue|from '\.\/assist\.js'/);
+  assert.match(rd('src/main.js'), /setBgAllowGate\(\(\) => permOff && !permShownOpen\);/);
+});
+
+test('v213: step 3 "The switch is greyed out? Back to step 2" shows step 2 at once (same second), not after a silent gap', () => {
+  const l = sim('redoBack'); const tap = at(l, 'person: taps "greyed out? Back to step 2"'), c2 = l.filter(x => x.e === 'card: Step 2: Allow restricted settings')[0];
+  assert.ok(c2 && c2.t - tap <= 1, 'step 2 came ' + (c2 && c2.t - tap) + ' s after the tap');
 });

@@ -8,6 +8,14 @@
 
 
 
+## Step 3 "greyed out? back to step 2" button (no version change, still 0.208.0)
+- `src/assist.js`: the `redo` branch now does `stage = 1; rs = 'unknown'; saveStage(1); close(); build(1); return;` so step 2 shows AT ONCE. Before, it only set the stage and waited for the 10 s timer, and `cardIndex()` could pick step 3 again. Test: scenario `redoBack` in `tests/permchain-sim.mjs`. DO NOT go back to waiting for the timer here: the person pressed it on purpose.
+
+## Background card no longer waits for the accessibility cards (no version change, still 0.208.0)
+- **BUG:** v211 made `bgallow.js` hold the background card back while the accessibility sequence was pending (`assistWaiting()`, `setBgAllowGate(... || assistPending())`). When the accessibility cards did not get their turn, the background card never came (zero popups with both OFF). The detection (`isBackgroundAllowed`, `allowed = ignoring`) was never the problem: it is identical to the owner's known-good v210d zip.
+- **FIX:** back to the old rule: `setBgAllowGate(() => permOff && !permShownOpen)` in `main.js`; `bgallow.js` no longer imports anything from `assist.js`. Only the notification card holds the background card back (then 10 s). `assist.js` only gets one extra guard: its cards do not open while the background card is open (never two cards at once).
+- **DO NOT REDO:** never make the background card wait for the accessibility cards again. Tests: `tests/bg-reopen-after-trip-v212.test.mjs` (chain + overlap + source asserts).
+
 ## Accessibility cards: exit after step 2, restricted-settings state, remembered progress (no version change, still 0.208.0)
 - **WHAT:** native `exitApp()` (finishAndRemoveTask, falls back to moveTaskToBack) and `restrictedStatus()` (AppOps `android:access_restricted_settings`, Android 13+: allowed / restricted / unknown; below 13 = allowed) in `LiquidNative.java` + wrappers in `src/native.js`. `src/assist.js`: step 2 button saves progress (`lf.assist` in localStorage, valid 1 h) and calls `Native.exitApp()` 350 ms later; `refresh()` clears the memory when the helper is ON and reads `rs`; `cardIndex()`: allowed -> step 3, restricted -> step 1 then step 2 until done, unknown -> remembered stage; step 3 has a "greyed out? back to step 2" button (`data-as="redo"`).
 - **WHAT THE APP CAN KNOW:** step 3 (helper ON) exactly; step 2 only through the Android 13+ op above (unverified on a real phone, falls back to remembered progress on "unknown"); step 1 not at all.
@@ -17,10 +25,10 @@
 ## Background / notification / accessibility cards skipped after leaving from the Android page (no version change, still 0.208.0)
 - **BUG (reproduced by `tests/bg-reopen-after-trip-v212.test.mjs`):** `trip` (bgallow.js), `trip` (assist.js) and `permTrip` (main.js) were set when the person tapped Allow / Open and cleared by the NEXT `visibilitychange` whatever happened. A person who left from the Android page (Home) and opened the app much later had that open swallowed as "back from settings": `shownOpen` / `stage` / `permShownOpen` were not reset, so the card did not come.
 - **FIX:** the trip only counts as "same open" when the person was away less than `TRIP_MAX_MS` (bgallow 10 s, notification 10 s, assist 10 min because step 2 is manual). Longer = a new open (flags reset, cards come again while the permission is still off). Files: `src/bgallow.js`, `src/assist.js`, `src/main.js`, new test.
-- **FAIL-SAFES (same entry):** `bgallow.js` waits for the accessibility cards only while something is happening (`ASSIST_CAP_MS` = 30 s idle, uses `assistActivityAt()` from assist.js and `lastBusyAt`), and `bgAllowHold` (All files access request) releases after 30 s. Normal gaps between popups stay 10 s (`WAIT_MS`); the extra 8 s in `bgAllowCheck` only applies when the picture cannot be read (GitHub unreachable).
+- **FAIL-SAFE (same entry):** `bgAllowHold` (All files access request) releases after 30 s. Normal gaps between popups stay 10 s (`WAIT_MS`); the extra 8 s in `bgAllowCheck` only applies when the picture cannot be read (GitHub unreachable).
 - **Live check:** `okUntil` re-check while allowed is 5 s (was 15 s); the poll itself is 1 s (`BGALLOW_POLL_MS`).
 - **TESTS:** `tests/permchain-sim.mjs` (helper, not a test) runs the real assist.js + bgallow.js together per scenario; `tests/bg-reopen-after-trip-v212.test.mjs` asserts them.
-- **DO NOT REDO:** do not remove the time limit; do not make the trip flag permanent again; do not let the background card wait for the accessibility cards without the idle cap. Coming straight back from the Android page (under the limit) must still NOT show a second card in the same open (test 2).
+- **DO NOT REDO:** do not remove the time limit; do not make the trip flag permanent again.
 
 ## Credits row: heart and star after the name (no version change, still 0.208.0)
 - **WHAT:** `src/main.js` About card: `row('Credits', 'Ai Hoshino ♥︎ ★')` (was `'Ai Hoshino'`). Text only. **DO NOT REDO:** keep the name first, then the two symbols; no character images.

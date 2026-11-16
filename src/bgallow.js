@@ -6,10 +6,6 @@
 // with the picture from background-allow-gif-pic/ (a plain card when none is uploaded). When it is already allowed, only a NEW upload shows it, once (as before).
 import { fetchBgAllowPic, BGALLOW_POLL_MS } from './bgallowpic.js';
 import { Native } from './native.js';
-import { assistPending, assistActivityAt } from './assist.js';
-const ASSIST_CAP_MS = 30000;   // v212: fail-safe only (normal gaps are always 10 s): the accessibility cards are waited for only while something is happening; 30 s of nothing (no card, no popup, no trip) and the background card goes ahead
-let lastBusyAt = Date.now();
-const assistWaiting = () => { try { return assistPending() && Date.now() - Math.max(lastBusyAt, launchAt, assistActivityAt()) < ASSIST_CAP_MS; } catch { return false; } };   // launchAt: declared below   // v211: the accessibility cards come before this card and may take the person a while
 const SEEN = 'lf.bgAllowSeen', ASKED = 'lf.bgAllowAsked';
 const memFlags = {};   // BUG-153: session copy, used when localStorage is blocked (no re-showing every second)
 const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch { return memFlags[k] || ''; } };
@@ -66,10 +62,9 @@ const blocked = () => !!document.getElementById('lf-assist') || !!document.query
  *  (Allow / Later / swiped away / Back), and also waits while the notification card is still due (picture downloading, Android prompt open). */
 function sequence() {
   const b = blocked();
-  if (b) { wasBlocked = true; lastBusyAt = Date.now(); }
+  if (b) wasBlocked = true;
   else if (wasBlocked) { wasBlocked = false; readyAt = Math.max(readyAt, Date.now() + WAIT_MS); }   // the card just went away: 10 s of quiet first
   if (!b && notifGate() && Date.now() - launchAt < NOTIF_WAIT_CAP) readyAt = Math.max(readyAt, Date.now() + WAIT_MS);
-  if (!b && assistWaiting()) readyAt = Math.max(readyAt, Date.now() + WAIT_MS);   // v211: the accessibility cards come first, however long they take   // notification card still coming: keep waiting
 }
 async function maybeShow() {
   sequence();
