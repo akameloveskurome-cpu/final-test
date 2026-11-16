@@ -10,6 +10,9 @@
 ## Accessibility cards first, then the background card (no version change)
 When both are due, the Accessibility cards now come first and the "Allow background activity" card comes 10 s after they are finished or dismissed; the two never show together. The Step 2 and Step 3 Accessibility cards have a "Back to the first card (step 1)" button. The hint at the bottom of the screen that tells you to tap Battery usage now shows once for about 2 seconds (it used to repeat for about 12 seconds). If the Accessibility cards never get their turn, the background card still comes after about 45 seconds. The background-activity detection itself is unchanged.
 
+## Step 2 card: help when "Allow restricted settings" is missing (no version change)
+The step 2 Accessibility card now shows a screenshot of the three-dot menu with only "Uninstall for all users" and explains that step 1 was not done right (open Accessibility, tap the greyed-out Liquid Dark battery helper, tap OK on the "Restricted setting" message, then do step 2 again). A "Back to step 1" button takes the person there at once.
+
 ## The "Allow background activity" popup shows again, on every open while it is off
 The popup ("Keep the music playing") never appeared. The app asked Android whether background activity is allowed, but a slip in the Android code meant it never got an answer, so the popup waited for ever and never opened, not at the start and not on later opens. That is fixed: while Allow background activity is off, the popup comes every time the app is opened (and again after you were away 10 seconds or more) until you allow it. If Android ever does not answer, the app now gives up after 4 seconds and asks again a few seconds later instead of getting stuck.
 

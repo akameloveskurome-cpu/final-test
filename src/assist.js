@@ -58,7 +58,11 @@ const CARDS = [
   { title: 'Step 2: Allow restricted settings', go: 'Got it, I will do this',
     body: '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">Now the option is unlocked, but Android hides it if the app opens App info for you. When you tap the button below, <b>Liquid Dark closes by itself</b>. Then open App info yourself like this:</p>'
       + step(1, 'On your home screen (or in the app drawer) <b>long press</b> the <b>Liquid Dark</b> icon.', 'c1') + step(2, 'Tap <b>App info</b>.', 'c2')
-      + step(3, 'Tap the <b>three dots</b> (top right).', 'a4') + step(4, 'Tap <b>Allow restricted settings</b> and enter your PIN or fingerprint. Then open Liquid Dark again.', 'a5') },
+      + step(3, 'Tap the <b>three dots</b> (top right).', 'a4') + step(4, 'Tap <b>Allow restricted settings</b> and enter your PIN or fingerprint. Then open Liquid Dark again.', 'a5')
+      + '<div style="text-align:left;border:1px solid #555;border-radius:12px;padding:12px;margin:0 0 16px;">'
+      + '<div style="font-size:15px;line-height:1.45;margin:0 0 8px;"><b>Do not see "Allow restricted settings"?</b> If the three dots only show <b>Uninstall for all users</b>, like in this picture, step 1 was not done right.</div>'
+      + '<img alt="" src="' + ASSIST_PICS.s1 + '" style="display:block;width:78%;max-width:290px;margin:0 auto 10px;border-radius:12px;">'
+      + '<div style="font-size:15px;line-height:1.45;">Tap <b>Back to step 1</b> below. Open Accessibility, tap <b>Downloaded apps</b>, tap <b>Liquid Dark battery helper</b> (it is greyed out, tap it anyway). When Android says <b>Restricted setting</b>, tap <b>OK</b>. Then do step 2 again.</div></div>' },
   { title: 'Step 3: turn the battery helper On', go: 'Open Accessibility',
     body: '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">Restricted settings are allowed now, so the switch works this time.</p>'
       + step(1, 'In Accessibility open <b>Downloaded apps</b>, then tap <b>Liquid Dark battery helper</b>. It is not greyed out any more.', 'b1') + step(2, 'Turn the switch <b>On</b>, then come back to Liquid Dark.', 'b2') },
@@ -98,8 +102,8 @@ function build(n) {
   o.innerHTML = '<div style="max-width:420px;max-height:100%;overflow-y:auto;color:#fff;font-family:system-ui,sans-serif;text-align:center;">'
     + '<h2 style="margin:0 0 12px;font-size:22px;">' + c.title + '</h2>' + c.body
     + '<button data-as="go" style="width:100%;padding:14px;font-size:17px;border:0;border-radius:12px;background:#ff3b5c;color:#fff;margin-bottom:10px;">' + c.go + '</button>'
-    + (n === 2 && rs !== 'allowed' ? '<button data-as="redo" style="width:100%;padding:12px;font-size:15px;border:0;border-radius:12px;background:#222;color:#fff;margin-bottom:10px;">The switch is greyed out? Back to step 2</button>' : '')
-    + (n >= 1 ? '<button data-as="back1" style="width:100%;padding:12px;font-size:15px;border:0;border-radius:12px;background:#222;color:#fff;margin-bottom:10px;">Back to the first card (step 1)</button>' : '')
+    + (n === 2 ? '<button data-as="redo" style="width:100%;padding:12px;font-size:15px;border:0;border-radius:12px;background:#222;color:#fff;margin-bottom:10px;">Back to step 2 (switch greyed out?)</button>' : '')
+    + (n >= 1 ? '<button data-as="back1" style="width:100%;padding:12px;font-size:15px;border:0;border-radius:12px;background:#222;color:#fff;margin-bottom:10px;">' + (n === 1 ? 'Menu only shows "Uninstall for all users"? Back to step 1' : 'Back to step 1') + '</button>' : '')
     + '<button data-as="later" style="width:100%;padding:12px;font-size:15px;border:0;border-radius:12px;background:#222;color:#bbb;">Not now</button></div>';
   o.addEventListener('click', e => {
     const b = e.target.closest('[data-as]'); if (!b) return;

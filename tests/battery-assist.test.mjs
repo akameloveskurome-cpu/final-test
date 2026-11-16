@@ -73,3 +73,15 @@ test('v211 popup order: All files access -> notification card -> accessibility c
 test('Settings > About > Credits shows Ai Hoshino followed by a heart and a star', () => {
   assert.match(rd('src/main.js'), /row\('Credits', 'Ai Hoshino ♥︎ ★'\)/);
 });
+
+test('step 2 card: help for "only Uninstall for all users in the three dots" = screenshot + Back to step 1 button; step 3 has Back to step 2 and step 1', async () => {
+  const { ASSIST_PICS } = await import('../src/assistpics.js');
+  assert.match(ASSIST_PICS.s1, /^data:image\/jpeg;base64,[A-Za-z0-9+/=]{2000,}$/, 'the owner screenshot is embedded');
+  const a = rd('src/assist.js');
+  assert.match(a, /Do not see "Allow restricted settings"\?/);
+  assert.match(a, /ASSIST_PICS\.s1/);
+  assert.match(a, /Uninstall for all users/);
+  assert.match(a, /data-as="back1"/);
+  assert.match(a, /\(n === 2 \? '<button data-as="redo"/, 'step 3 always has the Back to step 2 button');
+  assert.match(a, /\(n >= 1 \? '<button data-as="back1"/, 'steps 2 and 3 have the Back to step 1 button');
+});
