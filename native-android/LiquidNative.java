@@ -2030,7 +2030,7 @@ public class LiquidNative extends Plugin {
 
   @PluginMethod
   public void openAccessibilityList(PluginCall call) {
-    // v211: Android's own Accessibility list (Downloaded apps > Liquid Dark battery helper). Used for steps 1 and 3 of the accessibility cards.
+    // v211: Android's own Accessibility list (Downloaded apps > Liquid Dark). Used for steps 1 and 3 of the accessibility cards.
     boolean ok = tryStart(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
     JSObject o = new JSObject(); o.put("ok", ok); call.resolve(o);
   }

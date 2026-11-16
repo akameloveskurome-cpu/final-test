@@ -41,7 +41,8 @@ import { fetchPopupPic, peekManifest, popFit, popupUrl, POPUP_POLL_MS } from './
 import { fetchUpdatePic, UPD_PIC_MIN_MS } from './updpic.js';
 import { fetchCreditPic, CREDIT_POLL_MS, creditPicFailed } from './creditpic.js';
 import { fetchBannerPic, BANNER_POLL_MS, bannerPicFailed } from './statbanpic.js';
-import { startAssist, setAssistGate, setAssistDone, assistHoldsBg } from './assist.js';
+import { startAssist, setAssistGate, setAssistDone, assistHoldsBg, assistBack, assistCardOpen } from './assist.js';
+import { setLayerSync } from './cardlayer.js';
 import { startBgAllow, bgAllowClose, bgAllowCheck, bgAllowHold, bgAllowDemo, setBgAllowGate, setBgAllowAfter } from './bgallow.js';
 import { fetchSplashPic, splashLoad, splashSave, splashClear, SPLASH_POLL_MS, SPLASH_MIN_MS, SPLASH_CACHE_KEY } from './splashpic.js';
 // v134: the splash picture (splash-pic/). v208+: shown inside an 80% x 80% box (80vw x 80vh) on a black screen, object-fit:contain: scaled to the uploaded picture's shape, never cropped, never stretched, centered. Last picture kept on the phone so it shows at once next launch.
@@ -124,6 +125,7 @@ import { startAppLogoWatcher, checkLatestAppLogo, appLogoSrc, syncAppLogo } from
 import { restoreGate, newFirstDraw, resetFirstDraw, deferFirstDraw } from './updgate.js';
 import { checkUpdate, resetUpdateCache, UPDATE_POLL_MS, MY_CODE_ID, lastCheckConfirmed, getInstalledBuild, pendingUpdateIsInstalled, clearInstalledBuildCache } from './update.js';
 import { initLStats } from './lstats.js';
+import { startScrollHints } from './scrollhint.js';   // red "Scroll down ↓" on every scrolling sheet, card, list and page
 import { picNames, picKey, picDrop, picAliases } from './artistpics.js';
 import { artistKey } from './artistnames.js';
 import { morphHtml } from './morph.js';
@@ -3067,7 +3069,7 @@ if (Native.isNative) {
   Native.getSleepTimer().then(renderNP).catch(() => {});   // T22 timer state lives in the Android side
   loadLib(false);
 }
-updGateRestorePromise = updGateRestore().catch(() => {}); startAppLogoWatcher(); startPopup().catch(() => {}); creditPicCheck().catch(() => {}); splashCheck().catch(() => {}); setInterval(() => { splashCheck().catch(() => {}); }, SPLASH_POLL_MS); setInterval(() => { creditPicCheck().catch(() => {}); }, CREDIT_POLL_MS); setAssistDone(() => setTimeout(() => startPopup().catch(() => {}), 400)); setAssistGate(() => allFilesDone && notifChecked && !(permOff && !permShownOpen) && !document.querySelector('#sheet .popcard')); setBgAllowAfter(assistHoldsBg); startAssist(); startBgAllow(); banCheck(); setInterval(() => { banCheck().catch(() => {}); }, BANNER_POLL_MS); startUpdateCheck().catch(() => {}); setInterval(() => { if (!document.hidden) startUpdateCheck().catch(() => {}); }, UPDATE_POLL_MS);
+updGateRestorePromise = updGateRestore().catch(() => {}); startAppLogoWatcher(); startPopup().catch(() => {}); creditPicCheck().catch(() => {}); splashCheck().catch(() => {}); setInterval(() => { splashCheck().catch(() => {}); }, SPLASH_POLL_MS); setInterval(() => { creditPicCheck().catch(() => {}); }, CREDIT_POLL_MS); setAssistDone(() => setTimeout(() => startPopup().catch(() => {}), 400)); setAssistGate(() => allFilesDone && notifChecked && !(permOff && !permShownOpen) && !document.querySelector('#sheet .popcard')); setBgAllowAfter(assistHoldsBg); startAssist(); startScrollHints(); startBgAllow(); banCheck(); setInterval(() => { banCheck().catch(() => {}); }, BANNER_POLL_MS); startUpdateCheck().catch(() => {}); setInterval(() => { if (!document.hidden) startUpdateCheck().catch(() => {}); }, UPDATE_POLL_MS);
 // T4c step 2: Android Back button = close sheet > close Now Playing > go back one screen > minimise (never exits)
 // T18: coming back to the app = maybe check for new music (autoCheck itself limits this to once per 10 minutes)
 // v90: coming back to the app also re-reads the sleep timer (it may have fired while the app was away)
@@ -3081,6 +3083,8 @@ if (!Native.isNative) { Promise.all([loadPlaylists(), loadFavs(), loadStats()]).
 /* ---------- dialogs (D3/D4): the layer on top is the only one reachable; focus moves in and goes back; Escape closes the top layer ---------- */
 function closeTop() {
   if (updPending && updSheetOpen()) return true;   // v138: the update screen swallows Back / Escape
+  if (assistCardOpen()) return assistBack();   // v214: Back / Escape on an Accessibility card = Not now (this open only), as before it did nothing useful
+  if (document.getElementById('lf-bgallow')) return bgAllowClose();   // v214: Escape closes the background card too (= Later)
   if ($('#ppv')) { ppClose(); return true; }   // v132
   if ($('#cvv')) { closeCover(); return true; }
   if ($('#lyr')?.classList.contains('open')) { closeLyrics(); return true; }
@@ -3091,11 +3095,12 @@ function closeTop() {
 const modal = { np: false, sheet: false, lyr: false, npFrom: null, sheetFrom: null };
 function syncModal() {
   const sheet = !!$('#sheet').firstElementChild, lyr = !!$('#lyr')?.classList.contains('open'), np = $('#np').classList.contains('open');
+  const card = !!document.getElementById('lf-bgallow') || !!document.getElementById('lf-assist');   // v214: a permission card covers the whole app
   const inertOf = (sel, v) => document.querySelectorAll(sel).forEach(n => { if ('inert' in n) n.inert = v; });
-  inertOf('#main,#sub,#mini,#tabs', np || lyr || sheet); inertOf('#np', lyr || sheet); inertOf('#lyr', sheet);
+  inertOf('#main,#sub,#mini,#tabs', card || np || lyr || sheet); inertOf('#np', card || lyr || sheet); inertOf('#lyr', card || sheet); inertOf('#sheet', card);
   const ae = document.activeElement;
   if (np && !modal.np) modal.npFrom = ae; if (sheet && !modal.sheet) modal.sheetFrom = ae;
-  const topSel = sheet ? '#sheet' : lyr ? '#lyr' : np ? '#np' : '';
+  const topSel = card ? '' : sheet ? '#sheet' : lyr ? '#lyr' : np ? '#np' : '';   // v214: while a card is open the card keeps focus
   if (topSel && !(ae && $(topSel).contains(ae))) {
     const tgt = sheet ? $('#sheet .sheetbox') : lyr ? $('#lyr .gbtn') : $('#np .grabbtn');
     if (tgt) { if (sheet) tgt.tabIndex = -1; tgt.focus({ preventScroll: true }); }
@@ -3105,6 +3110,7 @@ function syncModal() {
   if (modal.np && !np) { const f = modal.npFrom; modal.npFrom = null; if (f && f.isConnected && !f.closest('[inert]')) f.focus({ preventScroll: true }); }
   modal.np = np; modal.sheet = sheet; modal.lyr = lyr;
 }
+setLayerSync(syncModal);   // v214: the permission cards ask for the same inert / focus rules
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && closeTop()) { e.preventDefault(); return; }
   if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset && e.target.dataset.act === 'lyr-seek') { e.preventDefault(); e.target.click(); }   // D8: lyric lines work from the keyboard

@@ -120,13 +120,13 @@ test('v213 step 2: tapping the button closes the app (exitApp) about a second la
   const go = at(l, 'person: go on Step 2'), ex = at(l, 'exitApp called'); assert.ok(ex - go <= 1 && ex >= go, 'exit ' + (ex - go) + ' s after the tap');
 });
 test('v213: once Android says restricted settings are allowed, the next card is step 3, then the background card', () => {
-  const l = sim('rsBecomesAllowed'); assert.deepEqual(cards(l), ['Step 1: open Accessibility', 'Step 2: Allow restricted settings', 'Step 3: turn the battery helper On']); assert.ok(at(l, 'lf-bgallow shown') > at(l, 'person: back', 2));
+  const l = sim('rsBecomesAllowed'); assert.deepEqual(cards(l), ['Step 1: open Accessibility', 'Step 2: Allow restricted settings', 'Step 3: turn Liquid Dark On']); assert.ok(at(l, 'lf-bgallow shown') > at(l, 'person: back', 2));
 });
 test('v213: restricted settings already allowed (e.g. done earlier): only step 3 is shown', () => {
-  assert.deepEqual(cards(sim('rsAllowed')), ['Step 3: turn the battery helper On']);
+  assert.deepEqual(cards(sim('rsAllowed')), ['Step 3: turn Liquid Dark On']);
 });
 test('v213: the app was closed by step 2 less than an hour ago and the helper is still off: it opens on step 3, not step 1', () => {
-  assert.deepEqual(cards(sim('coldAfterStep2')), ['Step 3: turn the battery helper On']);
+  assert.deepEqual(cards(sim('coldAfterStep2')), ['Step 3: turn Liquid Dark On']);
 });
 test('v213: more than an hour later and the helper is still off: the full sequence from step 1 again', () => {
   assert.deepEqual(cards(sim('coldLongAgo')), ['Step 1: open Accessibility']);

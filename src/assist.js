@@ -6,6 +6,9 @@
 // Owner's order (still 0.208.0): when BOTH are due, the accessibility cards come FIRST and the background card only 10 s after they are finished / dismissed (assistHoldsBg() below, wired in main.js with setBgAllowAfter). Never two cards at once.
 import { Native } from './native.js';
 import { ASSIST_PICS } from './assistpics.js';
+import { enterCard, leaveCard } from './cardlayer.js';
+import { ASSIST_ALT } from './assistpics.js';
+import { addScrollHint } from './scrollhint.js';   // red "Scroll down ↓" while more is below (shared with sheets, lists and pages)
 const WAIT_MS = 10000;
 const TRIP_MAX_MS = 600000;   // v212: step 2 is done by hand, so allow up to 10 minutes away before a return counts as a NEW open
 const PKEY = 'lf.assist', PKEEP_MS = 3600000;   // v213: progress is remembered for an hour, because step 2 closes the app and the next open is a fresh start
@@ -48,24 +51,25 @@ try { document.addEventListener('visibilitychange', () => {
   if (started) quickCheck().catch(() => {});   // look at the helper switch right away (a helper turned On in Settings releases the background card at once)
 }); } catch {}
 // Each step = a caption + a screenshot with a red "tap here" mark (src/assistpics.js).
-const step = (n, text, key) => '<div style="text-align:left;font-size:15px;line-height:1.45;margin:0 0 6px;"><b>' + n + '.</b> ' + text + '</div><img alt="" src="' + ASSIST_PICS[key] + '" style="display:block;width:62%;max-width:230px;margin:0 auto 18px;border-radius:12px;">';
+const step = (n, text, key) => '<div style="text-align:left;font-size:15px;line-height:1.45;margin:0 0 6px;"><b>' + n + '.</b> ' + text + '</div><img alt="' + ASSIST_ALT[key] + '" src="' + ASSIST_PICS[key] + '" style="display:block;width:62%;max-width:230px;margin:0 auto 18px;border-radius:12px;">';
 const CARDS = [
   { title: 'Step 1: open Accessibility', go: 'Open Accessibility',
     body: '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">Liquid Dark uses Android\'s Accessibility setting for one thing: it opens <b>Battery usage</b> for you. It does not read other apps and does not turn the switch on for you.</p>'
       + '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">First Android has to be asked once, so it shows the next card. Do these taps:</p>'
-      + step(1, 'Tap <b>Downloaded apps</b>.', 'a1') + step(2, 'Tap <b>Liquid Dark battery helper</b> (it is greyed out, tap it anyway).', 'a2')
+      + step(1, 'Tap <b>Downloaded apps</b>.', 'a1') + step(2, 'Tap <b>Liquid Dark</b> (it is greyed out, tap it anyway).', 'a2')
       + step(3, 'Android shows <b>Restricted setting</b>. Tap <b>OK</b>, then come back to Liquid Dark.', 'a3') },
   { title: 'Step 2: Allow restricted settings', go: 'Got it, I will do this',
     body: '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">Now the option is unlocked, but Android hides it if the app opens App info for you. When you tap the button below, <b>Liquid Dark closes by itself</b>. Then open App info yourself like this:</p>'
       + step(1, 'On your home screen (or in the app drawer) <b>long press</b> the <b>Liquid Dark</b> icon.', 'c1') + step(2, 'Tap <b>App info</b>.', 'c2')
       + step(3, 'Tap the <b>three dots</b> (top right).', 'a4') + step(4, 'Tap <b>Allow restricted settings</b> and enter your PIN or fingerprint. Then open Liquid Dark again.', 'a5')
+      + '<p style="text-align:left;font-size:15px;line-height:1.45;margin:0 0 16px;">Cannot long press? Open Android <b>Settings</b>, find <b>Liquid Dark</b> in the apps list and tap it, then do steps 3 and 4 above. No pictures needed.</p>'
       + '<div style="text-align:left;border:1px solid #555;border-radius:12px;padding:12px;margin:0 0 16px;">'
       + '<div style="font-size:15px;line-height:1.45;margin:0 0 8px;"><b>Do not see "Allow restricted settings"?</b> If the three dots only show <b>Uninstall for all users</b>, like in this picture, step 1 was not done right.</div>'
-      + '<img alt="" src="' + ASSIST_PICS.s1 + '" style="display:block;width:78%;max-width:290px;margin:0 auto 10px;border-radius:12px;">'
-      + '<div style="font-size:15px;line-height:1.45;">Tap <b>Back to step 1</b> below. Open Accessibility, tap <b>Downloaded apps</b>, tap <b>Liquid Dark battery helper</b> (it is greyed out, tap it anyway). When Android says <b>Restricted setting</b>, tap <b>OK</b>. Then do step 2 again.</div></div>' },
-  { title: 'Step 3: turn the battery helper On', go: 'Open Accessibility',
+      + '<img alt="' + ASSIST_ALT.s1 + '" src="' + ASSIST_PICS.s1 + '" style="display:block;width:78%;max-width:290px;margin:0 auto 10px;border-radius:12px;">'
+      + '<div style="font-size:15px;line-height:1.45;">Tap <b>Back to step 1</b> below. Open Accessibility, tap <b>Downloaded apps</b>, tap <b>Liquid Dark</b> (it is greyed out, tap it anyway). When Android says <b>Restricted setting</b>, tap <b>OK</b>. Then do step 2 again.</div></div>' },
+  { title: 'Step 3: turn Liquid Dark On', go: 'Open Accessibility',
     body: '<p style="font-size:15px;line-height:1.5;margin:0 0 14px;">Restricted settings are allowed now, so the switch works this time.</p>'
-      + step(1, 'In Accessibility open <b>Downloaded apps</b>, then tap <b>Liquid Dark battery helper</b>. It is not greyed out any more.', 'b1') + step(2, 'Turn the switch <b>On</b>, then come back to Liquid Dark.', 'b2') },
+      + step(1, 'In Accessibility open <b>Downloaded apps</b>, then tap <b>Liquid Dark</b>. It is not greyed out any more.', 'b1') + step(2, 'Turn the switch <b>On</b>, then come back to Liquid Dark.', 'b2') },
 ];
 async function refresh() {
   try { off = !(await Native.batteryAssistStatus()).enabled; } catch { off = false; }
@@ -92,9 +96,13 @@ async function tick() {
 }
 export async function maybeShowAssist() { await tick(); return assistCardOpen(); }   // kept for callers; the poller below does the real work
 export function startAssist() { started = true; activityAt = Date.now(); quickCheck().catch(() => {}); tick(); setInterval(tick, 1000); }
-function close() { activityAt = Date.now(); const o = document.getElementById('lf-assist'); if (o) o.remove(); onDone(); }
+let opener = null;   // v214: focus goes back here when the card closes
+/** v214: Android Back / Escape on an accessibility card = Not now (this open only, same as the button). */
+export function assistBack() { if (!assistCardOpen()) return false; stage = 3; close(); return true; }
+function close() { activityAt = Date.now(); const o = document.getElementById('lf-assist'); if (o) o.remove(); const f = opener; opener = null; leaveCard(f); onDone(); }
 function build(n) {
   activityAt = Date.now();
+  opener = document.activeElement;
   const c = CARDS[n];
   const o = document.createElement('div');
   o.id = 'lf-assist'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
@@ -119,4 +127,6 @@ function build(n) {
     close();
   });
   document.body.appendChild(o);
+  try { addScrollHint(o.firstElementChild); } catch {}
+  enterCard(o, '[data-as="go"]');   // v214: focus lands on the card's main button
 }

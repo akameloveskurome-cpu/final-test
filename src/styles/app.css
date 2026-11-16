@@ -880,6 +880,8 @@ html[data-bg="1"] #app::before{background:linear-gradient(to bottom,rgba(0,0,0,.
 #lf-bgallow .bgbody{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
 #lf-bgallow .bgimg{display:block;max-width:min(100%,360px);max-height:min(52vh,460px);object-fit:contain;border-radius:24px;margin-bottom:10px}
 #lf-bgallow b{font-size:1.375rem}#lf-bgallow p{margin:4px auto 0;max-width:320px;color:var(--text-2);font-size:0.875rem;line-height:1.4}#lf-bgallow p b{font-size:inherit;color:#fff}
+/* v215: no red focus ring on the two permission cards (the card still takes focus for TalkBack; the ring was the only visible focus mark) */
+#lf-bgallow button:focus,#lf-bgallow button:focus-visible,#lf-assist button:focus,#lf-assist button:focus-visible{outline:none}
 #lf-bgallow .bgact{width:100%;max-width:420px;display:flex;flex-direction:column;gap:10px}
 #lf-bgallow button{height:54px;border-radius:27px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:#fff;font:inherit;font-size:1.0625rem;-webkit-tap-highlight-color:transparent}
 #lf-bgallow button[data-bg="go"]{color:var(--accent)}

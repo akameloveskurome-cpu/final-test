@@ -39,7 +39,7 @@ test('v211 cards: Accessibility, then Allow restricted settings (App info), then
   assert.match(a, /Allow restricted settings/);
   assert.match(a, /three dots/);
   assert.match(a, /Downloaded apps/);
-  assert.match(a, /Liquid Dark battery helper/);
+  assert.match(a, /tap <b>Liquid Dark<\/b>/);
   assert.match(a, /Not now/);
   assert.equal((a.match(/go: 'Open Accessibility'/g) || []).length, 2, 'Accessibility card appears twice');
   assert.ok(a.indexOf("go: 'Open Accessibility'") < a.indexOf("go: 'Got it, I will do this'") && a.indexOf("go: 'Got it, I will do this'") < a.lastIndexOf("go: 'Open Accessibility'"));
@@ -84,4 +84,12 @@ test('step 2 card: help for "only Uninstall for all users in the three dots" = s
   assert.match(a, /data-as="back1"/);
   assert.match(a, /\(n === 2 \? '<button data-as="redo"/, 'step 3 always has the Back to step 2 button');
   assert.match(a, /\(n >= 1 \? '<button data-as="back1"/, 'steps 2 and 3 have the Back to step 1 button');
+});
+
+test('the Accessibility entry is named just "Liquid Dark" (not "battery helper") in the manifest, the cards and the picture descriptions', () => {
+  const sh = rd('scripts/install-native.sh');
+  assert.match(sh, /android:label="Liquid Dark"/);
+  assert.doesNotMatch(sh, /android:label="[^"]*battery helper/i);
+  for (const f of ['src/assist.js', 'src/assistpics.js']) assert.doesNotMatch(rd(f), /Liquid Dark battery helper/i, f);
+  assert.match(rd('src/assist.js'), /Step 3: turn Liquid Dark On/);
 });

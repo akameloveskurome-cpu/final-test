@@ -9,6 +9,7 @@
 // with the picture from background-allow-gif-pic/ (a plain card when none is uploaded). When it is already allowed, only a NEW upload shows it, once (as before).
 import { fetchBgAllowPic, BGALLOW_POLL_MS } from './bgallowpic.js';
 import { Native } from './native.js';
+import { enterCard, leaveCard } from './cardlayer.js';
 const SEEN = 'lf.bgAllowSeen', ASKED = 'lf.bgAllowAsked';
 const memFlags = {};   // BUG-153: session copy, used when localStorage is blocked (no re-showing every second)
 const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch { return memFlags[k] || ''; } };
@@ -46,7 +47,8 @@ async function decodes(src) {
 const accessibilityFirst = () => { try { return !!afterGate(); } catch { return false; } };
 const root = () => document.getElementById('lf-bgallow');
 export function bgAllowDemo(src) { bgAllowClose(); build(src || ''); }   // screenshots only (browser, window.__lf)
-export function bgAllowClose() { const o = root(); if (!o) return false; o.remove(); return true; }
+let opener = null;   // v214: the element that had focus before the card opened (focus goes back there)
+export function bgAllowClose() { const o = root(); if (!o) return false; o.remove(); const f = opener; opener = null; leaveCard(f); return true; }
 function html(src) {
   return `<div class="bgbody">${src ? `<img class="bgimg" alt="" src="${src}">` : ''}<b>Keep the music playing</b><p>Tap <b>Allow</b>, then switch on <b>Allow background activity</b> on the next screen. Without it Android can stop Liquid Dark in the background and listening time and plays get lost.</p></div><div class="bgact"><button data-bg="go">Allow</button><button data-bg="later">Later</button></div>`;
 }
@@ -57,7 +59,9 @@ function build(src) {
     bgAllowClose();
     if (b.dataset.bg === 'go') { trip = true; try { Native.openBackgroundSettings().catch(() => { trip = false; }); } catch { trip = false; } }
   });
+  opener = document.activeElement;
   document.body.appendChild(o);
+  enterCard(o, '[data-bg="go"]');   // v214: focus lands on Allow
 }
 function swapPic(o, src) {   // a new picture while the card is open: replace only the picture, never rebuild the card (no blinking)
   const body = o.querySelector('.bgbody'); if (!body) return;
